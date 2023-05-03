@@ -1,17 +1,27 @@
 import suba
+import pandas as pd
+import re
+
+
+def clean_regexs(text):
+    regexp = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
+    return re.sub(regexp, "", text)
 
 
 def oulala(lista, texto2):
     a = []
     for i in range(0, len(lista)):
-        if i < len(lista) - 1:
-            new_text = texto2[
-                texto2.find(lista[i]) + len(lista[i]) : texto2.find(lista[i + 1])
-            ]
-            a.append(new_text)
+        if texto2.find(lista[i]) != -1:
+            if i < len(lista) - 1:
+                new_text = texto2[
+                    texto2.find(lista[i]) + len(lista[i]) : texto2.find(lista[i + 1])
+                ]
+                a.append(new_text)
+            else:
+                new_text = texto2[texto2.find(lista[i]) + len(lista[i]) :]
+                a.append(new_text)
         else:
-            new_text = texto2[texto2.find(lista[i]) + len(lista[i]) :]
-            a.append(new_text)
+            a.append("")
     return a
 
 
@@ -26,26 +36,39 @@ def formatear(lista):
         texto = i[0]
         texto2 = texto.replace("\n", " ")
         texto2 = texto2.replace("  ", " ")
+        texto2 = clean_regexs(texto2)
         final.append(texto2)
     return final
 
 
-def barrer(lista, cortes, cortes2):
+def barrer(lista, cortes):
     b = []
     for i in lista:
-        x = oulala(cortes, i)
-        y = oulala(cortes2, x[1])
-        b.append(y)
+        if i.find(cortes[0][0]) == 0:
+            x = oulala(cortes[0], i)
+            b.append(x)
+        else:
+            x = oulala(cortes[1], i)
+            b.append(x)
     return b
 
 
 checkpoints = (
-    "Paso 1 - Declaración Testimonial ",
-    "Paso 2 - Declaración Testimonial ",
-    "Paso 3 - Declaración Testimonial ",
-    "Paso 4 - Declaración Testimonial ",
+    (
+        "Paso 1 - Declaración Testimonial ",
+        "Paso 2 - Declaración Testimonial ",
+        "Paso 3 - Declaración Testimonial ",
+        "Paso 4 - Declaración Testimonial ",
+        "Paso 5 - Declaración Testimonial ",
+    ),
+    (
+        "Paso 1 - Funcionarios intervinientes ",
+        "Paso 2 - Partes intervinientes ",
+        "Paso 3 - Relato del procedimiento ",
+        "Paso 4 - Elementos secuestrados y pruebas Elementos secuestrados y pruebas ",
+        "Paso 5 - Firmas ",
+    ),
 )
-
 cortes = (
     "Fecha: ",
     "Hora: ",
@@ -79,14 +102,13 @@ cortes = (
 )
 
 
-archivo = suba.cargar()
-listo = formatear(archivo)
-asdf = barrer(listo, checkpoints, cortes)
+def convertir(checkpoints):
 
-for i in asdf:
-    print(len(i[15]))
+    archivo = suba.cargar_fd()
+    listo = formatear(archivo)
+    asdf = barrer(listo, checkpoints)
+    ult = pd.DataFrame(asdf, columns=["paso1", "paso2", "paso3", "paso4", "paso5"])
+    ult.to_excel(r"C:\Users\Simon\Documents\GitHub\minos\ult_fd.xlsx")
 
 
-# b = oulala(cortes, a[1])
-# imprimir(a)
-# imprimir(b)
+convertir(checkpoints)
