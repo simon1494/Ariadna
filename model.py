@@ -134,16 +134,14 @@ class Inicial:
 
     def unificada(self, hechos, involucrados, efectos, canon):
         unificada = []
-        for i in (0, len(hechos) - 1):
-            item = canon
+        canonico = canon
+        for i in range(0, len(hechos)):
+            item = canonico
             for key in hechos[i].keys():
-                if key in item:
-                    item[key] = hechos[i][key]
+                item[key] = hechos[i][key]
             for key in involucrados[i].keys():
-                if key in item:
-                    item[key] = involucrados[i][key]
+                item[key] = involucrados[i][key]
             for key in efectos[i].keys():
-                if key in item:
-                    item[key] = efectos[i][key]
+                item[key] = efectos[i][key]
             unificada.append(item)
         return unificada

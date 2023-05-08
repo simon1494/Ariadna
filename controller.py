@@ -9,11 +9,6 @@ if __name__ == "__main__":
         checkpoints.cp_efectos,
         checkpoints.general,
     )
-    x = 0
-    print(proceso.final[x])
-    print("\n\n")
-    print(proceso.datos_hecho[x])
-    print("\n\n")
-    print(proceso.datos_inv[x])
-    print("\n\n")
-    print(proceso.datos_efectos[x])
+print(proceso.final[50])
+print("\n\n")
+print(proceso.datos_inv[50])
