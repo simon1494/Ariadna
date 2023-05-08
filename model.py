@@ -3,19 +3,29 @@ import re
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path as Ph
-from checkpoints import cascaron
 
 
 class Inicial:
-    def __init__(self, cp_iniciales, cp_hecho, cp_inv, cp_efectos):
+    def __init__(self, cp_iniciales, cp_datos, cp_inv, cp_efectos, canon):
         self.root = tk.Tk()
         self.root.withdraw()
         self.path = filedialog.askopenfilename()
+        # checkpoints
         self.checkpoints = cp_iniciales
-        self.cortes_datos = cp_hecho
+        self.cortes_datos = cp_datos
         self.cortes_inv = cp_inv
         self.cortes_efectos = cp_efectos
-        self.formateado = self.formatear(self.cargar())
+        # instancias de archivo
+        self.crudo = self.cargar()
+        self.formateado = self.formatear(self.crudo)
+        self.particiones = self.barrer_inicial(self.formateado)
+        self.datos_hecho = self.descomponer(self.particiones, self.cortes_datos, 1)
+        self.datos_inv = self.descomponer(self.particiones, self.cortes_inv, 0)
+        self.datos_efectos = self.descomponer(self.particiones, self.cortes_efectos, 3)
+        self.general = canon
+        self.final = self.unificada(
+            self.datos_hecho, self.datos_inv, self.datos_efectos, self.general
+        )
 
     def cargar(self):
         data = pd.read_excel(self.path)
@@ -25,36 +35,6 @@ class Inicial:
     def clean_regexs(self, text):
         regexp = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
         return re.sub(regexp, "", text)
-
-    def oulala(self, texto2, pos_item):
-        a = []
-        for i in range(0, len(pos_item)):
-            if i < len(pos_item) - 1:
-                new_text = texto2[pos_item[i] : pos_item[i + 1]]
-                a.append(new_text)
-            else:
-                new_text = texto2[pos_item[i] :]
-                a.append(new_text)
-        if len(a) < 5:
-            a.insert(1, "")
-        return a
-
-    def oulala2(self, texto2, pos_item):
-        a = []
-        for i in range(0, len(pos_item)):
-            if i < len(pos_item) - 1:
-                new_text = texto2[pos_item[i] : pos_item[i + 1]]
-                a.append(new_text)
-            else:
-                new_text = texto2[pos_item[i] :]
-                a.append(new_text)
-        if len(a) < 5:
-            a.insert(1, "")
-        return a
-
-    def imprimir(self, res):
-        for i in range(0, len(res)):
-            print(res[i] + "\n\n\n")
 
     def formatear(self, lista):
         final = []
@@ -66,94 +46,104 @@ class Inicial:
             final.append(texto2)
         return final
 
-    def barrer(self, lista):
+    def barrer_inicial(self, listado):
         b = []
-        pos = self.posiciones()
-        counter = 0
-        for i in lista:
+        for i in listado:
             if i.find(self.checkpoints[0][0]) == 0:
-                x = self.oulala(i, pos[counter])
+                x = self.segmentador(
+                    i,
+                    self.posiciones_datos(i, self.checkpoints[0]),
+                    self.checkpoints[0],
+                )
                 b.append(x)
             else:
-                x = self.oulala(i, pos[counter])
+                x = self.segmentador(
+                    i,
+                    self.posiciones_datos(i, self.checkpoints[1]),
+                    self.checkpoints[1],
+                )
                 b.append(x)
-            counter += 1
+        return self.recuperar_values(b)
+
+    def descomponer(self, particiones, canon, paso):
+        b = []
+        for i in particiones:
+            x = self.segmentador(
+                i[paso],
+                self.posiciones_datos(i[paso], canon),
+                canon,
+            )
+            b.append(x)
         return b
 
-    def convertir(self):
-        archivo = self.cargar()
-        listo = self.formatear(archivo)
-        asdf = self.barrer(listo)
-        ult = pd.DataFrame(asdf, columns=["paso1", "paso2", "paso3", "paso4", "paso5"])
+    def convertir(self, archivo):
+        ult = pd.DataFrame(
+            archivo, columns=["paso1", "paso2", "paso3", "paso4", "paso5"]
+        )
         ult.to_excel(rf"{Ph(__file__).resolve().parent}\ult.xlsx")
 
-    def posiciones(self, quitar=True):
-        posiciones = []
-        archivo = self.cargar()
-        listo = self.formatear(archivo)
-        for i in listo:
-            item = []
-            if i.find(self.checkpoints[0][0]) == 0:
-                for j in self.checkpoints[0]:
-                    item.append(i.find(j))
-                posiciones.append(item)
-            else:
-                for k in self.checkpoints[1]:
-                    item.append(i.find(k))
-                posiciones.append(item)
-            if quitar is True:
-                try:
-                    item.remove(-1)
-                except Exception:
+    def recuperar_values(self, dics):
+        a_lista = []
+        for i in dics:
+            registro = []
+            for value in i.values():
+                registro.append(value)
+            a_lista.append(registro)
+        return a_lista
+
+    def posiciones_datos(self, texto, cortes, quitar=True):
+        contador = 0
+        item = []
+        for j in cortes:
+            lista = []
+            lista.append(j)
+            lista.append(texto.find(j))
+            if quitar is False:
+                item.append(lista)
+            elif quitar is True:
+                if lista[1] == -1:
                     pass
-        return posiciones
+                else:
+                    item.append(lista)
+        item = dict(item)
+        item = sorted(item.items(), key=lambda x: x[1])
+        contador += 1
+        return item
 
-    def posiciones_datos(self, cortes, quitar=False):
-        posiciones = []
-        contador = 1
-        archivo = self.cargar()
-        listo = self.formatear(archivo)
-        for i in listo:
-            item = [contador]
-            for j in cortes:
-                item.append(i.find(j))
-            if quitar is True:
-                for i in range(0, len(item)):
-                    try:
-                        item.remove(-1)
-                    except Exception:
-                        pass
-            posiciones.append(item)
-            contador += 1
-        posiciones.append(item)
-        return posiciones
+    def segmentador(self, texto, puntos_de_corte, canon):
+        para_buscar = texto
+        posiciones = puntos_de_corte
+        canonico = {}
+        for i in canon:
+            canonico[i] = ""
+        prueba = {}
+        for i in range(0, len(posiciones)):
+            if i < len(posiciones) - 1:
+                clave = posiciones[i][0]
+                valor = para_buscar[
+                    posiciones[i][1] + len(clave) : posiciones[i + 1][1]
+                ]
+            elif i == len(posiciones) - 1:
+                clave = posiciones[i][0]
+                valor = para_buscar[posiciones[i][1] + len(clave) :]
+            prueba[clave] = valor
+        for k in canonico.keys():
+            if k in prueba:
+                canonico[k] = prueba[k]
+        return canonico
 
-    def reordenar(self, quitar=False):
-        estructura = {}
-        keys = self.cortes_datos
-        posiciones = self.posiciones_datos(self.cortes_datos)
-        contador = 1
-        for h in posiciones:
-            registro = {}
-            for i in range(0, len(keys)):
-                registro[keys[i]] = h[i]
-            # registro = sorted(registro.items(), key=lambda x: x[1])
-            if quitar is True:
-                for i in range(0, len(registro)):
-                    try:
-                        registro[i].index(-1)
-                        registro = registro.pop[i]
-                    except Exception:
-                        pass
-            estructura[contador] = registro
-            contador += 1
-        return estructura
-
-    def rearmar(self, archivo):
-        estructura = self.reordenar(quitar=True)
-        rearmado = {}
-        index = 1
-        for i in archivo:
-            new_registro = {}
-            for j in estructura.keys():
-                new_registro[j]
+    def unificada(self, hechos, involucrados, efectos, canon):
+        unificada = []
+        for i in (0, len(hechos) - 1):
+            item = canon
+            for key in hechos[i].keys():
+                if key in item:
+                    item[key] = hechos[i][key]
+            for key in involucrados[i].keys():
+                if key in item:
+                    item[key] = involucrados[i][key]
+            for key in efectos[i].keys():
+                if key in item:
+                    item[key] = efectos[i][key]
+            unificada.append(item)
+        return unificada
