@@ -1,107 +1,24 @@
 import pandas as pd
 import re
-from pathlib import Path as ph
+import tkinter as tk
+from tkinter import filedialog
+from pathlib import Path as Ph
+from checkpoints import cascaron
 
 
 class Inicial:
-    def __init__(self):
-        self.path = ph.cwd()
-        self.checkpoints = (
-            (
-                "Paso 1 - Declaración Testimonial ",
-                "Paso 2 - Declaración Testimonial ",
-                "Paso 3 - Declaración Testimonial ",
-                "Paso 4 - Declaración Testimonial ",
-                "Paso 5 - Declaración Testimonial ",
-            ),
-            (
-                "Paso 1 - Funcionarios intervinientes ",
-                "Paso 2 - Partes intervinientes ",
-                "Paso 3 - Relato del procedimiento ",
-                "Paso 4 - Elementos secuestrados y pruebas Elementos secuestrados y pruebas ",
-                "Paso 5 - Firmas ",
-            ),
-        )
-        self.cortes = (
-            "Fecha: ",
-            "Hora: ",
-            "Funcionario: ",
-            "Jerarquía: ",
-            "Dependencia: ",
-            "Legajo: ",
-            "FUNCIONARIO INTERVINIENTES DEL ACTA",
-            "FECHA Y HORA DEL HECHO Fecha de Inicio: ",
-            "Hora de Inicio: ",
-            "Fecha de finalización: ",
-            "Hora de finalización: ",
-            "LUGAR DEL HECHO Partido: ",
-            "Localidad: ",
-            "Modo de Ingreso: ",
-            "Latitud: ",
-            "Calle: ",
-            "Longitud: ",
-            "Altura: ",
-            "Piso: ",
-            "Departamento: ",
-            "Lugar Exacto: ",
-            "Entre: ",
-            "Descripcion: ",
-            "CALIFICACIÓN LEGAL DEL HECHO",
-            "INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada Deja constancia de la manifestación respecto a sí insta o no insta la acción: ",
-            "N° de Acta de Procedimiento: ",
-            "Nº de Denuncia: ",
-            "PP: ",
-            "ACTA DE PROCEDIMIENTO Emitido por el Sistema de Información Delictual el: ",
-        )
-        self.cortes_datos = (
-            "Fecha:",
-            "Hora:",
-            "Funcionario:",
-            "Jerarquía:",
-            "Dependencia:",
-            "Legajo:",
-            "FUNCIONARIO INTERVINIENTES DEL ACTA",
-            "FECHA Y HORA DEL HECHO Fecha de Inicio:",
-            "Hora de Inicio:",
-            "Fecha de finalización:",
-            "Hora de finalización:",
-            "LUGAR DEL HECHO Partido:",
-            "Localidad:",
-            "Modo de Ingreso:",
-            "Latitud:",
-            "Calle:",
-            "Longitud:",
-            "Altura:",
-            "Piso:",
-            "Departamento:",
-            "Lugar Exacto:",
-            "Entre:",
-            "Descripcion:",
-            "CALIFICACIÓN LEGAL DEL HECHO",
-            "INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada Deja constancia de la manifestación respecto a sí insta o no insta la acción:",
-            "¿Aporta documentación en este acto?",
-            "¿Aporta efectos en este acto?",
-        )
-        self.cortes_inv = (
-            "INVOLUCRADO - TESTIGO DATOS",
-            "INVOLUCRADO - SOSPECHOSO DATOS",
-            "INVOLUCRADO - VICTIMA DATOS",
-            "INVOLUCRADO - APREHENDIDO DATOS",
-            "INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS",
-            "INVOLUCRADO - REPRESENTANTE DATOS",
-            "INVOLUCRADO - PERSONA DE CONFIANZA DATOS",
-            "DENUNCIANTE DATOS",
-            "INVOLUCRADO - DENUNCIADO DATOS",
-        )
-        self.cortes_efectos = (
-            "AUTOMOTORES Marca",
-            "ARMA/S Tipo",
-            "ELEMENTOS SECUESTRADOS Tipo",
-            "OTROS OBJETOS Tipo",
-        )
+    def __init__(self, cp_iniciales, cp_hecho, cp_inv, cp_efectos):
+        self.root = tk.Tk()
+        self.root.withdraw()
+        self.path = filedialog.askopenfilename()
+        self.checkpoints = cp_iniciales
+        self.cortes_datos = cp_hecho
+        self.cortes_inv = cp_inv
+        self.cortes_efectos = cp_efectos
+        self.formateado = self.formatear(self.cargar())
 
     def cargar(self):
-        data = pd.read_excel(rf"{self.path}\fd.xlsx")
+        data = pd.read_excel(self.path)
         a = data.values.tolist()
         return a
 
@@ -164,14 +81,13 @@ class Inicial:
         return b
 
     def convertir(self):
-
         archivo = self.cargar()
         listo = self.formatear(archivo)
         asdf = self.barrer(listo)
         ult = pd.DataFrame(asdf, columns=["paso1", "paso2", "paso3", "paso4", "paso5"])
-        ult.to_excel(rf"{self.path}\ult.xlsx")
+        ult.to_excel(rf"{Ph(__file__).resolve().parent}\ult.xlsx")
 
-    def posiciones(self):
+    def posiciones(self, quitar=True):
         posiciones = []
         archivo = self.cargar()
         listo = self.formatear(archivo)
@@ -184,27 +100,60 @@ class Inicial:
             else:
                 for k in self.checkpoints[1]:
                     item.append(i.find(k))
+                posiciones.append(item)
+            if quitar is True:
                 try:
                     item.remove(-1)
-                except:
+                except Exception:
                     pass
-                posiciones.append(item)
         return posiciones
 
     def posiciones_datos(self, cortes, quitar=False):
         posiciones = []
+        contador = 1
         archivo = self.cargar()
         listo = self.formatear(archivo)
         for i in listo:
-            item = []
+            item = [contador]
             for j in cortes:
                 item.append(i.find(j))
             if quitar is True:
                 for i in range(0, len(item)):
                     try:
                         item.remove(-1)
-                    except:
+                    except Exception:
                         pass
             posiciones.append(item)
+            contador += 1
         posiciones.append(item)
         return posiciones
+
+    def reordenar(self, quitar=False):
+        estructura = {}
+        keys = self.cortes_datos
+        posiciones = self.posiciones_datos(self.cortes_datos)
+        contador = 1
+        for h in posiciones:
+            registro = {}
+            for i in range(0, len(keys)):
+                registro[keys[i]] = h[i]
+            # registro = sorted(registro.items(), key=lambda x: x[1])
+            if quitar is True:
+                for i in range(0, len(registro)):
+                    try:
+                        registro[i].index(-1)
+                        registro = registro.pop[i]
+                    except Exception:
+                        pass
+            estructura[contador] = registro
+            contador += 1
+        return estructura
+
+    def rearmar(self, archivo):
+        estructura = self.reordenar(quitar=True)
+        rearmado = {}
+        index = 1
+        for i in archivo:
+            new_registro = {}
+            for j in estructura.keys():
+                new_registro[j]
