@@ -137,11 +137,16 @@ class Inicial:
         canonico = canon
         for i in range(0, len(hechos)):
             item = canonico
-            for key in hechos[i].keys():
-                item[key] = hechos[i][key]
-            for key in involucrados[i].keys():
-                item[key] = involucrados[i][key]
-            for key in efectos[i].keys():
-                item[key] = efectos[i][key]
+            item.update(hechos[i])
+            item.update(involucrados[i])
+            item.update(efectos[i])
             unificada.append(item)
-        return unificada
+        return print(unificada)
+
+"""Traceback (most recent call last):
+  File "c:\Users\Simon\Documents\GitHub\minos\controller.py", line 12, in <module>
+    proceso.unificada(
+  File "c:\Users\Simon\Documents\GitHub\minos\model.py", line 141, in unificada
+    item.update(hechos[i])
+                ~~~~~~^^^
+KeyError: 0"""

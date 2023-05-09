@@ -9,6 +9,9 @@ if __name__ == "__main__":
         checkpoints.cp_efectos,
         checkpoints.general,
     )
-print(proceso.final[50])
-print("\n\n")
-print(proceso.datos_inv[50])
+    proceso.unificada(
+        proceso.datos_hecho[0],
+        proceso.datos_inv[0],
+        proceso.datos_efectos[0],
+        proceso.general,
+    )
