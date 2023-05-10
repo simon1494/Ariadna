@@ -15,6 +15,11 @@ cp_iniciales = (
     ),
 )
 
+cp_iden = (
+    ("Nº de Denuncia: ", " PP: ", " \nFORMULARIO DE DECLARACIÓN"),
+    ("N° de Acta de Procedimiento: ", " PP: ", " \nACTA DE PROCEDIMIENTO"),
+)
+
 cp_datos = (
     " Fecha: ",
     " Hora: ",
@@ -109,3 +114,49 @@ general = {
     " ELEMENTOS SECUESTRADOS Tipo ": "",
     " OTROS OBJETOS Tipo ": "",
 }
+
+encabezados = [
+    "N° de Registro",
+    "PP:",
+    "Fecha de carga",
+    "Hora de carga",
+    "Operador de Carga",
+    "Jerarquía",
+    "Dependencia",
+    "Legajo",
+    "Funcionarios intervinientes",
+    "Fecha de inicio HECHO",
+    "Hora de inicio HECHO",
+    "Fecha final HECHO",
+    "Hora final HECHO",
+    "Partido",
+    "Localidad",
+    "Modo de Ingreso carga:",
+    "Latitud:",
+    "Calle:",
+    "Longitud:",
+    "Altura:",
+    "Piso:",
+    "Departamento:",
+    "Lugar Exacto:",
+    "Entre:",
+    "Descripcion:",
+    "CALIFICACIÓN LEGAL DEL HECHO",
+    "Insta a la acción penal:",
+    "TESTIGO DATOS",
+    "SOSPECHOSO DATOS",
+    "VICTIMA DATOS",
+    "APREHENDIDO DATOS",
+    "TESTIGO DEL PROCEDIMIENTO DATOS",
+    "REPRESENTANTE DATOS",
+    "PERSONA DE CONFIANZA DATOS",
+    "DENUNCIANTE DATOS",
+    "DENUNCIADO DATOS",
+    "Relato",
+    "Aporta documentación",
+    "Aporta pruebas o efectos",
+    "AUTOMOTORES",
+    "ARMA/S",
+    "ELEMENTOS SECUESTRADOS",
+    "OTROS OBJETOS",
+]
