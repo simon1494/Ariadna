@@ -16,8 +16,8 @@ cp_iniciales = (
 )
 
 cp_iden = (
-    ("Nº de Denuncia: ", " PP: ", " \nFORMULARIO DE DECLARACIÓN"),
-    ("N° de Acta de Procedimiento: ", " PP: ", " \nACTA DE PROCEDIMIENTO"),
+    ("Nº de Denuncia: ", " PP: ", "FORMULARIO DE DECLARACIÓN"),
+    ("N° de Acta de Procedimiento: ", " PP: ", "ACTA DE PROCEDIMIENTO"),
 )
 
 cp_datos = (
@@ -160,3 +160,57 @@ encabezados = [
     "ELEMENTOS SECUESTRADOS",
     "OTROS OBJETOS",
 ]
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+splitters = {
+    "armas": "Implicación ",
+    "automotores": "Marca ",
+    "objetos": "Tipo",
+    "secuestros": "Tipo ",
+    "calificaciones": "CALIFICACIÓN LEGAL DEL HECHO ",
+}
+
+cp_armas = [
+    "Implicación",
+    "Tipo Arma",
+    "Numero Serie",
+    "Marca",
+    "Modelo",
+    "Calibre",
+    "Observaciones",
+]
+
+cp_automotores = [
+    "Marca",
+    "Dominio",
+    "Modelo",
+    "Nro. Motor",
+    "Color",
+    "Nro. Chasis",
+    "Vínculo",
+]
+
+cp_objetos = [
+    "Tipo",
+    "Implicación",
+    "Cantidad",
+    "Descripcion",
+    "Marca",
+    "Modelo",
+    "Valor",
+]
+
+cp_secuestros = [
+    "Tipo",
+    "Implicación",
+    "Cantidad",
+    "Descripcion",
+    "Marca",
+    "Modelo",
+    "Valor",
+]
+
+cp_calificaciones = ["Delito:", "Consumado:"]
