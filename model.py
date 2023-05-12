@@ -4,6 +4,7 @@ import pandas as pd
 import tkinter as tk
 from pathlib import Path as Ph
 from tkinter import filedialog
+import checkpoints
 
 
 class Inicial:
@@ -272,10 +273,10 @@ class Segmentado(Inicial):
             self._armar_paquete(self.indexados, 41), ck.splitters["armas"]
         )
         self.objetos = self._separar(
-            self._armar_paquete(self.indexados, 43), ck.splitters["objetos"]
+            self._armar_paquete(self.indexados, 43), ck.splitters["elementos"]
         )
         self.secuestros = self._separar(
-            self._armar_paquete(self.indexados, 42), ck.splitters["secuestros"]
+            self._armar_paquete(self.indexados, 42), ck.splitters["elementos"]
         )
         self.automotores = self._separar(
             self._armar_paquete(self.indexados, 40), ck.splitters["automotores"]
@@ -289,6 +290,9 @@ class Segmentado(Inicial):
         self.denunciados = self._armar_paquete(self.indexados, 36)
         self.denunciante = self._armar_paquete(self.indexados, 35)
         self.representante = self._armar_paquete(self.indexados, 33)
+        self.buenas = self._todo_un_campo_involucrado(
+            self.representante, checkpoints.representantes
+        )
 
     def comparar(self, path):
         para_comparar = self._cargar(path)
@@ -315,8 +319,8 @@ class Segmentado(Inicial):
 
         for i in palabras:
             if len(i) >= 2:
-                print(i[0])
-                print(i[1])
+                for j in i:
+                    print(j)
             else:
                 print("Sin elementos")
             print("\n\n")
@@ -348,6 +352,21 @@ class Segmentado(Inicial):
             texto = archivo[i][1]
             a = splitter
             matches = texto.split(a)
+            id = f"id_hecho {str(archivo[i][0])} "
             del matches[0]
-            nuevo.extend(list(map(lambda x: a + x, matches)))
+            matches = list(map(lambda x: a + x, matches))
+            matches = list(map(lambda x: id + x, matches))
+            nuevo.extend(matches)
         return nuevo
+
+    def _descomponer_involucrado(self, texto, canon):
+        cortes = list(canon.keys())
+        nuevo = self._segmentador(texto, self._posiciones_datos(texto, cortes), canon)
+        return nuevo
+
+    def _todo_un_campo_involucrado(self, lista, canon):
+        nuevo = []
+        nuevo.extend(
+            list(map(lambda x: self._descomponer_involucrado(x[1], canon), lista))
+        )
+        return self._recuperar_values(nuevo)

@@ -6,3 +6,6 @@ if __name__ == "__main__":
         inicial = model.Inicial(filedialog.askopenfilename())
     if input("¿Desea segmentar el archivo? ") == "si":
         segmentado = model.Segmentado(filedialog.askopenfilename())
+        for i in segmentado.buenas:
+            print(i)
+            print("\n\n")
