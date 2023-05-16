@@ -249,8 +249,11 @@ class Inicial:
         return lista
 
     def _clean_regexs(self, text):
-        regexp = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
-        return re.sub(regexp, "", text)
+        regex0 = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
+        regex1 = r"PP:......................(N° de Acta de Procedimiento: |Nº de Denuncia: ).........................................................................................................................\d/\d"
+        texto = re.sub(regex0, "", text)
+        texto = re.sub(regex1, "", texto)
+        return texto
 
 
 class Segmentado(Inicial):
@@ -263,24 +266,13 @@ class Segmentado(Inicial):
         self.calificaciones = list(
             map(
                 lambda x: x.replace("CALIFICACIÓN LEGAL DEL HECHO ", ""),
-                self._separar(
-                    self._armar_paquete(self.indexados, 26),
-                    ck.splitters["calificaciones"],
-                ),
+                self._armar_paquete(self.indexados, 26),
             )
         )
-        self.armas = self._separar(
-            self._armar_paquete(self.indexados, 41), ck.splitters["armas"]
-        )
-        self.objetos = self._separar(
-            self._armar_paquete(self.indexados, 43), ck.splitters["elementos"]
-        )
-        self.secuestros = self._separar(
-            self._armar_paquete(self.indexados, 42), ck.splitters["elementos"]
-        )
-        self.automotores = self._separar(
-            self._armar_paquete(self.indexados, 40), ck.splitters["automotores"]
-        )
+        self.armas = self._armar_paquete(self.indexados, 41)
+        self.objetos = self._armar_paquete(self.indexados, 43)
+        self.secuestros = self._armar_paquete(self.indexados, 42)
+        self.automotores = self._armar_paquete(self.indexados, 40)
         self.testigos_procedimiento = self._armar_paquete(self.indexados, 32)
         self.testigos_presenciales = self._armar_paquete(self.indexados, 28)
         self.victimas = self._armar_paquete(self.indexados, 30)
@@ -290,9 +282,21 @@ class Segmentado(Inicial):
         self.denunciados = self._armar_paquete(self.indexados, 36)
         self.denunciante = self._armar_paquete(self.indexados, 35)
         self.representante = self._armar_paquete(self.indexados, 33)
-        self.buenas = self._todo_un_campo_involucrado(
-            self.representante, checkpoints.representantes
-        )
+
+        self.involucrados = [
+            self.testigos_procedimiento,
+            self.testigos_presenciales,
+            self.victimas,
+            self.personas_confianza,
+            self.aprehendidos,
+            self.sospechosos,
+            self.denunciados,
+            self.denunciante,
+            self.representante,
+        ]
+
+        self.buenas = self._todos_los_involucrados(self.involucrados)
+        self._convertir(self.buenas)
 
     def comparar(self, path):
         para_comparar = self._cargar(path)
@@ -344,7 +348,7 @@ class Segmentado(Inicial):
                 elemento.append(indice_hecho)
                 elemento.append(texto)
                 nuevo.append(elemento)
-        return nuevo
+        return self._separar(nuevo, self._seleccionar_splitter(columna))
 
     def _separar(self, archivo, splitter):
         nuevo = []
@@ -360,13 +364,127 @@ class Segmentado(Inicial):
         return nuevo
 
     def _descomponer_involucrado(self, texto, canon):
+        general = checkpoints.general_involucrados.copy()
         cortes = list(canon.keys())
-        nuevo = self._segmentador(texto, self._posiciones_datos(texto, cortes), canon)
-        return nuevo
+        texto1 = texto.replace(cortes[1], self._tipo_involucrado(cortes[1]))
+        nuevo = self._segmentador(texto1, self._posiciones_datos(texto1, cortes), canon)
+        for key in nuevo:
+            if key in general:
+                general[key] = nuevo[key]
+                general[" tipo: "] = nuevo[list(nuevo.keys())[1]]
+        return general
 
     def _todo_un_campo_involucrado(self, lista, canon):
         nuevo = []
         nuevo.extend(
-            list(map(lambda x: self._descomponer_involucrado(x[1], canon), lista))
+            list(map(lambda x: self._descomponer_involucrado(x, canon), lista))
         )
         return self._recuperar_values(nuevo)
+
+    def _tipo_involucrado(self, tipo):
+        match tipo:
+            case " INVOLUCRADO - APREHENDIDO DATOS":
+                return " INVOLUCRADO - APREHENDIDO DATOS Aprehendido"
+            case " INVOLUCRADO - TESTIGO DATOS":
+                return " INVOLUCRADO - TESTIGO DATOS Testigo presencial"
+            case " INVOLUCRADO - PERSONA DE CONFIANZA DATOS":
+                return " INVOLUCRADO - PERSONA DE CONFIANZA DATOS Persona de confianza"
+            case " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS":
+                return " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS testigo de procedimiento"
+            case " INVOLUCRADO - REPRESENTANTE DATOS":
+                return " INVOLUCRADO - REPRESENTANTE DATOS Representante"
+            case " INVOLUCRADO - SOSPECHOSO DATOS":
+                return " INVOLUCRADO - SOSPECHOSO DATOS Sospechoso"
+            case " INVOLUCRADO - DENUNCIADO DATOS":
+                return " INVOLUCRADO - DENUNCIADO DATOS Denunciado"
+            case " INVOLUCRADO - VICTIMA DATOS":
+                return " INVOLUCRADO - VICTIMA DATOS Victima"
+            case " DENUNCIANTE DATOS":
+                return " DENUNCIANTE DATOS Denunciante"
+
+    def _seleccionar_splitter(self, columna):
+        match columna:
+            case 41:
+                return ck.splitters["armas"]
+            case 40:
+                return ck.splitters["automotores"]
+            case 42:
+                return ck.splitters["elementos"]
+            case 43:
+                return ck.splitters["elementos"]
+            case 26:
+                return ck.splitters["calificaciones"]
+            case 31:
+                return ck.splitters["aprehendidos"]
+            case 33:
+                return ck.splitters["representantes"]
+            case 29:
+                return ck.splitters["sospechosos"]
+            case 36:
+                return ck.splitters["denunciados"]
+            case 35:
+                return ck.splitters["denunciantes"]
+            case 30:
+                return ck.splitters["victimas"]
+            case 34:
+                return ck.splitters["confianzas"]
+            case 28:
+                return ck.splitters["testigos_pre"]
+            case 32:
+                return ck.splitters["testigos_pro"]
+
+    def _todos_los_involucrados(self, involucrados):
+        nuevo = []
+        nuevo.extend(
+            self._todo_un_campo_involucrado(
+                involucrados[0], checkpoints.testigos_procedimiento
+            )
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(
+                involucrados[1], checkpoints.testigos_presenciales
+            )
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[2], checkpoints.victimas)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[3], checkpoints.confianzas)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[4], checkpoints.aprehendidos)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[5], checkpoints.sospechosos)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[6], checkpoints.denunciados)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[7], checkpoints.denunciantes)
+        )
+
+        nuevo.extend(
+            self._todo_un_campo_involucrado(involucrados[8], checkpoints.representantes)
+        )
+
+        for index, item in enumerate(nuevo, 1):
+            item.insert(0, str(index))
+
+        return nuevo
+
+    def _convertir(self, archivo):
+        encabezados = list(checkpoints.general_involucrados.keys())
+        encabezados.insert(0, "id_involucrado")
+        ult = pd.DataFrame(archivo, columns=encabezados)
+        ult.to_excel(
+            rf"{Ph(__file__).resolve().parent}\Exportaciones\segmentada.xlsx",
+            index=False,
+        )
