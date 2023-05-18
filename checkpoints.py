@@ -40,7 +40,7 @@ cp_datos = (
     " Longitud: ",
     " Altura: ",
     " Piso: ",
-    " Departamento: : ",
+    " Departamento: ",
     " Lugar Exacto: ",
     " Entre: ",
     " Descripcion:",
@@ -49,24 +49,24 @@ cp_datos = (
 )
 
 cp_inv = (
-    "INVOLUCRADO - TESTIGO DATOS ",
-    "INVOLUCRADO - SOSPECHOSO DATOS ",
-    "INVOLUCRADO - VICTIMA DATOS ",
-    "INVOLUCRADO - APREHENDIDO DATOS ",
-    "INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS ",
-    "INVOLUCRADO - REPRESENTANTE DATOS ",
-    "INVOLUCRADO - PERSONA DE CONFIANZA DATOS ",
-    "DENUNCIANTE DATOS ",
-    "INVOLUCRADO - DENUNCIADO DATOS ",
+    " INVOLUCRADO - TESTIGO DATOS ",
+    " INVOLUCRADO - SOSPECHOSO DATOS ",
+    " INVOLUCRADO - VICTIMA DATOS ",
+    " INVOLUCRADO - APREHENDIDO DATOS ",
+    " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS ",
+    " INVOLUCRADO - REPRESENTANTE DATOS ",
+    " INVOLUCRADO - PERSONA DE CONFIANZA DATOS ",
+    " DENUNCIANTE DATOS ",
+    " INVOLUCRADO - DENUNCIADO DATOS ",
 )
 
 cp_efectos = (
-    " ¿Aporta documentación en este acto? ",
-    " ¿Aporta efectos en este acto? ",
-    " AUTOMOTORES Marca ",
-    " ARMA/S Tipo ",
-    " ELEMENTOS SECUESTRADOS Tipo ",
-    " OTROS OBJETOS Tipo ",
+    "¿Aporta documentación en este acto?",
+    "¿Aporta efectos en este acto?",
+    "AUTOMOTORES Marca",
+    "ARMA/S Tipo",
+    "ELEMENTOS SECUESTRADOS Tipo",
+    "OTROS OBJETOS Tipo",
 )
 
 general = {
@@ -91,7 +91,7 @@ general = {
     " Longitud: ": "",
     " Altura: ": "",
     " Piso: ": "",
-    " Departamento: : ": "",
+    " Departamento: ": "",
     " Lugar Exacto: ": "",
     " Entre: ": "",
     " Descripcion:": "",
@@ -107,12 +107,12 @@ general = {
     " DENUNCIANTE DATOS ": "",
     " INVOLUCRADO - DENUNCIADO DATOS ": "",
     " Relato: ": "",
-    " ¿Aporta documentación en este acto? ": "",
-    " ¿Aporta efectos en este acto? ": "",
-    " AUTOMOTORES Marca ": "",
-    " ARMA/S Tipo ": "",
-    " ELEMENTOS SECUESTRADOS Tipo ": "",
-    " OTROS OBJETOS Tipo ": "",
+    "¿Aporta documentación en este acto?": "",
+    "¿Aporta efectos en este acto?": "",
+    "AUTOMOTORES Marca": "",
+    "ARMA/S Tipo": "",
+    "ELEMENTOS SECUESTRADOS Tipo": "",
+    "OTROS OBJETOS Tipo": "",
 }
 
 encabezados = [
@@ -136,8 +136,8 @@ encabezados = [
     "Calle:",
     "Longitud:",
     "Altura:",
-    "Piso:",
-    "Departamento:",
+    " Piso: ",
+    " Departamento: ",
     "Lugar Exacto:",
     "Entre:",
     "Descripcion:",
@@ -217,41 +217,6 @@ cp_calificaciones = ["Delito:", "Consumado:"]
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-
-general_armas = {
-    "id": "",
-    "Implicación": "",
-    "Tipo Arma": "",
-    "Numero Serie": "",
-    "Marca": "",
-    "Modelo": "",
-    "Calibre": "",
-    "Observaciones": "",
-}
-
-general_elementos = {
-    "id": "",
-    "Tipo": "",
-    "Implicación": "",
-    "Cantidad": "",
-    "Descripcion": "",
-    "Marca": "",
-    "Modelo": "",
-    "Valor": "",
-}
-
-general_automotores = {
-    "id": "",
-    "Marca": "",
-    "Dominio": "",
-    "Modelo": "",
-    "Nro. Motor": "",
-    "Color": "",
-    "Nro. Chasis": "",
-    "Vínculo": "",
-}
-
-general_calificaciones = {"id": "", "Delito:": "", "Consumado:": ""}
 
 testigos_presenciales = {
     "id_hecho ": "",
@@ -397,7 +362,7 @@ representantes = {
     " Altura: ": "",
     " Entre: ": "",
     " Piso: ": "",
-    " Departamento: : ": "",
+    " Departamento: ": "",
     " Descripcion: ": "",
     " Número teléfono fijo: ": "",
     " Número de celular: ": "",
@@ -474,7 +439,7 @@ aprehendidos = {
     " Altura: ": "",
     " Entre: ": "",
     " Piso: ": "",
-    " Departamento: : ": "",
+    " Departamento: ": "",
     " Descripcion: ": "",
     " Número teléfono fijo: ": "",
     " Número de celular: ": "",
@@ -602,6 +567,39 @@ denunciantes = {
     " Vía de notificación: ": "",
 }
 
+general_datos = [
+    "N° de Registro",
+    "PP:",
+    "Fecha de carga",
+    "Hora de carga",
+    "Operador de Carga",
+    "Jerarquía",
+    "Dependencia",
+    "Legajo",
+    "Funcionarios intervinientes",
+    "Fecha de inicio HECHO",
+    "Hora de inicio HECHO",
+    "Fecha final HECHO",
+    "Hora final HECHO",
+    "Partido",
+    "Localidad",
+    "Modo de Ingreso carga:",
+    "Latitud:",
+    "Calle:",
+    "Longitud:",
+    "Altura:",
+    "Piso: ",
+    "Departamento: ",
+    "Lugar Exacto:",
+    "Entre:",
+    "Descripcion:",
+    "CALIFICACIÓN LEGAL DEL HECHO",
+    "Insta a la acción penal:",
+    "Relato",
+    "Aporta documentación",
+    "Aporta pruebas o efectos",
+]
+
 general_involucrados = {
     "id_hecho ": "",
     " tipo: ": "",
@@ -642,3 +640,38 @@ general_involucrados = {
     " Vía de notificación: ": "",
     " CARACTERISTICAS FISICAS ": "",
 }
+
+general_armas = {
+    "id_hecho": "",
+    "Implicación": "",
+    "Tipo Arma": "",
+    "Numero Serie": "",
+    "Marca": "",
+    "Modelo": "",
+    "Calibre": "",
+    "Observaciones": "",
+}
+
+general_elementos = {
+    "id_hecho": "",
+    "Tipo": "",
+    "Implicación": "",
+    "Cantidad": "",
+    "Descripcion": "",
+    "Marca": "",
+    "Modelo": "",
+    "Valor": "",
+}
+
+general_automotores = {
+    "id_hecho": "",
+    "Marca": "",
+    "Dominio": "",
+    "Modelo": "",
+    "Nro. Motor": "",
+    "Color": "",
+    "Nro. Chasis": "",
+    "Vínculo": "",
+}
+
+general_calificaciones = {"id_hecho": "", "Tipificación:": "", "Consumado:": ""}

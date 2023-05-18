@@ -3,8 +3,6 @@ import checkpoints as ck
 import pandas as pd
 import tkinter as tk
 from pathlib import Path as Ph
-from tkinter import filedialog
-import checkpoints
 
 
 class Inicial:
@@ -19,15 +17,31 @@ class Inicial:
         self._cortes_inv = ck.cp_inv
         self._cortes_efectos = ck.cp_efectos
         self._encabezados = ck.encabezados
-        self.procesado = self._procesar(
-            self._path,
-            self._ident,
-            self._checkpoints,
-            self._cortes_datos,
-            self._cortes_inv,
-            self._cortes_efectos,
+        self._general = ck.general
+
+        # campos
+        self.crudo = self._cargar(path)
+        self.formateado, self.identificadores = self._formatear(self.crudo, self._ident)
+        self.particiones = self._recuperar_values(
+            self._barrer_inicial(self.formateado, self._checkpoints)
         )
-        self._convertir(self.procesado, self._encabezados)
+        self.datos_hecho = self._descomponer(self.particiones, self._cortes_datos, 1)
+        for item in self.datos_hecho:
+            item[" CALIFICACIÓN LEGAL DEL HECHO "] = (
+                " CALIFICACIÓN LEGAL DEL HECHO "
+                + item[" CALIFICACIÓN LEGAL DEL HECHO "]
+            )
+        self.datos_inv = self._todos(self.particiones, self._cortes_inv, 0)
+        self.datos_efectos = self._todos(self.particiones, self._cortes_efectos, 3)
+        self.final = self._unificar(
+            self.identificadores,
+            self.datos_hecho,
+            self.datos_inv,
+            self.datos_efectos,
+            self.particiones,
+            self._general,
+        )
+        self._convertir(self.final, self._general)
 
     def _cargar(self, path, no_tiene_encabezados=True):
         if no_tiene_encabezados:
@@ -77,32 +91,6 @@ class Inicial:
                 b.append(x)
         return b
 
-    def _procesar(self, path, ident, check, cortes_datos, cortes_inv, cortes_efectos):
-        crudo = self._cargar(path)
-        formateado, identificadores = self._formatear(crudo, ident)
-        particiones = self._recuperar_values(self._barrer_inicial(formateado, check))
-        datos_hecho = self._descomponer(particiones, cortes_datos, 1)
-        for item in datos_hecho:
-            item[" CALIFICACIÓN LEGAL DEL HECHO "] = (
-                " CALIFICACIÓN LEGAL DEL HECHO "
-                + item[" CALIFICACIÓN LEGAL DEL HECHO "]
-            )
-        datos_inv = self._descomponer(particiones, cortes_inv, 0, encabezados=False)
-        datos_efectos = self._descomponer(
-            particiones, cortes_efectos, 3, encabezados=False
-        )
-        general = ck.general
-        final = self._unificar(
-            identificadores,
-            datos_hecho,
-            datos_inv,
-            datos_efectos,
-            particiones,
-            general,
-        )
-
-        return final
-
     def _convertir(self, archivo, encabezados):
         # ult = pd.DataFrame(archivo, columns=encabezados)
         # ult.to_excel(
@@ -112,7 +100,7 @@ class Inicial:
 
         ult = pd.DataFrame(self._borrar_duplicados(archivo), columns=encabezados)
         ult.to_excel(
-            rf"{Ph(__file__).resolve().parent}\Exportaciones\unificada sin dups.xlsx",
+            rf"{Ph(__file__).resolve().parent}\Exportaciones\unificada.xlsx",
             index=False,
         )
 
@@ -168,10 +156,10 @@ class Inicial:
                     clave = posiciones[i][0]
                     valor = para_buscar[
                         posiciones[i][1] + len(clave) : posiciones[i + 1][1]
-                    ]
+                    ].strip()
                 elif i == len(posiciones) - 1:
                     clave = posiciones[i][0]
-                    valor = para_buscar[posiciones[i][1] + len(clave) :]
+                    valor = para_buscar[posiciones[i][1] + len(clave) :].strip()
                 prueba[clave] = valor
             for k in canonico.keys():
                 if k in prueba:
@@ -180,10 +168,10 @@ class Inicial:
             for i in range(0, len(posiciones)):
                 if i < len(posiciones) - 1:
                     clave = posiciones[i][0]
-                    valor = para_buscar[posiciones[i][1] : posiciones[i + 1][1]]
+                    valor = para_buscar[posiciones[i][1] : posiciones[i + 1][1]].strip()
                 elif i == len(posiciones) - 1:
                     clave = posiciones[i][0]
-                    valor = para_buscar[posiciones[i][1] :]
+                    valor = para_buscar[posiciones[i][1] :].strip()
                 prueba[clave] = valor
             for k in canonico.keys():
                 if k in prueba:
@@ -244,8 +232,6 @@ class Inicial:
                             contador -= 1
                             contador2 += 1
                             break
-        print("\n\n\n")
-        print(len(lista))
         return lista
 
     def _clean_regexs(self, text):
@@ -254,6 +240,65 @@ class Inicial:
         texto = re.sub(regex0, "", text)
         texto = re.sub(regex1, "", texto)
         return texto
+
+    # retorna una expresión regular armada a partir de una lista o las claves de un diccionario
+    def _regex(self, iter):
+        resultado = ""
+        nueva_lista = (
+            iter
+            if isinstance(iter, tuple) or isinstance(iter, list)
+            else list(iter.keys())
+        )
+        for item in nueva_lista:
+            if nueva_lista.index(item) != 0:
+                resultado = f"{resultado}|{item}"
+            else:
+                resultado = f"{item}"
+        return re.compile(f"({resultado})")
+
+    # partiendo de un texto se retorna una lista con elementos separados por la expresión regular suministrada
+    def _prueba(self, regex, texto):
+        resultado = []
+        coincidencias = re.finditer(regex, texto)
+        posiciones = [coincidencia.start() for coincidencia in coincidencias]
+        for i in range(0, len(posiciones)):
+            if i == len(posiciones) - 1:
+                texto1 = texto[posiciones[i] :]
+            else:
+                texto1 = texto[posiciones[i] : posiciones[i + 1]]
+            resultado.append(texto1)
+        return resultado
+
+    # Retorna UN SOLO diccionario con claves iguales a los elementos de "general".
+    # Luego, busca en cada item de "lista" las claves de ese diccionario;
+    # si la encuentra, la agrega al valor de esa clave. Especialmente util
+    # para separar correctamente los efectos o involucrados de un registros
+    # que se encuentran desordenados.
+    def _un_solo(self, lista, general):
+        claves = general
+        canonico = {elemento: "" for elemento in claves}
+        for i in list(canonico.keys()):
+            for j in lista:
+                if j.find(i) != -1:
+                    canonico[i] = (f"{canonico[i]} {j}").strip()
+        return canonico
+
+    def _todos(self, archivo, general, paso):
+        resultado = []
+        for registro in archivo:
+            nuevo = self._un_solo(
+                self._prueba(self._regex(general), registro[paso]), general
+            )
+            resultado.append(nuevo)
+        if paso == 3:
+            for item in resultado:
+                item["¿Aporta documentación en este acto?"] = item[
+                    "¿Aporta documentación en este acto?"
+                ].replace("¿Aporta documentación en este acto? ", "")
+                item["¿Aporta efectos en este acto?"] = item[
+                    "¿Aporta efectos en este acto?"
+                ].replace("¿Aporta efectos en este acto? ", "")
+        return resultado
 
 
 class Segmentado(Inicial):
@@ -294,9 +339,16 @@ class Segmentado(Inicial):
             self.denunciante,
             self.representante,
         ]
-
+        self._automotores = self._descomponer(self.automotores, ck.general_automotores)
+        self._armas = self._descomponer(self.armas, ck.general_armas)
+        self._objetos = self._descomponer(self.objetos, ck.general_elementos)
+        self._secuestros = self._descomponer(self.secuestros, ck.general_elementos)
+        self._calificaciones = self._descomponer(
+            self.calificaciones, ck.general_calificaciones
+        )
+        self.datos = self._recortar(self.indexados)
         self.buenas = self._todos_los_involucrados(self.involucrados)
-        self._convertir(self.buenas)
+        self._convertir_segmentado()
 
     def comparar(self, path):
         para_comparar = self._cargar(path)
@@ -311,23 +363,6 @@ class Segmentado(Inicial):
         print(len(nuevo))
         print(len(nuevo2))
         return faltantes
-
-    def temporal(self):
-        palabras = [
-            self.calificaciones,
-            self.armas,
-            self.objetos,
-            self.secuestros,
-            self.automotores,
-        ]
-
-        for i in palabras:
-            if len(i) >= 2:
-                for j in i:
-                    print(j)
-            else:
-                print("Sin elementos")
-            print("\n\n")
 
     def _indexador(self, archivo, index=1):
         nuevo = []
@@ -364,14 +399,14 @@ class Segmentado(Inicial):
         return nuevo
 
     def _descomponer_involucrado(self, texto, canon):
-        general = checkpoints.general_involucrados.copy()
+        general = ck.general_involucrados.copy()
         cortes = list(canon.keys())
         texto1 = texto.replace(cortes[1], self._tipo_involucrado(cortes[1]))
         nuevo = self._segmentador(texto1, self._posiciones_datos(texto1, cortes), canon)
         for key in nuevo:
             if key in general:
                 general[key] = nuevo[key]
-                general[" tipo: "] = nuevo[list(nuevo.keys())[1]]
+                general[" tipo: "] = nuevo[list(nuevo.keys())[1]].strip()
         return general
 
     def _todo_un_campo_involucrado(self, lista, canon):
@@ -390,7 +425,7 @@ class Segmentado(Inicial):
             case " INVOLUCRADO - PERSONA DE CONFIANZA DATOS":
                 return " INVOLUCRADO - PERSONA DE CONFIANZA DATOS Persona de confianza"
             case " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS":
-                return " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS testigo de procedimiento"
+                return " INVOLUCRADO - TESTIGO DEL PROCEDIMIENTO DATOS Testigo de procedimiento"
             case " INVOLUCRADO - REPRESENTANTE DATOS":
                 return " INVOLUCRADO - REPRESENTANTE DATOS Representante"
             case " INVOLUCRADO - SOSPECHOSO DATOS":
@@ -436,43 +471,27 @@ class Segmentado(Inicial):
     def _todos_los_involucrados(self, involucrados):
         nuevo = []
         nuevo.extend(
-            self._todo_un_campo_involucrado(
-                involucrados[0], checkpoints.testigos_procedimiento
-            )
+            self._todo_un_campo_involucrado(involucrados[0], ck.testigos_procedimiento)
         )
 
         nuevo.extend(
-            self._todo_un_campo_involucrado(
-                involucrados[1], checkpoints.testigos_presenciales
-            )
+            self._todo_un_campo_involucrado(involucrados[1], ck.testigos_presenciales)
         )
 
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[2], checkpoints.victimas)
-        )
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[2], ck.victimas))
+
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[3], ck.confianzas))
+
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[4], ck.aprehendidos))
+
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[5], ck.sospechosos))
+
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[6], ck.denunciados))
+
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[7], ck.denunciantes))
 
         nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[3], checkpoints.confianzas)
-        )
-
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[4], checkpoints.aprehendidos)
-        )
-
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[5], checkpoints.sospechosos)
-        )
-
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[6], checkpoints.denunciados)
-        )
-
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[7], checkpoints.denunciantes)
-        )
-
-        nuevo.extend(
-            self._todo_un_campo_involucrado(involucrados[8], checkpoints.representantes)
+            self._todo_un_campo_involucrado(involucrados[8], ck.representantes)
         )
 
         for index, item in enumerate(nuevo, 1):
@@ -480,11 +499,104 @@ class Segmentado(Inicial):
 
         return nuevo
 
-    def _convertir(self, archivo):
-        encabezados = list(checkpoints.general_involucrados.keys())
-        encabezados.insert(0, "id_involucrado")
-        ult = pd.DataFrame(archivo, columns=encabezados)
-        ult.to_excel(
+    def _convertir_segmentado(self):
+
+        writer = pd.ExcelWriter(
             rf"{Ph(__file__).resolve().parent}\Exportaciones\segmentada.xlsx",
+            engine="xlsxwriter",
+        )
+
+        hechos_enc = ck.general_datos
+        hechos_enc.insert(0, "id")
+        hechos = pd.DataFrame(self.datos, columns=hechos_enc)
+        hechos["Latitud:"] = hechos["Latitud:"].astype(str)
+        hechos["Longitud:"] = hechos["Latitud:"].astype(str)
+        hechos.to_excel(
+            writer,
+            sheet_name="datos_hecho",
             index=False,
         )
+
+        inv_enc = list(ck.general_involucrados.keys())
+        inv_enc.insert(0, "id")
+        involucrados = pd.DataFrame(self.buenas, columns=inv_enc)
+        involucrados.to_excel(
+            writer,
+            sheet_name="involucrados",
+            index=False,
+        )
+
+        armas_enc = list(ck.general_armas.keys())
+        armas_enc.insert(0, "id")
+        armas = pd.DataFrame(self._armas, columns=armas_enc)
+        armas.to_excel(
+            writer,
+            sheet_name="armas",
+            index=False,
+        )
+
+        aut_enc = list(ck.general_automotores.keys())
+        aut_enc.insert(0, "id")
+        automotores = pd.DataFrame(self._automotores, columns=aut_enc)
+        automotores.to_excel(
+            writer,
+            sheet_name="automotores",
+            index=False,
+        )
+
+        secu_enc = list(ck.general_elementos.keys())
+        secu_enc.insert(0, "id")
+        secuestros = pd.DataFrame(self._secuestros, columns=secu_enc)
+        secuestros.to_excel(
+            writer,
+            sheet_name="secuestros",
+            index=False,
+        )
+
+        obj_enc = list(ck.general_elementos.keys())
+        obj_enc.insert(0, "id")
+        objetos = pd.DataFrame(self._objetos, columns=obj_enc)
+        objetos.to_excel(
+            writer,
+            sheet_name="objetos",
+            index=False,
+        )
+
+        cal_enc = list(ck.general_calificaciones.keys())
+        cal_enc.insert(0, "id")
+        cal = pd.DataFrame(self._calificaciones, columns=cal_enc)
+        cal.to_excel(
+            writer,
+            sheet_name="calificaciones",
+            index=False,
+        )
+
+        writer.save()
+
+    def _todos(self, archivo, general):
+        resultado = []
+        for registro in archivo:
+            nuevo = self._un_solo(self._prueba(self._regex(general), registro), general)
+            resultado.append(nuevo)
+        return self._recuperar_values(resultado)
+
+    def _descomponer(self, particiones, canon, encabezados=True):
+        b = []
+        for i in particiones:
+            x = self._segmentador(
+                i,
+                self._posiciones_datos(i, canon),
+                canon,
+                encabezados=encabezados,
+            )
+            b.append(x)
+        return self._indexador(self._recuperar_values(b))
+
+    def _recortar(self, lista):
+        a_eliminar = sorted(
+            [41, 43, 42, 40, 32, 28, 30, 34, 31, 29, 36, 35, 33], reverse=True
+        )
+        for sub in lista:
+            for j in a_eliminar:
+                del sub[j]
+        return lista
