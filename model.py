@@ -1,4 +1,5 @@
 import re
+import tkinter as tk
 import checkpoints as ck
 import pandas as pd
 from pathlib import Path as Ph
@@ -17,7 +18,7 @@ class Administrador:
     @staticmethod
     def _convertir_inicial(archivo, encabezados, error=False):
         if not error:
-            nombre_archivo = input("¿Cómo desea nombrar al archivo?: ")
+            nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
         else:
             nombre_archivo = "log_errores"
         ult = pd.DataFrame(archivo, columns=encabezados)
@@ -29,7 +30,7 @@ class Administrador:
 
     @staticmethod
     def _convertir_segmentado(archivo):
-        nombre_archivo = input("¿Cómo desea nombrar al archivo?: ")
+        nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
         writer = pd.ExcelWriter(
             rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx",
             engine="xlsxwriter",
@@ -567,12 +568,37 @@ class Inicial(CoreInicial):
         return self._recuperar_values(unificada)
 
 
-class Segmentado(CoreFinal):
+class Addendum:
+    def hacer_todas_las_calificaciones(self, registro):
+        calificacion = registro[26]
+        calificacion = self.rearmar_calificacion(calificacion)
+        registro[26] = calificacion
+        return registro
+
+    @staticmethod
+    def rearmar_calificacion(calificacion):
+        if calificacion.find("tipificación"):
+            resultado = calificacion.split(
+                "CALIFICACIÓN LEGAL DEL HECHO Tipificación: "
+            )
+        else:
+            resultado = calificacion.split("CALIFICACIÓN LEGAL DEL HECHO Delito: ")
+        del resultado[0]
+        resultado = list(map(lambda item: item.strip(), resultado))
+        final = "; ".join(resultado)
+        return final
+
+    def cotejar_con_base(self, archivo):
+        base = pd.read_excel(
+            rf"{Ph(__file__).resolve().parent}\Base calificaciones.xlsx", header=None
+        )
+
+
+class Segmentado(CoreFinal, Addendum):
     def __init__(self, archivo):
         # preparación e indexado del archivo inicial
         self.segmentados = archivo
         self.indexados = self._indexador(self.segmentados)
-        print(len(self.indexados[1]))
 
         # indexado de entidades simples
         self.calificaciones = list(
@@ -615,6 +641,12 @@ class Segmentado(CoreFinal):
         self._secuestros = self._descomponer(self.secuestros, ck.general_elementos)
         self._calificaciones = self._descomponer(
             self.calificaciones, ck.general_calificaciones
+        )
+        self.indexados = list(
+            map(
+                lambda registro: self.hacer_todas_las_calificaciones(registro),
+                self.indexados,
+            )
         )
         self.datos = self._recortar(self.indexados)
 
