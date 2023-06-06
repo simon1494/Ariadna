@@ -1,4 +1,5 @@
 import re
+import copy
 import tkinter as tk
 import checkpoints as ck
 import pandas as pd
@@ -343,33 +344,33 @@ class CoreFinal(CoreProcessing):
 
     def _seleccionar_splitter(self, columna):
         match columna:
-            case 41:
-                return ck.splitters["armas"]
-            case 40:
-                return ck.splitters["automotores"]
             case 42:
-                return ck.splitters["elementos"]
+                return ck.splitters["armas"]
+            case 41:
+                return ck.splitters["automotores"]
             case 43:
+                return ck.splitters["elementos"]
+            case 44:
                 return ck.splitters["elementos"]
             case 26:
                 return ck.splitters["calificaciones"]
-            case 31:
-                return ck.splitters["aprehendidos"]
-            case 33:
-                return ck.splitters["representantes"]
-            case 29:
-                return ck.splitters["sospechosos"]
-            case 36:
-                return ck.splitters["denunciados"]
-            case 35:
-                return ck.splitters["denunciantes"]
-            case 30:
-                return ck.splitters["victimas"]
-            case 34:
-                return ck.splitters["confianzas"]
-            case 28:
-                return ck.splitters["testigos_pre"]
             case 32:
+                return ck.splitters["aprehendidos"]
+            case 34:
+                return ck.splitters["representantes"]
+            case 30:
+                return ck.splitters["sospechosos"]
+            case 37:
+                return ck.splitters["denunciados"]
+            case 36:
+                return ck.splitters["denunciantes"]
+            case 31:
+                return ck.splitters["victimas"]
+            case 35:
+                return ck.splitters["confianzas"]
+            case 29:
+                return ck.splitters["testigos_pre"]
+            case 33:
                 return ck.splitters["testigos_pro"]
 
     def _todos_los_involucrados(self, involucrados):
@@ -475,16 +476,19 @@ class Tester(Formateador):
                 final = con1 and con3 and con4 and con5
             if final is False:
                 nuevo = []
+                nuevo.append(registros.index(item))
                 nuevo.append(self.identificar(identificadores[registros.index(item)]))
                 nuevo.append(item)
                 resultado.append(nuevo)
-        return resultado
+        resultado2 = list(map(list, set(map(tuple, resultado))))
+        return resultado2
 
+    @staticmethod
     def identificar(diccionario):
-        for clave, valor in diccionario.items():
-            if valor != "":
-                return valor
-        return "no identificado"
+        if diccionario[" Nro registro: "] != "":
+            return diccionario[" Nro registro: "]
+        else:
+            return "no identificado"
 
 
 class Inicial(CoreInicial):
@@ -512,6 +516,19 @@ class Inicial(CoreInicial):
                     **item,
                     " CALIFICACIÓN LEGAL DEL HECHO ": " CALIFICACIÓN LEGAL DEL HECHO "
                     + item[" CALIFICACIÓN LEGAL DEL HECHO "],
+                },
+                self.datos_hecho,
+            )
+        )
+        self.datos_hecho = self.datos_hecho = list(
+            map(
+                lambda item: {
+                    **item,
+                    " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada": item[
+                        " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada"
+                    ].replace(
+                        ": ", ""
+                    ),
                 },
                 self.datos_hecho,
             )
@@ -569,33 +586,77 @@ class Inicial(CoreInicial):
 
 
 class Addendum:
-    def hacer_todas_las_calificaciones(self, registro):
-        calificacion = registro[26]
-        calificacion = self.rearmar_calificacion(calificacion)
-        registro[26] = calificacion
-        return registro
+    def rearmar_calificacion(self, registro, base, son_registros=True):
+        if son_registros:
+            calificacion = registro[26]
+            base_nueva = base.copy()
+            if calificacion.find("tipificación"):
+                resultado = calificacion.split(
+                    "CALIFICACIÓN LEGAL DEL HECHO Tipificación: "
+                )
+            else:
+                resultado = calificacion.split("CALIFICACIÓN LEGAL DEL HECHO Delito: ")
+            del resultado[0]
+            resultado = list(map(lambda item: item.strip(), resultado))
+            resultado = self.cotejar_todas(resultado, base_nueva)
+            final = "; ".join(resultado)
+            registro[26] = final
+            return registro
+        else:
+            errores = []
+            calificacion = registro[2]
+            base_nueva = base.copy()
+            calificacion = [calificacion.strip()]
+            calificacion = self.cotejar_todas(calificacion, base_nueva)
+            final = "; ".join(calificacion)
+            registro[2] = final
+            return registro
 
     @staticmethod
-    def rearmar_calificacion(calificacion):
-        if calificacion.find("tipificación"):
-            resultado = calificacion.split(
-                "CALIFICACIÓN LEGAL DEL HECHO Tipificación: "
-            )
+    def simplificada(calificacion):
+        calificacion3 = calificacion.replace("Consumado: Si", "")
+        calificacion4 = calificacion3.replace("Consumado: No", "")
+        calificacion0 = calificacion4.replace(" ", "")
+        calificacion1 = calificacion0.replace("-", "")
+        calificacion2 = calificacion1.replace(".", "")
+        return calificacion2
+
+    def cotejar_una(self, calificacion, data):
+        a_cotejar = self.simplificada(calificacion)
+        if a_cotejar in data:
+            resultado = data[a_cotejar]
+            return resultado
         else:
-            resultado = calificacion.split("CALIFICACIÓN LEGAL DEL HECHO Delito: ")
-        del resultado[0]
-        resultado = list(map(lambda item: item.strip(), resultado))
-        final = "; ".join(resultado)
+            return "error"
+
+    def cotejar_todas(self, elementos, data):
+        final = list(map(lambda item: self.cotejar_una(item, data), elementos))
         return final
 
-    def cotejar_con_base(self, archivo):
-        base = pd.read_excel(
-            rf"{Ph(__file__).resolve().parent}\Base calificaciones.xlsx", header=None
-        )
+    @staticmethod
+    def identificar_errores(archivo_original, modificado):
+        errores = []
+        for i in range(0, len(modificado)):
+            if modificado[i][2].find("error") > -1:
+                errores.append(
+                    [
+                        modificado[i][0],
+                        modificado[i][1],
+                        archivo_original[i][2],
+                    ]
+                )
+        return errores
 
 
 class Segmentado(CoreFinal, Addendum):
     def __init__(self, archivo):
+        # enlaza con la base de calificaciones actual y lo almanece en forma de diccionario
+        self.base_calificaciones = dict(
+            pd.read_excel(
+                rf"{Ph(__file__).resolve().parent}\Base calificaciones\calificaciones_db.xlsx",
+                header=None,
+            ).values.tolist()
+        )
         # preparación e indexado del archivo inicial
         self.segmentados = archivo
         self.indexados = self._indexador(self.segmentados)
@@ -607,21 +668,21 @@ class Segmentado(CoreFinal, Addendum):
                 self._armar_paquete(self.indexados, 26),
             )
         )
-        self.armas = self._armar_paquete(self.indexados, 41)
-        self.objetos = self._armar_paquete(self.indexados, 43)
-        self.secuestros = self._armar_paquete(self.indexados, 42)
-        self.automotores = self._armar_paquete(self.indexados, 40)
+        self.armas = self._armar_paquete(self.indexados, 42)
+        self.objetos = self._armar_paquete(self.indexados, 44)
+        self.secuestros = self._armar_paquete(self.indexados, 43)
+        self.automotores = self._armar_paquete(self.indexados, 41)
 
         # indexado de involucrados
-        self.testigos_procedimiento = self._armar_paquete(self.indexados, 32)
-        self.testigos_presenciales = self._armar_paquete(self.indexados, 28)
-        self.victimas = self._armar_paquete(self.indexados, 30)
-        self.personas_confianza = self._armar_paquete(self.indexados, 34)
-        self.aprehendidos = self._armar_paquete(self.indexados, 31)
-        self.sospechosos = self._armar_paquete(self.indexados, 29)
-        self.denunciados = self._armar_paquete(self.indexados, 36)
-        self.denunciante = self._armar_paquete(self.indexados, 35)
-        self.representante = self._armar_paquete(self.indexados, 33)
+        self.testigos_procedimiento = self._armar_paquete(self.indexados, 33)
+        self.testigos_presenciales = self._armar_paquete(self.indexados, 29)
+        self.victimas = self._armar_paquete(self.indexados, 31)
+        self.personas_confianza = self._armar_paquete(self.indexados, 35)
+        self.aprehendidos = self._armar_paquete(self.indexados, 32)
+        self.sospechosos = self._armar_paquete(self.indexados, 30)
+        self.denunciados = self._armar_paquete(self.indexados, 37)
+        self.denunciante = self._armar_paquete(self.indexados, 36)
+        self.representante = self._armar_paquete(self.indexados, 34)
         self.involucrados = [
             self.testigos_procedimiento,
             self.testigos_presenciales,
@@ -642,27 +703,45 @@ class Segmentado(CoreFinal, Addendum):
         self._calificaciones = self._descomponer(
             self.calificaciones, ck.general_calificaciones
         )
-        self.indexados = list(
+        self._calificaciones_chequeadas = list(
             map(
-                lambda registro: self.hacer_todas_las_calificaciones(registro),
-                self.indexados,
+                lambda registro: self.rearmar_calificacion(
+                    registro, self.base_calificaciones, son_registros=False
+                ),
+                copy.deepcopy(self._calificaciones),
             )
         )
-        self.datos = self._recortar(self.indexados)
+        self.errores = self.identificar_errores(
+            self._calificaciones, self._calificaciones_chequeadas
+        )
+        if not len(self.errores):
+            self.indexados = list(
+                map(
+                    lambda registro: self.rearmar_calificacion(
+                        registro, self.base_calificaciones
+                    ),
+                    self.indexados,
+                )
+            )
+            self.datos = self._recortar(self.indexados)
 
-        # segmentado y consolidación de todos los involucrados
-        self._involucrados = self._todos_los_involucrados(self.involucrados)
+            # segmentado y consolidación de todos los involucrados
+            self._involucrados = self._todos_los_involucrados(self.involucrados)
 
-        # archivo final segmentado
-        self.final = [
-            self.datos,
-            self._automotores,
-            self._armas,
-            self._objetos,
-            self._secuestros,
-            self._involucrados,
-            self._calificaciones,
-        ]
+            # archivo final segmentado
+            self.final = [
+                self.datos,
+                self._automotores,
+                self._armas,
+                self._objetos,
+                self._secuestros,
+                self._involucrados,
+                self._calificaciones,
+            ]
+        else:
+            tk.messagebox.showinfo(
+                "Advertencia", f"Se detectaron calificaciones no existentes en base."
+            )
 
     def _indexador(self, archivo, index=1):
         nuevo = []
@@ -675,7 +754,7 @@ class Segmentado(CoreFinal, Addendum):
 
     def _recortar(self, lista):
         a_eliminar = sorted(
-            [41, 43, 42, 40, 32, 28, 30, 34, 31, 29, 36, 35, 33], reverse=True
+            [41, 43, 42, 44, 32, 37, 30, 34, 31, 29, 36, 35, 33], reverse=True
         )
         for sub in lista:
             for j in a_eliminar:

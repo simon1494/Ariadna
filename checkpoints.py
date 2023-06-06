@@ -45,7 +45,8 @@ cp_datos = (
     " Entre: ",
     " Descripcion:",
     " CALIFICACIÓN LEGAL DEL HECHO ",
-    " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada Deja constancia de la manifestación respecto a sí insta o no insta la acción: ",
+    " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada",
+    " Deja constancia de la manifestación respecto a sí insta o no insta la acción: ",
 )
 
 cp_inv = (
@@ -96,7 +97,8 @@ general = {
     " Entre: ": "",
     " Descripcion:": "",
     " CALIFICACIÓN LEGAL DEL HECHO ": "",
-    " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada Deja constancia de la manifestación respecto a sí insta o no insta la acción: ": "",
+    " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada": "",
+    " Deja constancia de la manifestación respecto a sí insta o no insta la acción: ": "",
     " INVOLUCRADO - TESTIGO DATOS ": "",
     " INVOLUCRADO - SOSPECHOSO DATOS ": "",
     " INVOLUCRADO - VICTIMA DATOS ": "",
@@ -594,7 +596,8 @@ general_datos = [
     "Entre:",
     "Descripcion:",
     "CALIFICACIÓN LEGAL DEL HECHO",
-    "Insta a la acción penal:",
+    "INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada",
+    "Deja constancia de la manifestación respecto a sí insta o no insta la acción:",
     "Relato",
     "Aporta documentación",
     "Aporta pruebas o efectos",
