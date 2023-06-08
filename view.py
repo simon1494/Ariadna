@@ -6,6 +6,7 @@ import checkpoints as ck
 import pandas as pd
 from pathlib import Path as Ph
 from model import Addendum
+import os
 
 
 class VentanaBotones:
@@ -57,16 +58,31 @@ class VentanaBotones:
             height=b_alto,
         )
 
+        boton_addendum = tk.Button(
+            self.ventana,
+            text="Addendum",
+            bg="light green",
+            fg="black",
+            font=("Palatino Linotype", 11),
+            command=lambda: self.abrir_ventana_addendum(),
+        )
+        boton_addendum.place(
+            x=500,
+            y=210,
+            width=80,
+            height=20,
+        )
+
         boton_errores = tk.Button(
             self.ventana,
-            text="ERRORES",
+            text="Errores",
             bg="light green",
             fg="black",
             font=("Palatino Linotype", 11),
             command=lambda: self.abrir_ventana_errores(),
         )
         boton_errores.place(
-            x=500,
+            x=20,
             y=210,
             width=80,
             height=20,
@@ -78,19 +94,25 @@ class VentanaBotones:
     def procesar_inicial(self):
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
         try:
+            path = filedialog.askopenfilename()
+
+            nombre_archivo = os.path.splitext(os.path.basename(path))[0]
+
             formateador = model.Formateador()
-            archivo = model.Administrador._cargar(filedialog.askopenfilename())
+            archivo = model.Administrador._cargar(path)
             tester = model.Tester(archivo)
             if len(tester.errores) > 0:
-                model.Administrador._convertir_inicial(
+                log_errores = model.Administrador._convertir_inicial(
                     tester.errores,
-                    ["indice", "n° registro", "errores"],
+                    ["indice", "n° registro", "para enmendar"],
+                    nombre=nombre_archivo,
                     error=True,
                 )
-                print(
-                    "Hubo errores en los listados.\nSe ha generado un registro errores."
+                tk.messagebox.showinfo(
+                    "Advertencia",
+                    "Hubo errores en los listados.\nSe ha generado un registro errores.",
                 )
-
+                os.startfile(log_errores)
             else:
                 archivo, identificadores = formateador._formatear(archivo, ck.cp_iden)
                 inicial = model.Inicial(archivo, identificadores)
@@ -124,7 +146,7 @@ class VentanaBotones:
                 tk.messagebox.showinfo(
                     "Advertencia", f"El proceso de segmentado se ha abortado."
                 )
-                ventana_errores = VentanaErrores(segmentado.errores)
+                ventana_errores = Ventana_addendum(segmentado.errores)
                 self.ventana.wait_window(ventana_errores)
         except FileNotFoundError:
             tk.messagebox.showinfo(
@@ -139,17 +161,26 @@ class VentanaBotones:
         center_y = int(screen_height / 2 - window_height / 2)
         return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
 
+    def abrir_ventana_addendum(self):
+        ventana_addendum = Ventana_addendum(self.ventana)
+
     def abrir_ventana_errores(self):
-        ventana_errores = VentanaErrores()
+        ventana_errores = Ventana_errores(self.ventana)
 
 
-class VentanaErrores(tk.Toplevel):
-    def __init__(self, archivo=[]):
+class Ventana_addendum(tk.Toplevel):
+    def __init__(
+        self,
+        ventana,
+        archivo=[],
+    ):
         super().__init__()
-        self.title("Ventana de Ejemplo")
-        self.geometry("400x300")
+        self.title("Módulo Addendum")
+        self.ancho = 400
+        self.alto = 300
+        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
         self.registros = archivo
-
+        self.original = ""
         self.crear_widgets()
         self.correr()
 
@@ -190,16 +221,20 @@ class VentanaErrores(tk.Toplevel):
         self.agregar_boton = ttk.Button(
             self,
             text="Agregar a base",
-            command=lambda: self.agregar_a_base(self.entry_frame.get()),
+            command=lambda: self.agregar_a_base(self.entry_frame, self.original),
         )
         self.agregar_boton.pack(pady=10)
 
     def seleccionar_item(self, tree, entry):
-        item_ = tree.focus()
-        datos_registro = tree.item(item_)["values"][2]
-        entry.set(datos_registro)
+        try:
+            item_ = tree.focus()
+            datos_registro = tree.item(item_)["values"][2]
+            entry.set(datos_registro)
+            self.original = datos_registro
+        except Exception:
+            ...
 
-    def agregar_a_base(self, valor):
+    def agregar_a_base(self, entry, original):
         # Lógica para agregar los datos a la base de datos
         # Leer el archivo Excel
         df = dict(
@@ -209,10 +244,10 @@ class VentanaErrores(tk.Toplevel):
             ).values.tolist()
         )
         addendum = Addendum()
-        simplificado = addendum.simplificada(valor)
+        simplificado = addendum.simplificada(original)
 
         # Agregar un nuevo registro
-        df[simplificado] = valor
+        df[simplificado] = entry.get()
 
         # convierto el dic en df
         df = list(df.items())
@@ -222,11 +257,97 @@ class VentanaErrores(tk.Toplevel):
         df.to_excel(
             rf"{Ph(__file__).resolve().parent}\Base calificaciones\calificaciones_db.xlsx",
             index=False,
+            header=False,
         )
         tk.messagebox.showinfo(
             "Alta",
             f"Se ha agregado la nueva carátula a la base de datos de calificaciones.",
         )
 
+    @staticmethod
+    def centrar_ventana(win, window_width, window_height):
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+        center_x = int(screen_width / 2 - window_width / 2)
+        center_y = int(screen_height / 2 - window_height / 2)
+        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
+
     def correr(self):
         self.mainloop()
+
+
+class Ventana_errores(tk.Toplevel):
+    def __init__(self, ventana):
+        super().__init__()
+        self.title("Módulo errores")
+        self.ancho = 400
+        self.alto = 300
+        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
+        self.geometry("400x100")
+        self.corregido = None
+        self.crear_botones()
+        self.correr()
+
+    def crear_botones(self):
+        # Crear un contenedor para los botones
+        contenedor_botones = tk.Frame(self)
+        contenedor_botones.pack(pady=10)
+
+        self.boton_original = tk.Button(
+            contenedor_botones,
+            text="Original",
+            width=10,
+            command=lambda: self.cargar_original(),
+        )
+        self.boton_original.pack(side=tk.LEFT, padx=40)
+
+        self.boton_enmendado = tk.Button(
+            contenedor_botones,
+            text="Enmendado",
+            width=10,
+            command=lambda: self.cargar_enmendado(),
+        )
+        self.boton_enmendado.pack(side=tk.RIGHT, padx=40)
+
+        self.boton_corregir = tk.Button(
+            self, text="Corregir Original", command=lambda: self.corregir_original()
+        )
+        self.boton_corregir.pack(pady=10)
+
+    def corregir_original(self):
+        original = model.Administrador._cargar(
+            self.path_original,
+        )
+        enmendado = model.Administrador._cargar(
+            self.path_enmendado, no_tiene_encabezados=False
+        )
+
+        for error in enmendado:
+            original[int(error[0])][0] = error[2]
+
+        nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
+        ult = pd.DataFrame(original)
+        ult.to_excel(
+            rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx",
+            index=False,
+            header=False,
+        )
+        print("Corregidos correctamente")
+        return rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx"
+
+    def cargar_original(self):
+        self.path_original = filedialog.askopenfilename()
+
+    def cargar_enmendado(self):
+        self.path_enmendado = filedialog.askopenfilename()
+
+    def correr(self):
+        self.mainloop()
+
+    @staticmethod
+    def centrar_ventana(win, window_width, window_height):
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+        center_x = int(screen_width / 2 - window_width / 2)
+        center_y = int(screen_height / 2 - window_height / 2)
+        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"

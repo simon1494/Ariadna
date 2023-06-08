@@ -17,17 +17,25 @@ class Administrador:
         return a
 
     @staticmethod
-    def _convertir_inicial(archivo, encabezados, error=False):
+    def _convertir_inicial(archivo, encabezados, nombre=None, error=False):
         if not error:
             nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
+            ult = pd.DataFrame(archivo, columns=encabezados)
+            ult.to_excel(
+                rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx",
+                index=False,
+            )
+            return (
+                rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx"
+            )
         else:
-            nombre_archivo = "log_errores"
-        ult = pd.DataFrame(archivo, columns=encabezados)
-        ult.to_excel(
-            rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx",
-            index=False,
-        )
-        return rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx"
+            nombre_archivo = "(log_errores)"
+            ult = pd.DataFrame(archivo, columns=encabezados)
+            ult.to_excel(
+                rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre} {nombre_archivo}.xlsx",
+                index=False,
+            )
+            return rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre} {nombre_archivo}.xlsx"
 
     @staticmethod
     def _convertir_segmentado(archivo):
@@ -161,16 +169,38 @@ class CoreProcessing:
         return canonico
 
     def _descomponer(self, particiones, canon, paso, encabezados=True):
-        b = []
-        for i in particiones:
-            x = self._segmentador(
-                i[paso],
-                self._posiciones_datos(i[paso], canon),
-                canon,
-                encabezados=encabezados,
-            )
-            b.append(x)
-        return b
+        if paso != 1:
+            b = []
+            for i in particiones:
+                x = self._segmentador(
+                    i[paso],
+                    self._posiciones_datos(i[paso], canon),
+                    canon,
+                    encabezados=encabezados,
+                )
+                b.append(x)
+            return b
+        elif paso == 1:
+            b = []
+            for i in particiones:
+                if i[paso].find(" Descripcion:") > -1:
+                    x = self._segmentador(
+                        i[paso],
+                        self._posiciones_datos(i[paso], canon[0]),
+                        canon[0],
+                        encabezados=encabezados,
+                    )
+                    b.append(x)
+                elif i[paso].find(" Descripcion:") == -1:
+                    x = self._segmentador(
+                        i[paso],
+                        self._posiciones_datos(i[paso], canon[1]),
+                        canon[1],
+                        encabezados=encabezados,
+                    )
+                    b.append(x)
+                    print(x)
+            return b
 
     def _recuperar_values(self, dics):
         a_lista = []
@@ -205,14 +235,34 @@ class CoreInicial(CoreProcessing):
                 self._prueba(self._regex(general), registro[paso]), general
             )
             resultado.append(nuevo)
-        if paso == 3:
-            for item in resultado:
-                item["¿Aporta documentación en este acto?"] = item[
-                    "¿Aporta documentación en este acto?"
-                ].replace("¿Aporta documentación en este acto? ", "")
-                item["¿Aporta efectos en este acto?"] = item[
-                    "¿Aporta efectos en este acto?"
-                ].replace("¿Aporta efectos en este acto? ", "")
+        return resultado
+
+    def _efectos(self, archivo, general):
+        resultado = []
+        for registro in archivo:
+            if registro[1].find("INSTA A LA ACCIÓN") > -1:
+                nuevo = self._un_solo(
+                    self._prueba(self._regex(general[1][1]), registro[2]), general[1][1]
+                )
+                nuevo.update(
+                    self._un_solo(
+                        self._prueba(self._regex(general[1][0]), registro[3]),
+                        general[1][0],
+                    )
+                )
+                resultado.append(nuevo)
+            elif registro[1].find("INSTA A LA ACCIÓN") == -1:
+                nuevo = self._un_solo(
+                    self._prueba(self._regex(general[0]), registro[3]), general[0]
+                )
+                resultado.append(nuevo)
+        for item in resultado:
+            item["¿Aporta documentación en este acto?"] = item[
+                "¿Aporta documentación en este acto?"
+            ].replace("¿Aporta documentación en este acto? ", "")
+            item["¿Aporta efectos en este acto?"] = item[
+                "¿Aporta efectos en este acto?"
+            ].replace("¿Aporta efectos en este acto? ", "")
         return resultado
 
     def _borrar_duplicados(self, archivo):
@@ -442,14 +492,16 @@ class Formateador(CoreProcessing):
     def _clean_regexs(self, text):
         regex0 = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
         regex1 = r"PP:......................(N° de Acta de Procedimiento: |Nº de Denuncia: ).........................................................................................................................\d/\d"
+        regex2 = r"( PP:).................................................................................................Emitido por el Sistema...................................................\d*"
         texto = re.sub(regex0, "", text)
         texto = re.sub(regex1, "", texto)
+        texto = re.sub(regex2, "", texto)
         return texto
 
 
 class Tester(Formateador):
     def __init__(self, archivo):
-        self.errores = self.comprobar_entrada(archivo)
+        self.errores = self.comprobar_entrada(self.quitar_anulados(archivo))
 
     def comprobar_entrada(self, archivo):
         registros, identificadores = self._formatear(archivo, ck.cp_iden)
@@ -490,6 +542,11 @@ class Tester(Formateador):
         else:
             return "no identificado"
 
+    def quitar_anulados(self, archivo):
+        return [
+            elem for elem in archivo if elem[0].lower() not in ["anulado", "anulada"]
+        ]
+
 
 class Inicial(CoreInicial):
     def __init__(self, archivo, identificadores):
@@ -498,7 +555,7 @@ class Inicial(CoreInicial):
         self._ident = ck.cp_iden
         self._cortes_datos = ck.cp_datos
         self._cortes_inv = ck.cp_inv
-        self._cortes_efectos = ck.cp_efectos
+        self._cortes_efectos = ck.efectos_combinado
         self._encabezados = ck.encabezados
         self._general = ck.general
 
@@ -508,9 +565,9 @@ class Inicial(CoreInicial):
 
         # procesamiento de campos iniciales
         self.datos_inv = self._todos(self.particiones, self._cortes_inv, 0)
-        self.datos_efectos = self._todos(self.particiones, self._cortes_efectos, 3)
+        self.datos_efectos = self._efectos(self.particiones, self._cortes_efectos)
         self.datos_hecho = self._descomponer(self.particiones, self._cortes_datos, 1)
-        self.datos_hecho = self.datos_hecho = list(
+        self.datos_hecho = list(
             map(
                 lambda item: {
                     **item,
@@ -520,7 +577,7 @@ class Inicial(CoreInicial):
                 self.datos_hecho,
             )
         )
-        self.datos_hecho = self.datos_hecho = list(
+        self.datos_hecho = list(
             map(
                 lambda item: {
                     **item,
