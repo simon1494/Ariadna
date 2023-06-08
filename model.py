@@ -110,7 +110,7 @@ class Administrador:
             index=False,
         )
 
-        writer.save()
+        writer.close()
 
 
 class CoreProcessing:
@@ -199,7 +199,6 @@ class CoreProcessing:
                         encabezados=encabezados,
                     )
                     b.append(x)
-                    print(x)
             return b
 
     def _recuperar_values(self, dics):
@@ -481,7 +480,7 @@ class Formateador(CoreProcessing):
             )
             texto2 = texto.replace("\n", " ")
             texto2 = texto2.replace("  ", " ")
-            texto2 = self._clean_regexs(texto2)
+            # texto2 = self._clean_regexs(texto2)
             final.append(texto2)
             valor = iden.pop(que_uso[0])
             iden[" Nro registro: "] = valor
@@ -628,6 +627,11 @@ class Inicial(CoreInicial):
             for key in hechos[i].keys():
                 if key in item:
                     item[key] = hechos[i][key].strip()
+            if item[" Descripción:"] == "":
+                try:
+                    item[" Descripción:"] = hechos[i][" Descripcion:"]
+                except Exception as error:
+                    print(f"Error en la 'Descripcion': {error}")
             for key in involucrados[i].keys():
                 if key in item:
                     item[key] = involucrados[i][key].strip()

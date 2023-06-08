@@ -148,7 +148,7 @@ general = {
     " Departamento: ": "",
     " Lugar Exacto: ": "",
     " Entre: ": "",
-    " Descripcion:": "",
+    " Descripción:": "",
     " CALIFICACIÓN LEGAL DEL HECHO ": "",
     " INSTA A LA ACCIÓN Para delitos de acción pública dependiente de instancia privada": "",
     " Deja constancia de la manifestación respecto a sí insta o no insta la acción: ": "",
