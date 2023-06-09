@@ -113,7 +113,7 @@ class Administrador:
         writer.close()
 
 
-class CoreProcessing:
+class CoreMotor:
     def _posiciones_datos(self, texto, cortes, quitar=True):
         contador = 0
         item = []
@@ -211,7 +211,7 @@ class CoreProcessing:
         return a_lista
 
 
-class CoreInicial(CoreProcessing):
+class Core_Inicial(CoreMotor):
     def _regex(self, iter):
         # retorna una expresión regular armada a partir de una lista o las claves de un diccionario
         resultado = ""
@@ -326,7 +326,7 @@ class CoreInicial(CoreProcessing):
         return canonico
 
 
-class CoreFinal(CoreProcessing):
+class Core_Final(CoreMotor):
     def _armar_paquete(self, archivo, columna):
         nuevo = []
         for item in archivo:
@@ -352,10 +352,25 @@ class CoreFinal(CoreProcessing):
             nuevo.extend(matches)
         return nuevo
 
+    def _descomponer(self, particiones, canon, indice, encabezados=True):
+        b = []
+        for i in particiones:
+            x = self._segmentador(
+                i,
+                self._posiciones_datos(i, canon),
+                canon,
+                encabezados=encabezados,
+            )
+            b.append(x)
+        return self._indexador(self._recuperar_values(b), indice)
+
     def _descomponer_involucrado(self, texto, canon):
         general = ck.general_involucrados.copy()
         cortes = list(canon.keys())
         texto1 = texto.replace(cortes[1], self._tipo_involucrado(cortes[1]))
+        texto1 = texto.replace(
+            " Descripción: ", " Descripcion: "
+        )  # a causa de una actualización del sistema Sisep en el campo
         nuevo = self._segmentador(texto1, self._posiciones_datos(texto1, cortes), canon)
         for key in nuevo:
             if key in general:
@@ -390,39 +405,43 @@ class CoreFinal(CoreProcessing):
                 return " INVOLUCRADO - VICTIMA DATOS Victima"
             case " DENUNCIANTE DATOS":
                 return " DENUNCIANTE DATOS Denunciante"
+            case " INVOLUCRADO - PROFUGO DATOS":
+                return " INVOLUCRADO - PROFUGO DATOS Profugo"
 
     def _seleccionar_splitter(self, columna):
         match columna:
+            case 27:
+                return ck.splitters["calificaciones"]
+            case 29:
+                return ck.splitters["testigos_pre"]  #
+            case 30:
+                return ck.splitters["sospechosos"]  #
+            case 31:
+                return ck.splitters["victimas"]  #
+            case 32:
+                return ck.splitters["aprehendidos"]  #
+            case 33:
+                return ck.splitters["profugos"]
+            case 34:
+                return ck.splitters["testigos_pro"]
+            case 35:
+                return ck.splitters["representantes"]
+            case 36:
+                return ck.splitters["confianzas"]
+            case 37:
+                return ck.splitters["denunciantes"]
+            case 38:
+                return ck.splitters["denunciados"]
             case 42:
-                return ck.splitters["armas"]
-            case 41:
                 return ck.splitters["automotores"]
             case 43:
-                return ck.splitters["elementos"]
+                return ck.splitters["armas"]
             case 44:
                 return ck.splitters["elementos"]
-            case 26:
-                return ck.splitters["calificaciones"]
-            case 32:
-                return ck.splitters["aprehendidos"]
-            case 34:
-                return ck.splitters["representantes"]
-            case 30:
-                return ck.splitters["sospechosos"]
-            case 37:
-                return ck.splitters["denunciados"]
-            case 36:
-                return ck.splitters["denunciantes"]
-            case 31:
-                return ck.splitters["victimas"]
-            case 35:
-                return ck.splitters["confianzas"]
-            case 29:
-                return ck.splitters["testigos_pre"]
-            case 33:
-                return ck.splitters["testigos_pro"]
+            case 45:
+                return ck.splitters["elementos"]
 
-    def _todos_los_involucrados(self, involucrados):
+    def _todos_los_involucrados(self, involucrados, indice):
         nuevo = []
         nuevo.extend(
             self._todo_un_campo_involucrado(involucrados[0], ck.testigos_procedimiento)
@@ -448,25 +467,15 @@ class CoreFinal(CoreProcessing):
             self._todo_un_campo_involucrado(involucrados[8], ck.representantes)
         )
 
-        for index, item in enumerate(nuevo, 1):
+        nuevo.extend(self._todo_un_campo_involucrado(involucrados[9], ck.profugos))
+
+        for index, item in enumerate(nuevo, indice):
             item.insert(0, str(index))
 
         return nuevo
 
-    def _descomponer(self, particiones, canon, encabezados=True):
-        b = []
-        for i in particiones:
-            x = self._segmentador(
-                i,
-                self._posiciones_datos(i, canon),
-                canon,
-                encabezados=encabezados,
-            )
-            b.append(x)
-        return self._indexador(self._recuperar_values(b))
 
-
-class Formateador(CoreProcessing):
+class Formateador(CoreMotor):
     def _formatear(self, lista, identi):
         final = []
         identificadores = []
@@ -480,7 +489,7 @@ class Formateador(CoreProcessing):
             )
             texto2 = texto.replace("\n", " ")
             texto2 = texto2.replace("  ", " ")
-            # texto2 = self._clean_regexs(texto2)
+            texto2 = self._clean_regexs(texto2)
             final.append(texto2)
             valor = iden.pop(que_uso[0])
             iden[" Nro registro: "] = valor
@@ -492,10 +501,17 @@ class Formateador(CoreProcessing):
         regex0 = r"(Nº de Denuncia: | N° de Acta de Procedimiento: )..................................................(FORMULARIO DE DECLARACIÓN |ACTA DE PROCEDIMIENTO ).......................................................................\d+(/)\d+"
         regex1 = r"PP:......................(N° de Acta de Procedimiento: |Nº de Denuncia: ).........................................................................................................................\d/\d"
         regex2 = r"( PP:).................................................................................................Emitido por el Sistema...................................................\d*"
+        regex3 = r"(Nº de Denuncia)....................................................FORMULARIO.......................................................................................\d*/\d*"
+        regex4 = r"(N° de Acta de Procedimiento: )..................................................ACTA......................................................................\d*/\d*/\d*.......-.\d*/\d"
         texto = re.sub(regex0, "", text)
-        texto = re.sub(regex1, "", texto)
-        texto = re.sub(regex2, "", texto)
-        return texto
+        texto1 = re.sub(regex1, "", texto)
+        texto2 = re.sub(regex2, "", texto1)
+        texto3 = re.sub(regex3, "", texto2)
+        texto4 = re.sub(regex4, "", texto3)
+        texto5 = texto4.replace(
+            " INVOLUCRADO - TESTIGO DEL HECHO DATOS ", " INVOLUCRADO - TESTIGO DATOS "
+        )  # se agrega a causa de una actualización del Sisep con fecha 2023-06-09
+        return texto5
 
 
 class Tester(Formateador):
@@ -547,7 +563,7 @@ class Tester(Formateador):
         ]
 
 
-class Inicial(CoreInicial):
+class Inicial(Core_Inicial):
     def __init__(self, archivo, identificadores):
         # checkpoints
         self._checkpoints = ck.cp_iniciales
@@ -599,7 +615,11 @@ class Inicial(CoreInicial):
             self.particiones,
             self._general,
         )
+        print(self.procesados[0])
         self.sin_duplicados = self._borrar_duplicados(self.procesados)
+        self.sin_duplicados = list(
+            map(lambda registro: self.limpiar_relato(registro), self.sin_duplicados)
+        )
 
     def _barrer_inicial(self, listado, cortes):
         b = []
@@ -644,6 +664,17 @@ class Inicial(CoreInicial):
             item[" Relato: "] = relatos[i][2].strip()
             unificada.append(item.copy())
         return self._recuperar_values(unificada)
+
+    @staticmethod
+    def limpiar_relato(registro):
+        registro_nuevo = copy.deepcopy(registro)
+        texto = registro[38]
+        regex1 = r"(Relato del procedimiento ).*RELATO DEL PROCEDIMIENTO: "
+        regex2 = r"Relato del hecho RELATO DEL HECHO: "
+        texto = re.sub(regex1, "", texto)
+        texto = re.sub(regex2, "", texto)
+        registro_nuevo[38] = texto
+        return registro_nuevo
 
 
 class Addendum:
@@ -709,8 +740,8 @@ class Addendum:
         return errores
 
 
-class Segmentado(CoreFinal, Addendum):
-    def __init__(self, archivo):
+class Segmentado(Core_Final, Addendum):
+    def __init__(self, archivo, indices):
         # enlaza con la base de calificaciones actual y lo almanece en forma de diccionario
         self.base_calificaciones = dict(
             pd.read_excel(
@@ -720,30 +751,31 @@ class Segmentado(CoreFinal, Addendum):
         )
         # preparación e indexado del archivo inicial
         self.segmentados = archivo
-        self.indexados = self._indexador(self.segmentados)
+        self.indexados = self._indexador(self.segmentados, indices[0])
 
         # indexado de entidades simples
         self.calificaciones = list(
             map(
                 lambda x: x.replace("CALIFICACIÓN LEGAL DEL HECHO ", ""),
-                self._armar_paquete(self.indexados, 26),
+                self._armar_paquete(self.indexados, 27),
             )
         )
-        self.armas = self._armar_paquete(self.indexados, 42)
-        self.objetos = self._armar_paquete(self.indexados, 44)
-        self.secuestros = self._armar_paquete(self.indexados, 43)
-        self.automotores = self._armar_paquete(self.indexados, 41)
+        self.armas = self._armar_paquete(self.indexados, 43)
+        self.objetos = self._armar_paquete(self.indexados, 45)
+        self.secuestros = self._armar_paquete(self.indexados, 44)
+        self.automotores = self._armar_paquete(self.indexados, 42)
 
         # indexado de involucrados
-        self.testigos_procedimiento = self._armar_paquete(self.indexados, 33)
-        self.testigos_presenciales = self._armar_paquete(self.indexados, 29)
-        self.victimas = self._armar_paquete(self.indexados, 31)
-        self.personas_confianza = self._armar_paquete(self.indexados, 35)
-        self.aprehendidos = self._armar_paquete(self.indexados, 32)
-        self.sospechosos = self._armar_paquete(self.indexados, 30)
-        self.denunciados = self._armar_paquete(self.indexados, 37)
-        self.denunciante = self._armar_paquete(self.indexados, 36)
-        self.representante = self._armar_paquete(self.indexados, 34)
+        self.testigos_procedimiento = self._armar_paquete(self.indexados, 34)
+        self.testigos_presenciales = self._armar_paquete(self.indexados, 29)  #
+        self.victimas = self._armar_paquete(self.indexados, 31)  #
+        self.personas_confianza = self._armar_paquete(self.indexados, 36)
+        self.aprehendidos = self._armar_paquete(self.indexados, 32)  #
+        self.sospechosos = self._armar_paquete(self.indexados, 30)  #
+        self.denunciados = self._armar_paquete(self.indexados, 38)
+        self.denunciante = self._armar_paquete(self.indexados, 37)
+        self.representante = self._armar_paquete(self.indexados, 35)
+        self.profugos = self._armar_paquete(self.indexados, 33)
         self.involucrados = [
             self.testigos_procedimiento,
             self.testigos_presenciales,
@@ -754,15 +786,22 @@ class Segmentado(CoreFinal, Addendum):
             self.denunciados,
             self.denunciante,
             self.representante,
+            self.profugos,
         ]
 
         # segmentado de entidades simples
-        self._automotores = self._descomponer(self.automotores, ck.general_automotores)
-        self._armas = self._descomponer(self.armas, ck.general_armas)
-        self._objetos = self._descomponer(self.objetos, ck.general_elementos)
-        self._secuestros = self._descomponer(self.secuestros, ck.general_elementos)
+        self._automotores = self._descomponer(
+            self.automotores, ck.general_automotores, indices[2]
+        )
+        self._armas = self._descomponer(self.armas, ck.general_armas, indices[3])
+        self._objetos = self._descomponer(
+            self.objetos, ck.general_elementos, indices[4]
+        )
+        self._secuestros = self._descomponer(
+            self.secuestros, ck.general_elementos, indices[5]
+        )
         self._calificaciones = self._descomponer(
-            self.calificaciones, ck.general_calificaciones
+            self.calificaciones, ck.general_calificaciones, indices[1]
         )
         self._calificaciones_chequeadas = list(
             map(
@@ -787,7 +826,9 @@ class Segmentado(CoreFinal, Addendum):
             self.datos = self._recortar(self.indexados)
 
             # segmentado y consolidación de todos los involucrados
-            self._involucrados = self._todos_los_involucrados(self.involucrados)
+            self._involucrados = self._todos_los_involucrados(
+                self.involucrados, indices[6]
+            )
 
             # archivo final segmentado
             self.final = [
@@ -804,7 +845,7 @@ class Segmentado(CoreFinal, Addendum):
                 "Advertencia", f"Se detectaron calificaciones no existentes en base."
             )
 
-    def _indexador(self, archivo, index=1):
+    def _indexador(self, archivo, index):
         nuevo = []
         for item in archivo:
             nw_item = item.copy()
@@ -815,7 +856,7 @@ class Segmentado(CoreFinal, Addendum):
 
     def _recortar(self, lista):
         a_eliminar = sorted(
-            [41, 43, 42, 44, 32, 37, 30, 34, 31, 29, 36, 35, 33], reverse=True
+            [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 42, 43, 44, 45], reverse=True
         )
         for sub in lista:
             for j in a_eliminar:

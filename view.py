@@ -2,6 +2,7 @@ import tkinter as tk
 import model
 from tkinter import filedialog
 from tkinter import ttk
+from tkinter.font import Font
 import checkpoints as ck
 import pandas as pd
 from pathlib import Path as Ph
@@ -9,7 +10,7 @@ from model import Addendum
 import os
 
 
-class VentanaBotones:
+class Ventana_principal:
     def __init__(self):
         self.ventana = tk.Tk()
         self.ventana.title("Ventana con botones")
@@ -17,6 +18,8 @@ class VentanaBotones:
         self.alto = 250
         self.ventana.geometry(self.centrar_ventana(self.ventana, self.ancho, self.alto))
         self.ventana.configure(bg="dark gray")
+
+        self.setear_indices()
         self.crear_botones()
 
     def crear_botones(self):
@@ -88,6 +91,48 @@ class VentanaBotones:
             height=20,
         )
 
+        boton_indices = tk.Button(
+            self.ventana,
+            text="Indices",
+            bg="light green",
+            fg="black",
+            font=("Palatino Linotype", 11),
+            command=lambda: self.abrir_ventana_indices(),
+        )
+        boton_indices.place(
+            x=20,
+            y=20,
+            width=80,
+            height=20,
+        )
+
+    def setear_indices(self):
+        self.id_hechos = tk.IntVar()
+        self.id_calificaciones = tk.IntVar()
+        self.id_automotores = tk.IntVar()
+        self.id_armas = tk.IntVar()
+        self.id_objetos = tk.IntVar()
+        self.id_secuestros = tk.IntVar()
+        self.id_involucrados = tk.IntVar()
+
+        self.id_hechos.set(1)
+        self.id_calificaciones.set(1)
+        self.id_automotores.set(1)
+        self.id_armas.set(1)
+        self.id_objetos.set(1)
+        self.id_secuestros.set(1)
+        self.id_involucrados.set(1)
+
+        self.indices = (
+            self.id_hechos,
+            self.id_calificaciones,
+            self.id_automotores,
+            self.id_armas,
+            self.id_objetos,
+            self.id_secuestros,
+            self.id_involucrados,
+        )
+
     def iniciar(self):
         self.ventana.mainloop()
 
@@ -131,23 +176,28 @@ class VentanaBotones:
         #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
     def procesar_final(self, path=False):
+        indices = list(map(lambda var: var.get(), self.indices))
         try:
             if path is False:
                 archivo1 = model.Administrador._cargar(
                     filedialog.askopenfilename(), no_tiene_encabezados=False
                 )
-                segmentado = model.Segmentado(archivo1)
+                segmentado = model.Segmentado(archivo1, indices)
             else:
                 archivo1 = model.Administrador._cargar(path, no_tiene_encabezados=False)
-                segmentado = model.Segmentado(archivo1)
+                segmentado = model.Segmentado(archivo1, indices)
             try:
                 model.Administrador._convertir_segmentado(segmentado.final)
+                tk.messagebox.showinfo(
+                    "Advertencia", f"El proceso se completo correctamente :)"
+                )
             except AttributeError:
                 tk.messagebox.showinfo(
                     "Advertencia", f"El proceso de segmentado se ha abortado."
                 )
-                ventana_errores = Ventana_addendum(segmentado.errores)
-                self.ventana.wait_window(ventana_errores)
+                ventana_errores = Ventana_addendum(
+                    self.ventana, archivo=segmentado.errores
+                )
         except FileNotFoundError:
             tk.messagebox.showinfo(
                 "Advertencia", f"No se ha seleccionado ningún archivo."
@@ -166,6 +216,9 @@ class VentanaBotones:
 
     def abrir_ventana_errores(self):
         ventana_errores = Ventana_errores(self.ventana)
+
+    def abrir_ventana_indices(self):
+        ventana_indices = Ventana_indices(self.ventana, self.indices)
 
 
 class Ventana_addendum(tk.Toplevel):
@@ -343,6 +396,79 @@ class Ventana_errores(tk.Toplevel):
 
     def correr(self):
         self.mainloop()
+
+    @staticmethod
+    def centrar_ventana(win, window_width, window_height):
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+        center_x = int(screen_width / 2 - window_width / 2)
+        center_y = int(screen_height / 2 - window_height / 2)
+        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
+
+
+class Ventana_indices(tk.Toplevel):
+    def __init__(self, ventana, indices):
+        super().__init__()
+        self.title("Etiquetas y Cuadros de Texto")
+        self.ancho = 360
+        self.alto = 300
+        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
+        self.configure(bg="gray")
+        self.crear_widgets(indices)
+
+    def crear_widgets(self, indices):
+        etiquetas = [
+            "Hechos",
+            "Calificaciones",
+            "Armas",
+            "Automotores",
+            "Objetos",
+            "Secuestros",
+            "Involucrados",
+        ]
+
+        sep_x = 30
+        sep_y = 0.5
+        font_label = Font(weight="bold", size=9)
+        self.etiquetas_labels = []
+        self.etiquetas_entries = []
+
+        for i, etiqueta_texto in enumerate(etiquetas):
+            etiqueta = tk.Label(
+                self,
+                text=etiqueta_texto,
+                font=font_label,
+                bg="gray",
+            )
+            etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
+            self.etiquetas_labels.append(etiqueta)
+
+            cuadro_texto = tk.Entry(
+                self,
+                textvariable=indices[i],
+            )
+            cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
+            self.etiquetas_entries.append(cuadro_texto)
+
+        btn_conectar = tk.Button(self, text="Conectar con Base", bg="light green")
+        btn_conectar.place(x=50, y=250)
+
+        btn_setear_ids = tk.Button(
+            self,
+            text="Setear IDs",
+            bg="light green",
+            command=lambda: self.actualizar_indices(indices, self.etiquetas_entries),
+        )
+        btn_setear_ids.place(x=240, y=250)
+
+    def actualizar_indices(self, indices, entries):
+        for i, ind in enumerate(indices):
+            ind.set(entries[i].get())
+        self.withdraw()
+        tk.messagebox.showinfo(
+            "Indices configurados", f"Los índices fueron configurados correctamente"
+        )
+        self.destroy()
 
     @staticmethod
     def centrar_ventana(win, window_width, window_height):
