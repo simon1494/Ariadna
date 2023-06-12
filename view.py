@@ -106,6 +106,21 @@ class Ventana_principal:
             height=20,
         )
 
+        boton_varios = tk.Button(
+            self.ventana,
+            text="Procesar varios",
+            bg="light green",
+            fg="black",
+            font=("Palatino Linotype", 11),
+            command=lambda: self.procesar_varios(),
+        )
+        boton_varios.place(
+            x=470,
+            y=20,
+            width=110,
+            height=20,
+        )
+
     def setear_indices(self):
         self.id_hechos = tk.IntVar()
         self.id_calificaciones = tk.IntVar()
@@ -162,7 +177,7 @@ class Ventana_principal:
                 archivo, identificadores = formateador._formatear(archivo, ck.cp_iden)
                 inicial = model.Inicial(archivo, identificadores)
                 path = model.Administrador._convertir_inicial(
-                    inicial.sin_duplicados, ck.general
+                    inicial.sin_duplicados, ck.general, nombre=nombre_archivo
                 )
                 if tk.messagebox.askyesno(
                     "Segmentar", "¿Desea proceder a segmentar el archivo?"
@@ -187,6 +202,12 @@ class Ventana_principal:
                 archivo1 = model.Administrador._cargar(path, no_tiene_encabezados=False)
                 segmentado = model.Segmentado(archivo1, indices)
             try:
+                try:
+                    mensaje = model.Formateador.comprobar_salida(segmentado.final)
+                    if mensaje != "":
+                        tk.messagebox.showinfo("Advertencia", mensaje)
+                except Exception as error:
+                    print(error)
                 model.Administrador._convertir_segmentado(segmentado.final)
                 tk.messagebox.showinfo(
                     "Advertencia", f"El proceso se completo correctamente :)"
@@ -202,6 +223,66 @@ class Ventana_principal:
             tk.messagebox.showinfo(
                 "Advertencia", f"No se ha seleccionado ningún archivo."
             )
+
+    def procesar_varios(self):
+        carpeta = filedialog.askdirectory()
+        archivos = os.listdir(carpeta)
+
+        indices = list(map(lambda var: var.get(), self.indices))
+        for archivo in archivos:
+            path = os.path.join(
+                carpeta, archivo
+            )  # Obtener la ruta completa del archivo
+            if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
+                try:
+                    archivo1 = model.Administrador._cargar(
+                        path, no_tiene_encabezados=False
+                    )
+                    try:
+                        segmentado = model.Segmentado(archivo1, indices, carpeta=True)
+                        try:
+                            mensaje = model.Formateador.comprobar_salida(
+                                segmentado.final
+                            )
+                            if mensaje != "":
+                                tk.messagebox.showinfo("Advertencia", mensaje)
+                            try:
+                                model.Administrador._convertir_segmentado(
+                                    segmentado.final, nombre=archivo
+                                )
+                                print(f"listo {archivo}")
+                                try:
+                                    indices_finales = (
+                                        model.Administrador._obtener_indices(
+                                            segmentado.final
+                                        )
+                                    )
+                                    print(f"Iniciales: {str(indices)}")
+                                    print(f"Finales: {str(indices_finales)}")
+                                    indices = list(
+                                        map(lambda x: x + 1, indices_finales)
+                                    )
+                                    print(f"Siguientes: {str(indices)}\n")
+                                except Exception as error:
+                                    print(
+                                        f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                    )
+                            except Exception as error:
+                                print(
+                                    f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                )
+                        except Exception as error:
+                            print(
+                                f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                            )
+                    except Exception as error:
+                        print(f"({archivo}) Error en etapa de procesado: {error}")
+                except Exception as error:
+                    print(f"({archivo}) Error en etapa de carga: {error}")
+        tk.messagebox.showinfo(
+            "Aviso",
+            "El proceso se completó correctamente.",
+        )
 
     @staticmethod
     def centrar_ventana(win, window_width, window_height):

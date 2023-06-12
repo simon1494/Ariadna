@@ -743,33 +743,33 @@ general_involucrados = {
 
 general_armas = {
     "id_hecho": "",
-    "Implicación": "",
     "Tipo Arma": "",
-    "Numero Serie": "",
     "Marca": "",
     "Modelo": "",
+    "Numero Serie": "",
     "Calibre": "",
     "Observaciones": "",
+    "Implicación": "",
 }
 
 general_elementos = {
     "id_hecho": "",
     "Tipo": "",
-    "Implicación": "",
-    "Cantidad": "",
-    "Descripcion": "",
     "Marca": "",
     "Modelo": "",
+    "Cantidad": "",
     "Valor": "",
+    "Descripcion": "",
+    "Implicación": "",
 }
 
 general_automotores = {
     "id_hecho": "",
     "Marca": "",
-    "Dominio": "",
     "Modelo": "",
-    "Nro. Motor": "",
     "Color": "",
+    "Dominio": "",
+    "Nro. Motor": "",
     "Nro. Chasis": "",
     "Vínculo": "",
 }
