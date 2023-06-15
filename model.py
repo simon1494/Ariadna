@@ -7,13 +7,19 @@ from pathlib import Path as Ph
 
 
 class Administrador:
-    @staticmethod
-    def _cargar(path, no_tiene_encabezados=True):
+    def _cargar(path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
             data = pd.read_excel(path, header=None)
         else:
             data = pd.read_excel(path)
         a = data.values.tolist()
+        if es_original:
+            a = [
+                sublista
+                for sublista in a
+                if sublista[0].lower() not in ["anulado", "anulada"]
+            ]
+            print(a[112])
         return a
 
     @staticmethod
@@ -129,6 +135,15 @@ class Administrador:
             else:
                 nuevos_indices.append(None)
         return nuevos_indices
+
+    """@staticmethod
+    def quitar_anulados(archivo):
+        final = [
+            sublista
+            for sublista in archivo
+            if sublista[0].lower() not in ["anulado", "anulada"]
+        ]
+        return final"""
 
 
 class CoreMotor:
@@ -520,9 +535,10 @@ class Formateador(CoreMotor):
         for campo, df in tablas.items():
             if len(df) > 0:
                 for columna in df.columns:
-                    contiene_nan = df[columna].isna().all()
-                    if contiene_nan:
-                        columnas_vacias.append((columna, campo))
+                    if columna != 27:
+                        contiene_nan = df[columna].isna().all()
+                        if contiene_nan:
+                            columnas_vacias.append((columna, campo))
             else:
                 df_vacios.append(campo)
 
@@ -542,11 +558,12 @@ class Formateador(CoreMotor):
 
 class Tester(Formateador):
     def __init__(self, archivo):
-        self.errores = self.comprobar_entrada(self.quitar_anulados(archivo))
+        self.errores = self.comprobar_entrada(archivo)
         self.errores_salida = None
 
     def comprobar_entrada(self, archivo):
-        registros, identificadores = self._formatear(archivo, ck.cp_iden)
+        archiv = copy.deepcopy(archivo)
+        registros, identificadores = self.formatear(archiv, ck.cp_iden)
         resultado = []
         for item in registros:
             if item.find("Paso 1 - Declaración Testimonial ") > -1:
@@ -571,7 +588,11 @@ class Tester(Formateador):
             if final is False:
                 nuevo = []
                 nuevo.append(registros.index(item))
-                nuevo.append(self.identificar(identificadores[registros.index(item)]))
+                identificador = self.identificar(
+                    identificadores[registros.index(item)]
+                ).replace("-", "")
+                identificador = identificador.replace("/", "")
+                nuevo.append(identificador)
                 nuevo.append(item)
                 resultado.append(nuevo)
         resultado2 = list(map(list, set(map(tuple, resultado))))
@@ -584,10 +605,27 @@ class Tester(Formateador):
         else:
             return "no identificado"
 
-    def quitar_anulados(self, archivo):
-        return [
-            elem for elem in archivo if elem[0].lower() not in ["anulado", "anulada"]
-        ]
+    def formatear(self, lista, identi):
+        final = []
+        identificadores = []
+        lista_ = copy.deepcopy(lista)
+        for i in lista_:
+            texto = i[0]
+            que_uso = identi[0] if texto.find("Nº de Denuncia: ") != -1 else identi[1]
+            iden = self._segmentador(
+                texto,
+                self._posiciones_datos(texto, que_uso),
+                que_uso,
+            )
+            texto2 = texto.replace("\n", " ")
+            texto2 = texto2.replace("  ", " ")
+            texto2 = self._clean_regexs(texto2)
+            final.append(texto2)
+            valor = iden.pop(que_uso[0])
+            iden[" Nro registro: "] = valor
+            del iden[que_uso[2]]
+            identificadores.append(iden.copy())
+        return final, identificadores
 
 
 class Inicial(Core_Inicial):
@@ -613,8 +651,8 @@ class Inicial(Core_Inicial):
             map(
                 lambda item: {
                     **item,
-                    " CALIFICACIÓN LEGAL DEL HECHO ": " CALIFICACIÓN LEGAL DEL HECHO "
-                    + item[" CALIFICACIÓN LEGAL DEL HECHO "],
+                    "CALIFICACIÓN LEGAL DEL HECHO ": "CALIFICACIÓN LEGAL DEL HECHO "
+                    + item["CALIFICACIÓN LEGAL DEL HECHO "],
                 },
                 self.datos_hecho,
             )
@@ -677,7 +715,7 @@ class Inicial(Core_Inicial):
                 try:
                     item[" Descripción:"] = hechos[i][" Descripcion:"]
                 except Exception as error:
-                    print(f"Error en la 'Descripcion': {error}")
+                    print(f"Error en la 'Descripcion' del index {i}: {error}")
             for key in involucrados[i].keys():
                 if key in item:
                     item[key] = involucrados[i][key].strip()

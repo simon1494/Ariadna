@@ -106,18 +106,33 @@ class Ventana_principal:
             height=20,
         )
 
-        boton_varios = tk.Button(
+        boton_ns = tk.Button(
             self.ventana,
-            text="Procesar varios",
+            text="Procesar ns",
             bg="light green",
             fg="black",
             font=("Palatino Linotype", 11),
             command=lambda: self.procesar_varios(),
         )
-        boton_varios.place(
+        boton_ns.place(
             x=470,
             y=20,
             width=110,
+            height=20,
+        )
+
+        boton_crudos = tk.Button(
+            self.ventana,
+            text="Procesar crudos",
+            bg="light green",
+            fg="black",
+            font=("Palatino Linotype", 11),
+            command=lambda: self.procesar_crudos(),
+        )
+        boton_crudos.place(
+            x=330,
+            y=20,
+            width=130,
             height=20,
         )
 
@@ -224,6 +239,57 @@ class Ventana_principal:
                 "Advertencia", f"No se ha seleccionado ningún archivo."
             )
 
+    def procesar_crudos(self, path=False):
+        carpeta = filedialog.askdirectory()
+        archivos = os.listdir(carpeta)
+        formateador = model.Formateador()
+
+        for archivo in archivos:
+            path = os.path.join(
+                carpeta, archivo
+            )  # Obtener la ruta completa del archivo
+            if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
+                try:
+                    nombre_archivo = os.path.splitext(os.path.basename(path))[0]
+                    archivo0 = model.Administrador._cargar(path)
+                    try:
+                        tester = model.Tester(archivo0)
+                        try:
+                            if len(tester.errores) > 0:
+                                log_errores = model.Administrador._convertir_inicial(
+                                    tester.errores,
+                                    ["indice", "n° registro", "para enmendar"],
+                                    nombre=nombre_archivo,
+                                    error=True,
+                                )
+                            else:
+                                archivo0, identificadores = formateador._formatear(
+                                    archivo0, ck.cp_iden
+                                )
+                                inicial = model.Inicial(archivo0, identificadores)
+                                path = model.Administrador._convertir_inicial(
+                                    inicial.sin_duplicados,
+                                    ck.general,
+                                    nombre=nombre_archivo,
+                                )
+                        except Exception as error:
+                            print(
+                                f"({archivo}) Error en etapa de procesado del archivo: {error}"
+                            )
+                    except Exception as error:
+                        print(
+                            f"({archivo}) Error en etapa de testeo de información entrante: {error}"
+                        )
+                except Exception as error:
+                    print(
+                        f"({archivo}) Error en etapa de carga del archivo crudo: {error}"
+                    )
+            print(f"Listo {archivo}")
+        tk.messagebox.showinfo(
+            "Aviso",
+            "El procesado de crudos ha sido completado.",
+        )
+
     def procesar_varios(self):
         carpeta = filedialog.askdirectory()
         archivos = os.listdir(carpeta)
@@ -279,9 +345,10 @@ class Ventana_principal:
                         print(f"({archivo}) Error en etapa de procesado: {error}")
                 except Exception as error:
                     print(f"({archivo}) Error en etapa de carga: {error}")
+            print(f"Listo {archivo}")
         tk.messagebox.showinfo(
             "Aviso",
-            "El proceso se completó correctamente.",
+            "El procesado de no segmentados ha sido completado.",
         )
 
     @staticmethod
@@ -453,21 +520,21 @@ class Ventana_errores(tk.Toplevel):
             self.path_original,
         )
         enmendado = model.Administrador._cargar(
-            self.path_enmendado, no_tiene_encabezados=False
+            self.path_enmendado, no_tiene_encabezados=False, es_original=False
         )
 
         for error in enmendado:
             original[int(error[0])][0] = error[2]
 
-        nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
+        nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
         ult = pd.DataFrame(original)
         ult.to_excel(
-            rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx",
+            rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx",
             index=False,
             header=False,
         )
         print("Corregidos correctamente")
-        return rf"{Ph(__file__).resolve().parent}\Exportaciones\{nombre_archivo}.xlsx"
+        return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx"
 
     def cargar_original(self):
         self.path_original = filedialog.askopenfilename()
