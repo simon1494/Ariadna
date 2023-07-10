@@ -19,7 +19,6 @@ class Administrador:
                 for sublista in a
                 if sublista[0].lower() not in ["anulado", "anulada"]
             ]
-            print(a[112])
         return a
 
     @staticmethod
@@ -126,14 +125,14 @@ class Administrador:
         writer.close()
 
     @staticmethod
-    def _obtener_indices(archivo):
+    def _obtener_indices(archivo, antiguos):
         nuevos_indices = []
 
         for i in range(0, len(archivo)):
             if len(archivo[i]) > 0:
                 nuevos_indices.append(int(archivo[i][-1][0]))
             else:
-                nuevos_indices.append(None)
+                nuevos_indices.append(antiguos[i] - 1)
         return nuevos_indices
 
     """@staticmethod
@@ -522,13 +521,12 @@ class Formateador(CoreMotor):
     def comprobar_salida(archivo):
         tablas = {
             "hechos": pd.DataFrame(archivo[0]),
-            "automotores": pd.DataFrame(archivo[1]),
-            "armas": pd.DataFrame(archivo[2]),
-            "objetos": pd.DataFrame(archivo[3]),
-            "secuestros": pd.DataFrame(archivo[4]),
-            "involucrados": pd.DataFrame(archivo[5]),
+            "automotores": pd.DataFrame(archivo[2]),
+            "armas": pd.DataFrame(archivo[3]),
+            "objetos": pd.DataFrame(archivo[4]),
+            "secuestros": pd.DataFrame(archivo[5]),
+            "involucrados": pd.DataFrame(archivo[6]),
         }
-
         df_vacios = []
         columnas_vacias = []
 
@@ -553,6 +551,13 @@ class Formateador(CoreMotor):
             mensaje = mensaje + "\n\nLas siguientes columnas estan vacías:"
             for columna, tabla in columnas_vacias:
                 mensaje = mensaje + f"\n -Columna {columna} de la tabla '{tabla}'"
+
+        if 1200 > len(tablas["hechos"]) > 2400:
+            if 1200 > len(tablas["hechos"]):
+                mensaje = mensaje + "\n\nEl archivo contiene menos de 1200 registros."
+            elif len(tablas["hechos"]) > 2400:
+                mensaje = mensaje + "\n\nEl archivo contiene más de 2400 registros."
+
         return mensaje
 
 
@@ -758,7 +763,6 @@ class Inicial(Core_Inicial):
 
         if len(duplicados) > 0:
             for item in duplicados:
-                print("\n")
                 contador = 0
                 for i in lista:
                     if i[0] == item:
@@ -771,8 +775,6 @@ class Inicial(Core_Inicial):
                             contador2 += 1
                             break
             if len(duplicados) > 0:
-                for duplicado in duplicados:
-                    print(duplicado)
                 print(f"Se han eliminado {contador2} duplicados.\n")
         return lista
 

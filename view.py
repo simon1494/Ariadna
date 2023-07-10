@@ -1,5 +1,6 @@
 import tkinter as tk
 import model
+import mysql.connector
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter.font import Font
@@ -71,6 +72,21 @@ class Ventana_principal:
         )
         boton_addendum.place(
             x=500,
+            y=210,
+            width=80,
+            height=20,
+        )
+
+        boton_compilar = tk.Button(
+            self.ventana,
+            text="Compilar",
+            bg="light green",
+            fg="black",
+            font=("Palatino Linotype", 11),
+            command=lambda: self.compilar_archivos(),
+        )
+        boton_compilar.place(
+            x=410,
             y=210,
             width=80,
             height=20,
@@ -156,8 +172,8 @@ class Ventana_principal:
         self.indices = (
             self.id_hechos,
             self.id_calificaciones,
-            self.id_automotores,
             self.id_armas,
+            self.id_automotores,
             self.id_objetos,
             self.id_secuestros,
             self.id_involucrados,
@@ -316,11 +332,11 @@ class Ventana_principal:
                                 model.Administrador._convertir_segmentado(
                                     segmentado.final, nombre=archivo
                                 )
-                                print(f"listo {archivo}")
+                                print(f"\nPreparando {archivo}")
                                 try:
                                     indices_finales = (
                                         model.Administrador._obtener_indices(
-                                            segmentado.final
+                                            segmentado.final, indices
                                         )
                                     )
                                     print(f"Iniciales: {str(indices)}")
@@ -328,7 +344,7 @@ class Ventana_principal:
                                     indices = list(
                                         map(lambda x: x + 1, indices_finales)
                                     )
-                                    print(f"Siguientes: {str(indices)}\n")
+                                    print(f"Siguientes: {str(indices)}")
                                 except Exception as error:
                                     print(
                                         f"({archivo}) Error en la obtención de índices nuevos: {error}"
@@ -350,6 +366,42 @@ class Ventana_principal:
             "Aviso",
             "El procesado de no segmentados ha sido completado.",
         )
+
+    def compilar_archivos(self):
+        carpeta = filedialog.askdirectory()
+        print(carpeta)
+        archivos = os.listdir(carpeta)
+
+        # Nombre del archivo final
+        archivo_final = f"{carpeta}/consolidado.xlsx"
+
+        # Leer la primera hoja de un archivo para obtener los nombres de las hojas
+        primer_archivo = f"{carpeta}/{archivos[0]}"
+        with pd.ExcelFile(primer_archivo) as xls:
+            hojas = xls.sheet_names
+
+        # Almacenar los datos en un diccionario por hoja
+        datos = {}
+        for hoja in hojas:
+            datos[hoja] = pd.DataFrame()
+
+        # Leer los archivos de Excel y almacenar los datos en el diccionario
+        for archivo in archivos:
+            with pd.ExcelFile(f"{carpeta}/{archivo}") as xls:
+                for hoja in hojas:
+                    df = pd.read_excel(xls, sheet_name=hoja)
+                    if hoja == "datos_hecho":
+                        df["Latitud:"] = df["Latitud:"].astype(str)
+                        df["Longitud:"] = df["Latitud:"].astype(str)
+                    datos[hoja] = pd.concat([datos[hoja], df])
+            print("Listo ", archivo)
+
+        # Escribir los datos consolidados en un archivo de Excel
+        with pd.ExcelWriter(archivo_final) as writer:
+            for hoja, df in datos.items():
+                df.to_excel(writer, sheet_name=hoja, index=False)
+
+        print("Se ha creado el archivo consolidado:", archivo_final)
 
     @staticmethod
     def centrar_ventana(win, window_width, window_height):
@@ -598,7 +650,12 @@ class Ventana_indices(tk.Toplevel):
             cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
             self.etiquetas_entries.append(cuadro_texto)
 
-        btn_conectar = tk.Button(self, text="Conectar con Base", bg="light green")
+        btn_conectar = tk.Button(
+            self,
+            text="Conectar con Base",
+            bg="light green",
+            command=lambda: self.conectar_con_base(),
+        )
         btn_conectar.place(x=50, y=250)
 
         btn_setear_ids = tk.Button(
@@ -625,3 +682,59 @@ class Ventana_indices(tk.Toplevel):
         center_x = int(screen_width / 2 - window_width / 2)
         center_y = int(screen_height / 2 - window_height / 2)
         return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
+
+    def conectar_con_base(self):
+        indices = []
+
+        conexion = mysql.connector.connect(
+            host="localhost", user="root", password="", database="monitoreo"
+        )
+
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor()
+
+        consulta = "SELECT max(id_hecho) FROM hechos"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        indices.append(1)
+
+        consulta = "SELECT max(id) FROM armas"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        consulta = "SELECT max(id) FROM automotores"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        consulta = "SELECT max(id) FROM objetos"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        consulta = "SELECT max(id) FROM secuestros"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        consulta = "SELECT max(id) FROM involucrados"
+        cursor.execute(consulta)
+        resultados = cursor.fetchall()
+        for fila in resultados:
+            indices.append(fila[0])
+
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+
+        for i, ind in enumerate(indices):
+            self.etiquetas_entries[i].delete(0, "end")
+            self.etiquetas_entries[i].insert(0, ind + 1)
