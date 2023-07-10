@@ -7,7 +7,6 @@ from tkinter.font import Font
 import checkpoints as ck
 import pandas as pd
 from pathlib import Path as Ph
-from model import Addendum
 import os
 
 
@@ -401,7 +400,45 @@ class Ventana_principal:
             for hoja, df in datos.items():
                 df.to_excel(writer, sheet_name=hoja, index=False)
 
+        print("\nAnalizando coherencia de indexados...")
+        try:
+            if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
+                print("Chequeada coherencia de indexados sin errores")
+            else:
+                print("Se detectaron errores de coherencia en los indexados")
+        except Exception as error:
+            print(error)
         print("Se ha creado el archivo consolidado:", archivo_final)
+
+    def comprobar_indices(self, archivo):
+        # Leer el archivo Excel
+        xls = pd.ExcelFile(archivo)
+
+        # Lista para almacenar las tuplas de cada hoja
+        tuplas_hojas = []
+
+        # Recorrer cada hoja del archivo
+
+        for hoja_nombre in xls.sheet_names:
+            # Leer la hoja y obtener los valores de la primera columna
+            df = pd.read_excel(xls, sheet_name=hoja_nombre)
+            columna = df.iloc[:, 0]  # Primera columna (index 0)
+
+            # Convertir la columna en una tupla y agregarla a la lista
+            tupla_hoja = tuple(columna.values[0:])  # Excluir el encabezado
+            tuplas_hojas.append(tupla_hoja)
+
+            # Verificar si la lista contiene enteros consecutivos en orden ascendente
+            for tupla in tuplas_hojas:
+                if not tupla:  # Si la lista está vacía, no se considera consecutiva
+                    return False
+
+                n = tupla[0]  # Primer elemento de la lista
+                for num in tupla:
+                    if num != n:  # Si el número no es igual a n, no es consecutivo
+                        return False
+                    n += 1  # Incrementar n para verificar el siguiente número
+        return True
 
     @staticmethod
     def centrar_ventana(win, window_width, window_height):
@@ -496,7 +533,7 @@ class Ventana_addendum(tk.Toplevel):
                 header=None,
             ).values.tolist()
         )
-        addendum = Addendum()
+        addendum = model.Addendum()
         simplificado = addendum.simplificada(original)
 
         # Agregar un nuevo registro
@@ -684,57 +721,61 @@ class Ventana_indices(tk.Toplevel):
         return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
 
     def conectar_con_base(self):
-        indices = []
+        try:
+            indices = []
 
-        conexion = mysql.connector.connect(
-            host="localhost", user="root", password="", database="monitoreo"
-        )
+            conexion = mysql.connector.connect(
+                host="localhost", user="root", password="", database="monitoreo"
+            )
 
-        # Crear un cursor para ejecutar consultas
-        cursor = conexion.cursor()
+            # Crear un cursor para ejecutar consultas
+            cursor = conexion.cursor()
 
-        consulta = "SELECT max(id_hecho) FROM hechos"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id_hecho) FROM hechos"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        indices.append(1)
+            indices.append(1)
 
-        consulta = "SELECT max(id) FROM armas"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id) FROM armas"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        consulta = "SELECT max(id) FROM automotores"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id) FROM automotores"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        consulta = "SELECT max(id) FROM objetos"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id) FROM objetos"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        consulta = "SELECT max(id) FROM secuestros"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id) FROM secuestros"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        consulta = "SELECT max(id) FROM involucrados"
-        cursor.execute(consulta)
-        resultados = cursor.fetchall()
-        for fila in resultados:
-            indices.append(fila[0])
+            consulta = "SELECT max(id) FROM involucrados"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
 
-        # Cerrar el cursor y la conexión
-        cursor.close()
-        conexion.close()
+            # Cerrar el cursor y la conexión
+            cursor.close()
+            conexion.close()
 
-        for i, ind in enumerate(indices):
-            self.etiquetas_entries[i].delete(0, "end")
-            self.etiquetas_entries[i].insert(0, ind + 1)
+            for i, ind in enumerate(indices):
+                self.etiquetas_entries[i].delete(0, "end")
+                self.etiquetas_entries[i].insert(0, ind + 1)
+
+        except Exception as error:
+            tk.messagebox.showinfo("!!", error)
