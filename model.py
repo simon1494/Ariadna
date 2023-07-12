@@ -53,7 +53,7 @@ class Administrador:
             nombre_archivo = nombre
 
         writer = pd.ExcelWriter(
-            rf"{Ph(__file__).resolve().parent}\Exportaciones\Segmentados\{nombre_archivo} (seg).xlsx",
+            rf"{Ph(__file__).resolve().parent}\Exportaciones\Segmentados\{nombre_archivo.replace(' (ns).xlsx','')} (seg).xlsx",
             engine="xlsxwriter",
         )
 
@@ -79,7 +79,7 @@ class Administrador:
 
         armas_enc = list(ck.general_armas.keys())
         armas_enc.insert(0, "id")
-        armas = pd.DataFrame(archivo[3], columns=armas_enc)
+        armas = pd.DataFrame(archivo[2], columns=armas_enc)
         armas.to_excel(
             writer,
             sheet_name="armas",
@@ -88,7 +88,7 @@ class Administrador:
 
         aut_enc = list(ck.general_automotores.keys())
         aut_enc.insert(0, "id")
-        automotores = pd.DataFrame(archivo[2], columns=aut_enc)
+        automotores = pd.DataFrame(archivo[3], columns=aut_enc)
         automotores.to_excel(
             writer,
             sheet_name="automotores",
@@ -521,8 +521,8 @@ class Formateador(CoreMotor):
     def comprobar_salida(archivo):
         tablas = {
             "hechos": pd.DataFrame(archivo[0]),
-            "automotores": pd.DataFrame(archivo[2]),
-            "armas": pd.DataFrame(archivo[3]),
+            "armas": pd.DataFrame(archivo[2]),
+            "automotores": pd.DataFrame(archivo[3]),
             "objetos": pd.DataFrame(archivo[4]),
             "secuestros": pd.DataFrame(archivo[5]),
             "involucrados": pd.DataFrame(archivo[6]),
@@ -893,9 +893,9 @@ class Segmentado(Core_Final, Addendum):
 
         # segmentado de entidades simples
         self._automotores = self._descomponer(
-            self.automotores, ck.general_automotores, indices[2]
+            self.automotores, ck.general_automotores, indices[3]
         )
-        self._armas = self._descomponer(self.armas, ck.general_armas, indices[3])
+        self._armas = self._descomponer(self.armas, ck.general_armas, indices[2])
         self._objetos = self._descomponer(
             self.objetos, ck.general_elementos, indices[4]
         )
@@ -976,8 +976,8 @@ class Segmentado(Core_Final, Addendum):
             self.final = [
                 self.datos,
                 self._calificaciones,
-                self._automotores,
                 self._armas,
+                self._automotores,
                 self._objetos,
                 self._secuestros,
                 self._involucrados,

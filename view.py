@@ -622,7 +622,7 @@ class Ventana_errores(tk.Toplevel):
             index=False,
             header=False,
         )
-        print("Corregidos correctamente")
+        print(f"{nombre_archivo} corregido correctamente")
         return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx"
 
     def cargar_original(self):
@@ -687,13 +687,21 @@ class Ventana_indices(tk.Toplevel):
             cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
             self.etiquetas_entries.append(cuadro_texto)
 
-        btn_conectar = tk.Button(
+        btn_base = tk.Button(
             self,
-            text="Conectar con Base",
-            bg="light green",
+            text="Desde la Base",
+            bg="orange",
             command=lambda: self.conectar_con_base(),
         )
-        btn_conectar.place(x=50, y=250)
+        btn_base.place(x=155, y=250)
+
+        btn_archivo = tk.Button(
+            self,
+            text="Desde archivo",
+            bg="sky blue",
+            command=lambda: self.conectar_con_archivo(),
+        )
+        btn_archivo.place(x=40, y=250)
 
         btn_setear_ids = tk.Button(
             self,
@@ -701,7 +709,7 @@ class Ventana_indices(tk.Toplevel):
             bg="light green",
             command=lambda: self.actualizar_indices(indices, self.etiquetas_entries),
         )
-        btn_setear_ids.place(x=240, y=250)
+        btn_setear_ids.place(x=270, y=250)
 
     def actualizar_indices(self, indices, entries):
         for i, ind in enumerate(indices):
@@ -779,3 +787,25 @@ class Ventana_indices(tk.Toplevel):
 
         except Exception as error:
             tk.messagebox.showinfo("!!", error)
+
+    def conectar_con_archivo(self):
+        ruta_archivo = filedialog.askopenfilename()
+        try:
+            # Cargar el archivo Excel
+            df = pd.read_excel(ruta_archivo, sheet_name=None)
+
+            # Lista para almacenar los últimos registros
+            ultimos_registros = []
+
+            # Iterar sobre cada hoja del archivo
+            for hoja, datos in df.items():
+                # Obtener el último valor de la primera columna
+                ultimo_registro = datos.iloc[-1, 0]
+                ultimos_registros.append(ultimo_registro)
+
+            for i, ind in enumerate(ultimos_registros):
+                self.etiquetas_entries[i].delete(0, "end")
+                self.etiquetas_entries[i].insert(0, ind + 1)
+
+        except FileNotFoundError:
+            tk.messagebox.showinfo("!!", f"No se ha seleccionado ningún archivo")
