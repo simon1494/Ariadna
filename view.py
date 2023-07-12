@@ -391,7 +391,7 @@ class Ventana_principal:
                     df = pd.read_excel(xls, sheet_name=hoja)
                     if hoja == "datos_hecho":
                         df["Latitud:"] = df["Latitud:"].astype(str)
-                        df["Longitud:"] = df["Latitud:"].astype(str)
+                        df["Longitud:"] = df["Longitud:"].astype(str)
                     datos[hoja] = pd.concat([datos[hoja], df])
             print("Listo ", archivo)
 

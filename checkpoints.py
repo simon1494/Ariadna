@@ -775,3 +775,4 @@ general_automotores = {
 }
 
 general_calificaciones = {"id_hecho": "", "Tipificación:": "", "Consumado:": ""}
+general_calificaciones2 = {"id_hecho": "", "Tipificación:": ""}

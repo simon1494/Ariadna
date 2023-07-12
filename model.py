@@ -61,19 +61,19 @@ class Administrador:
         hechos_enc.insert(0, "id")
         hechos = pd.DataFrame(archivo[0], columns=hechos_enc)
         hechos["Latitud:"] = hechos["Latitud:"].astype(str)
-        hechos["Longitud:"] = hechos["Latitud:"].astype(str)
+        hechos["Longitud:"] = hechos["Longitud:"].astype(str)
         hechos.to_excel(
             writer,
             sheet_name="datos_hecho",
             index=False,
         )
 
-        inv_enc = list(ck.general_involucrados.keys())
-        inv_enc.insert(0, "id")
-        involucrados = pd.DataFrame(archivo[6], columns=inv_enc)
-        involucrados.to_excel(
+        cal_enc = list(ck.general_calificaciones.keys())
+        cal_enc.insert(0, "id")
+        cal = pd.DataFrame(archivo[1], columns=cal_enc)
+        cal.to_excel(
             writer,
-            sheet_name="involucrados",
+            sheet_name="calificaciones",
             index=False,
         )
 
@@ -95,15 +95,6 @@ class Administrador:
             index=False,
         )
 
-        secu_enc = list(ck.general_elementos.keys())
-        secu_enc.insert(0, "id")
-        secuestros = pd.DataFrame(archivo[5], columns=secu_enc)
-        secuestros.to_excel(
-            writer,
-            sheet_name="secuestros",
-            index=False,
-        )
-
         obj_enc = list(ck.general_elementos.keys())
         obj_enc.insert(0, "id")
         objetos = pd.DataFrame(archivo[4], columns=obj_enc)
@@ -113,12 +104,21 @@ class Administrador:
             index=False,
         )
 
-        cal_enc = list(ck.general_calificaciones.keys())
-        cal_enc.insert(0, "id")
-        cal = pd.DataFrame(archivo[1], columns=cal_enc)
-        cal.to_excel(
+        secu_enc = list(ck.general_elementos.keys())
+        secu_enc.insert(0, "id")
+        secuestros = pd.DataFrame(archivo[5], columns=secu_enc)
+        secuestros.to_excel(
             writer,
-            sheet_name="calificaciones",
+            sheet_name="secuestros",
+            index=False,
+        )
+
+        inv_enc = list(ck.general_involucrados.keys())
+        inv_enc.insert(0, "id")
+        involucrados = pd.DataFrame(archivo[6], columns=inv_enc)
+        involucrados.to_excel(
+            writer,
+            sheet_name="involucrados",
             index=False,
         )
 
@@ -797,7 +797,6 @@ class Addendum:
             registro[26] = final
             return registro
         else:
-            errores = []
             calificacion = registro[2]
             base_nueva = base.copy()
             calificacion = [calificacion.strip()]
@@ -819,6 +818,10 @@ class Addendum:
         a_cotejar = self.simplificada(calificacion)
         if a_cotejar in data:
             resultado = data[a_cotejar]
+            if calificacion.find(" Consumado: Si"):
+                resultado = resultado + " Consumado: Si"
+            elif calificacion.find(" Consumado: No"):
+                resultado = resultado + " Consumado: No"
             return resultado
         else:
             return "error"
@@ -854,7 +857,6 @@ class Segmentado(Core_Final, Addendum):
         # preparación e indexado del archivo inicial
         self.segmentados = archivo
         self.indexados = self._indexador(self.segmentados, indices[0])
-
         # indexado de entidades simples)
         self.calificaciones = list(
             map(
@@ -862,6 +864,7 @@ class Segmentado(Core_Final, Addendum):
                 self._armar_paquete(self.indexados, 26),
             )
         )
+
         self.armas = self._armar_paquete(self.indexados, 43)
         self.objetos = self._armar_paquete(self.indexados, 45)
         self.secuestros = self._armar_paquete(self.indexados, 44)
@@ -926,7 +929,6 @@ class Segmentado(Core_Final, Addendum):
                 )
             )
             self.datos = self._recortar(self.indexados)
-
             # segmentado y consolidación de todos los involucrados
             self._involucrados = self._todos_los_involucrados(
                 self.involucrados, indices[6], limpiar=True
