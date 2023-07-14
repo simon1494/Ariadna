@@ -393,14 +393,15 @@ class Ventana_principal:
                         df["Latitud:"] = df["Latitud:"].astype(str)
                         df["Longitud:"] = df["Longitud:"].astype(str)
                     datos[hoja] = pd.concat([datos[hoja], df])
-            print("Listo ", archivo)
+            print("Listo", archivo)
 
         # Escribir los datos consolidados en un archivo de Excel
         with pd.ExcelWriter(archivo_final) as writer:
+            print("\nComenzando proceso de compilación...")
             for hoja, df in datos.items():
                 df.to_excel(writer, sheet_name=hoja, index=False)
 
-        print("\nAnalizando coherencia de indexados...")
+        print("Analizando coherencia de indexados...")
         try:
             if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
                 print("Chequeada coherencia de indexados sin errores")
@@ -408,7 +409,7 @@ class Ventana_principal:
                 print("Se detectaron errores de coherencia en los indexados")
         except Exception as error:
             print(error)
-        print("Se ha creado el archivo consolidado:", archivo_final)
+        print("Se ha creado el archivo consolidado en:", archivo_final)
 
     def comprobar_indices(self, archivo):
         # Leer el archivo Excel

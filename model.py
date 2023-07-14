@@ -1,9 +1,13 @@
 import re
 import copy
+import locale
 import tkinter as tk
 import checkpoints as ck
 import pandas as pd
+from datetime import datetime
 from pathlib import Path as Ph
+
+locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
 class Administrador:
@@ -135,15 +139,6 @@ class Administrador:
                 nuevos_indices.append(antiguos[i] - 1)
         return nuevos_indices
 
-    """@staticmethod
-    def quitar_anulados(archivo):
-        final = [
-            sublista
-            for sublista in archivo
-            if sublista[0].lower() not in ["anulado", "anulada"]
-        ]
-        return final"""
-
 
 class CoreMotor:
     def _posiciones_datos(self, texto, cortes, quitar=True):
@@ -245,9 +240,40 @@ class CoreMotor:
     def _limpiar_registro(self, registro):
         nuevo = registro.copy()
         for i in range(len(nuevo)):
-            if nuevo[i] == "Sin especificar":
+            if nuevo[i] == "Sin especificar" or nuevo[i] == "Sin especifica":
                 nuevo[i] = ""
         return nuevo
+
+    def _formatear_fecha(self, registro, inicial=True):
+        _registro = registro.copy()
+        if inicial:
+            try:
+                if len(_registro[2]) > 4:
+                    fecha_objeto = datetime.strptime(_registro[2], "%d %B %Y")
+                    fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
+                    _registro[2] = fecha_formateada
+
+                if len(_registro[9]) > 4:
+                    fecha_objeto = datetime.strptime(_registro[9], "%d %B %Y")
+                    fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
+                    _registro[9] = fecha_formateada
+
+                if len(_registro[11]) > 4:
+                    fecha_objeto = datetime.strptime(_registro[11], "%d %B %Y")
+                    fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
+                    _registro[11] = fecha_formateada
+            except Exception as error:
+                print(error)
+            return _registro
+        else:
+            try:
+                if len(_registro[15]) > 4 and _registro[15] != "Sin especifica":
+                    fecha_objeto = datetime.strptime(_registro[15], "%d %B %Y")
+                    fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
+                    _registro[15] = fecha_formateada
+            except Exception as error:
+                print(error)
+            return _registro
 
 
 class Core_Inicial(CoreMotor):
@@ -635,6 +661,7 @@ class Tester(Formateador):
 
 class Inicial(Core_Inicial):
     def __init__(self, archivo, identificadores):
+
         # checkpoints
         self._checkpoints = ck.cp_iniciales
         self._ident = ck.cp_iden
@@ -686,6 +713,13 @@ class Inicial(Core_Inicial):
             self._general,
         )
         self.sin_duplicados = self._borrar_duplicados(self.procesados)
+
+        self.sin_duplicados = list(
+            map(
+                lambda lista: self._formatear_fecha(lista), self.sin_duplicados
+            )  # da el formato correcto a las columnas "fecha_carga","fecha_inicio_hecho" y "fecha_final_hecho"
+        )
+        print(self.sin_duplicados[0])
         self.sin_duplicados = list(
             map(lambda registro: self.limpiar_relato(registro), self.sin_duplicados)
         )
@@ -932,6 +966,13 @@ class Segmentado(Core_Final, Addendum):
             # segmentado y consolidación de todos los involucrados
             self._involucrados = self._todos_los_involucrados(
                 self.involucrados, indices[6], limpiar=True
+            )
+
+            self._involucrados = list(
+                map(
+                    lambda lista: self._formatear_fecha(lista, inicial=False),
+                    self._involucrados,
+                )  # da el formato correcto a las columnas "fecha_nacimiento" en todos los involucrados
             )
 
             # limpieza de campos "Sin especificar".
