@@ -8,39 +8,127 @@ import checkpoints as ck
 import pandas as pd
 from pathlib import Path as Ph
 import os
+import copy
 
 
-class Ventana_principal:
-    def __init__(self):
-        self.ventana = tk.Tk()
-        self.ventana.title("Ventana con botones")
-        self.ancho = 600
-        self.alto = 250
-        self.ventana.geometry(self.centrar_ventana(self.ventana, self.ancho, self.alto))
-        self.ventana.configure(bg="dark gray")
+class Ventana_Base:
+    color_botones = "#8CA2EA"
+    botones_iniciales = "#AFEB54"
+    botones_segmentado = "#EBA605"
+    botones_subir = "#C34DEB"
+    amarillo = "#EBDD04"
+    rojo = "#EA3830"
+    verde = "#27EA00"
+    color_back = "#1D2B61"
+
+    @staticmethod
+    def centrar_ventana(win, window_width, window_height):
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+        center_x = int(screen_width / 2 - window_width / 2)
+        center_y = int(screen_height / 2 - window_height / 2)
+        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
+
+
+class Ventana_Principal(Ventana_Base):
+    def __init__(self, master):
+        self.ventana = master
+        self.ventana.title("Ariadna b-1.0.1")
+        self.ventana.ancho = 900
+        self.ventana.alto = 250
+        self.ventana.geometry(
+            self.centrar_ventana(self.ventana, self.ventana.ancho, self.ventana.alto)
+        )
+        self.ventana.configure(bg=self.color_back)
+
+        self.menu_inicial = [
+            {
+                "nombre": "uno",
+                "texto": "Procesar Uno",
+                "callback": lambda: self.procesar_inicial(),
+            },
+            {
+                "nombre": "varios",
+                "texto": "Procesar Varios",
+                "callback": lambda: self.procesar_crudos(),
+            },
+            {
+                "nombre": "errores",
+                "texto": "Corregir Crudos",
+                "callback": lambda: self.abrir_ventana_top_intermedia(
+                    self.ventana_top, Ventana_errores
+                ),
+            },
+        ]
+        self.menu_segmentado = [
+            {
+                "nombre": "uno",
+                "texto": "Procesar Uno",
+                "callback": lambda: self.procesar_final(),
+            },
+            {
+                "nombre": "varios",
+                "texto": "Procesar Varios",
+                "callback": lambda: self.procesar_varios(),
+            },
+            {
+                "nombre": "indices",
+                "texto": "Setear Índices",
+                "callback": lambda: self.abrir_ventana_top_intermedia(
+                    self.ventana_top, Ventana_indices, indices=self.indices
+                ),
+            },
+            {
+                "nombre": "compilar",
+                "texto": "Compilar archivos",
+                "callback": lambda: self.compilar_archivos(),
+            },
+        ]
+        self.menu_subir = [
+            {
+                "nombre": "conectar",
+                "texto": "Conectar con base",
+                "callback": lambda: self.abrir_ventana_top_intermedia(
+                    self.ventana_top, Ventana_conectar
+                ),
+            },
+            {
+                "nombre": "testear",
+                "texto": "Testear integridad",
+                "callback": lambda: None,
+            },
+            {
+                "nombre": "subir",
+                "texto": "Subir a Base",
+                "callback": lambda: None,
+            },
+        ]
 
         self.setear_indices()
         self.crear_botones()
 
     def crear_botones(self):
-        x_pos = int(self.ancho / 2)
-        y_pos = int(self.alto / 2)
+        x_pos = 50
+        y_pos = int(self.ventana.alto / 2)
         estilo_fuente = ("Palatino Linotype", 16)
         b_alto = 75
         b_ancho = 200
+        bg_color = self.color_botones
 
-        separacion = 120
+        separacion = 100
 
         boton_inicial = tk.Button(
             self.ventana,
             text="INICIAL",
-            bg="light green",
+            bg=bg_color,
             fg="black",
             font=estilo_fuente,
-            command=lambda: self.procesar_inicial(),
+            command=lambda: self.abrir_ventana_intermedia(
+                self.menu_inicial, "PROCESAR CRUDOS", self.botones_iniciales
+            ),
         )
         boton_inicial.place(
-            x=x_pos - separacion - (b_ancho / 2),
+            x=x_pos,
             y=y_pos - (b_alto / 2),
             width=b_ancho,
             height=b_alto,
@@ -49,106 +137,35 @@ class Ventana_principal:
         boton_segmentado = tk.Button(
             self.ventana,
             text="SEGMENTADO",
-            bg="light green",
+            bg=bg_color,
             fg="black",
             font=estilo_fuente,
-            command=lambda: self.procesar_final(),
+            command=lambda: self.abrir_ventana_intermedia(
+                self.menu_segmentado, "PROCESAR FINALES", self.botones_segmentado
+            ),
         )
         boton_segmentado.place(
-            x=x_pos + separacion - (b_ancho / 2),
+            x=x_pos + separacion + b_ancho,
             y=y_pos - (b_alto / 2),
             width=b_ancho,
             height=b_alto,
         )
 
-        boton_addendum = tk.Button(
+        boton_subir = tk.Button(
             self.ventana,
-            text="Addendum",
-            bg="light green",
+            text="SUBIR A BASE",
+            bg=bg_color,
             fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.abrir_ventana_addendum(),
+            font=estilo_fuente,
+            command=lambda: self.abrir_ventana_intermedia(
+                self.menu_subir, "SUBIR ARCHIVO A BASE", self.botones_subir
+            ),
         )
-        boton_addendum.place(
-            x=500,
-            y=210,
-            width=80,
-            height=20,
-        )
-
-        boton_compilar = tk.Button(
-            self.ventana,
-            text="Compilar",
-            bg="light green",
-            fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.compilar_archivos(),
-        )
-        boton_compilar.place(
-            x=410,
-            y=210,
-            width=80,
-            height=20,
-        )
-
-        boton_errores = tk.Button(
-            self.ventana,
-            text="Errores",
-            bg="light green",
-            fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.abrir_ventana_errores(),
-        )
-        boton_errores.place(
-            x=20,
-            y=210,
-            width=80,
-            height=20,
-        )
-
-        boton_indices = tk.Button(
-            self.ventana,
-            text="Indices",
-            bg="light green",
-            fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.abrir_ventana_indices(),
-        )
-        boton_indices.place(
-            x=20,
-            y=20,
-            width=80,
-            height=20,
-        )
-
-        boton_ns = tk.Button(
-            self.ventana,
-            text="Procesar ns",
-            bg="light green",
-            fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.procesar_varios(),
-        )
-        boton_ns.place(
-            x=470,
-            y=20,
-            width=110,
-            height=20,
-        )
-
-        boton_crudos = tk.Button(
-            self.ventana,
-            text="Procesar crudos",
-            bg="light green",
-            fg="black",
-            font=("Palatino Linotype", 11),
-            command=lambda: self.procesar_crudos(),
-        )
-        boton_crudos.place(
-            x=330,
-            y=20,
-            width=130,
-            height=20,
+        boton_subir.place(
+            x=x_pos + (separacion + b_ancho) * 2,
+            y=y_pos - (b_alto / 2),
+            width=b_ancho,
+            height=b_alto,
         )
 
     def setear_indices(self):
@@ -177,9 +194,6 @@ class Ventana_principal:
             self.id_secuestros,
             self.id_involucrados,
         )
-
-    def iniciar(self):
-        self.ventana.mainloop()
 
     def procesar_inicial(self):
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
@@ -213,6 +227,11 @@ class Ventana_principal:
                     "Segmentar", "¿Desea proceder a segmentar el archivo?"
                 ):
                     self.procesar_final(path)
+                else:
+                    tk.messagebox.showinfo(
+                        "Proceso completado",
+                        "El archivo fue procesado correctamente.",
+                    )
         except FileNotFoundError:
             tk.messagebox.showinfo(
                 "Advertencia", f"No se ha seleccionado ningún archivo."
@@ -221,150 +240,143 @@ class Ventana_principal:
         #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
     def procesar_final(self, path=False):
-        indices = list(map(lambda var: var.get(), self.indices))
-        try:
-            if path is False:
-                archivo1 = model.Administrador._cargar(
-                    filedialog.askopenfilename(), no_tiene_encabezados=False
-                )
-                segmentado = model.Segmentado(archivo1, indices)
-            else:
-                archivo1 = model.Administrador._cargar(path, no_tiene_encabezados=False)
-                segmentado = model.Segmentado(archivo1, indices)
-            try:
-                try:
-                    mensaje = model.Formateador.comprobar_salida(segmentado.final)
-                    if mensaje != "":
-                        tk.messagebox.showinfo("Advertencia", mensaje)
-                except Exception as error:
-                    print(error)
-                model.Administrador._convertir_segmentado(segmentado.final)
-                tk.messagebox.showinfo(
-                    "Advertencia", f"El proceso se completo correctamente :)"
-                )
-            except AttributeError:
-                tk.messagebox.showinfo(
-                    "Advertencia", f"El proceso de segmentado se ha abortado."
-                )
-                ventana_errores = Ventana_addendum(
-                    self.ventana, archivo=segmentado.errores
-                )
-        except FileNotFoundError:
+        if not self.todos_unos(self.indices):
+            self._cargar_no_segmentado(path, self.indices)
+        else:
             tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ningún archivo."
+                "Advertencia", f"Antes de segmentar, primero setee los indices."
             )
+            self.abrir_ventana_top_intermedia(
+                self.ventana_top, Ventana_indices, self.indices
+            )
+            indices = list(map(lambda var: var.get(), self.indices))
+            self._cargar_no_segmentado(path, indices)
 
     def procesar_crudos(self, path=False):
-        carpeta = filedialog.askdirectory()
-        archivos = os.listdir(carpeta)
-        formateador = model.Formateador()
+        try:
+            carpeta = filedialog.askdirectory()
+            archivos = os.listdir(carpeta)
+            formateador = model.Formateador()
 
-        for archivo in archivos:
-            path = os.path.join(
-                carpeta, archivo
-            )  # Obtener la ruta completa del archivo
-            if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
-                try:
-                    nombre_archivo = os.path.splitext(os.path.basename(path))[0]
-                    archivo0 = model.Administrador._cargar(path)
+            for archivo in archivos:
+                path = os.path.join(
+                    carpeta, archivo
+                )  # Obtener la ruta completa del archivo
+                if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
                     try:
-                        tester = model.Tester(archivo0)
+                        nombre_archivo = os.path.splitext(os.path.basename(path))[0]
+                        archivo0 = model.Administrador._cargar(path)
                         try:
-                            if len(tester.errores) > 0:
-                                log_errores = model.Administrador._convertir_inicial(
-                                    tester.errores,
-                                    ["indice", "n° registro", "para enmendar"],
-                                    nombre=nombre_archivo,
-                                    error=True,
-                                )
-                            else:
-                                archivo0, identificadores = formateador._formatear(
-                                    archivo0, ck.cp_iden
-                                )
-                                inicial = model.Inicial(archivo0, identificadores)
-                                path = model.Administrador._convertir_inicial(
-                                    inicial.sin_duplicados,
-                                    ck.general,
-                                    nombre=nombre_archivo,
-                                )
-                        except Exception as error:
-                            print(
-                                f"({archivo}) Error en etapa de procesado del archivo: {error}"
-                            )
-                    except Exception as error:
-                        print(
-                            f"({archivo}) Error en etapa de testeo de información entrante: {error}"
-                        )
-                except Exception as error:
-                    print(
-                        f"({archivo}) Error en etapa de carga del archivo crudo: {error}"
-                    )
-            print(f"Listo {archivo}")
-        tk.messagebox.showinfo(
-            "Aviso",
-            "El procesado de crudos ha sido completado.",
-        )
-
-    def procesar_varios(self):
-        carpeta = filedialog.askdirectory()
-        archivos = os.listdir(carpeta)
-
-        indices = list(map(lambda var: var.get(), self.indices))
-        for archivo in archivos:
-            path = os.path.join(
-                carpeta, archivo
-            )  # Obtener la ruta completa del archivo
-            if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
-                try:
-                    archivo1 = model.Administrador._cargar(
-                        path, no_tiene_encabezados=False
-                    )
-                    try:
-                        segmentado = model.Segmentado(archivo1, indices, carpeta=True)
-                        try:
-                            mensaje = model.Formateador.comprobar_salida(
-                                segmentado.final
-                            )
-                            if mensaje != "":
-                                tk.messagebox.showinfo("Advertencia", mensaje)
+                            tester = model.Tester(archivo0)
                             try:
-                                model.Administrador._convertir_segmentado(
-                                    segmentado.final, nombre=archivo
-                                )
-                                print(f"\nPreparando {archivo}")
-                                try:
-                                    indices_finales = (
-                                        model.Administrador._obtener_indices(
-                                            segmentado.final, indices
+                                if len(tester.errores) > 0:
+                                    log_errores = (
+                                        model.Administrador._convertir_inicial(
+                                            tester.errores,
+                                            ["indice", "n° registro", "para enmendar"],
+                                            nombre=nombre_archivo,
+                                            error=True,
                                         )
                                     )
-                                    print(f"Iniciales: {str(indices)}")
-                                    print(f"Finales: {str(indices_finales)}")
-                                    indices = list(
-                                        map(lambda x: x + 1, indices_finales)
+                                else:
+                                    archivo0, identificadores = formateador._formatear(
+                                        archivo0, ck.cp_iden
                                     )
-                                    print(f"Siguientes: {str(indices)}")
-                                except Exception as error:
-                                    print(
-                                        f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                    inicial = model.Inicial(archivo0, identificadores)
+                                    path = model.Administrador._convertir_inicial(
+                                        inicial.sin_duplicados,
+                                        ck.general,
+                                        nombre=nombre_archivo,
                                     )
                             except Exception as error:
                                 print(
-                                    f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                    f"({archivo}) Error en etapa de procesado del archivo: {error}"
                                 )
                         except Exception as error:
                             print(
-                                f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                f"({archivo}) Error en etapa de testeo de información entrante: {error}"
                             )
                     except Exception as error:
-                        print(f"({archivo}) Error en etapa de procesado: {error}")
-                except Exception as error:
-                    print(f"({archivo}) Error en etapa de carga: {error}")
-            print(f"Listo {archivo}")
-        tk.messagebox.showinfo(
-            "Aviso",
-            "El procesado de no segmentados ha sido completado.",
-        )
+                        print(
+                            f"({archivo}) Error en etapa de carga del archivo crudo: {error}"
+                        )
+                print(f"Listo {archivo}")
+            tk.messagebox.showinfo(
+                "Aviso",
+                "El procesado de crudos ha sido completado.",
+            )
+        except FileNotFoundError:
+            tk.messagebox.showinfo(
+                "Advertencia", f"No se ha seleccionado ninguna carpeta."
+            )
+
+    def procesar_varios(self):
+        try:
+            carpeta = filedialog.askdirectory()
+            archivos = os.listdir(carpeta)
+
+            indices = list(map(lambda var: var.get(), self.indices))
+            for archivo in archivos:
+                path = os.path.join(
+                    carpeta, archivo
+                )  # Obtener la ruta completa del archivo
+                if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
+                    try:
+                        archivo1 = model.Administrador._cargar(
+                            path, no_tiene_encabezados=False
+                        )
+                        try:
+                            segmentado = model.Segmentado(
+                                archivo1, indices, carpeta=True
+                            )
+                            try:
+                                mensaje = model.Formateador.comprobar_salida(
+                                    segmentado.final
+                                )
+                                if mensaje != "":
+                                    tk.messagebox.showinfo("Advertencia", mensaje)
+                                try:
+                                    model.Administrador._convertir_segmentado(
+                                        segmentado.final, nombre=archivo
+                                    )
+                                    print(f"\nPreparando {archivo}")
+                                    try:
+                                        indices_finales = (
+                                            model.Administrador._obtener_indices(
+                                                segmentado.final, indices
+                                            )
+                                        )
+                                        print(f"Iniciales: {str(indices)}")
+                                        print(f"Finales: {str(indices_finales)}")
+                                        indices = list(
+                                            map(lambda x: x + 1, indices_finales)
+                                        )
+                                        print(f"Siguientes: {str(indices)}")
+                                    except Exception as error:
+                                        print(
+                                            f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                        )
+                                except Exception as error:
+                                    print(
+                                        f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                    )
+                            except Exception as error:
+                                print(
+                                    f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                )
+                        except Exception as error:
+                            print(f"({archivo}) Error en etapa de procesado: {error}")
+                    except Exception as error:
+                        print(f"({archivo}) Error en etapa de carga: {error}")
+                print(f"Listo {archivo}")
+            tk.messagebox.showinfo(
+                "Aviso",
+                "El procesado de no segmentados ha sido completado.",
+            )
+        except FileNotFoundError:
+            tk.messagebox.showinfo(
+                "Advertencia", f"No se ha seleccionado ninguna carpeta."
+            )
 
     def compilar_archivos(self):
         carpeta = filedialog.askdirectory()
@@ -441,31 +453,131 @@ class Ventana_principal:
                     n += 1  # Incrementar n para verificar el siguiente número
         return True
 
+    def abrir_ventana_intermedia(self, widgets, titulo, colores_botones):
+        self.ventana_top = Ventana_Intermedia(
+            self.ventana, widgets, titulo, colores_botones
+        )
+        self.cambiar_de_ventana(self.ventana, self.ventana_top)
+
+    def abrir_ventana_top_intermedia(self, main, Clase, indices=False):
+        if not indices:
+            self.ventana_top_intermedia = Clase(main)
+            self.cambiar_de_ventana(main, self.ventana_top_intermedia)
+        else:
+            self.ventana_top_intermedia = Clase(main, indices)
+            self.cambiar_de_ventana(main, self.ventana_top_intermedia)
+
+    def cambiar_de_ventana(self, main, top):
+        main.withdraw()
+        main.wait_window(top)
+        main.deiconify()
+
+    def iniciar(self):
+        self.ventana.mainloop()
+
+    def _cargar_no_segmentado(self, path, indices):
+        try:
+            if path is False:
+                archivo1 = model.Administrador._cargar(
+                    filedialog.askopenfilename(), no_tiene_encabezados=False
+                )
+                segmentado = model.Segmentado(archivo1, indices)
+            else:
+                archivo1 = model.Administrador._cargar(path, no_tiene_encabezados=False)
+                segmentado = model.Segmentado(archivo1, indices)
+            try:
+                try:
+                    mensaje = model.Formateador.comprobar_salida(segmentado.final)
+                    if mensaje != "":
+                        tk.messagebox.showinfo("Advertencia", mensaje)
+                except Exception as error:
+                    print(error)
+                model.Administrador._convertir_segmentado(segmentado.final)
+                tk.messagebox.showinfo(
+                    "Advertencia", f"El proceso se completo correctamente :)"
+                )
+            except AttributeError:
+                tk.messagebox.showinfo(
+                    "Advertencia", f"El proceso de segmentado se ha abortado."
+                )
+                ventana_errores = Ventana_addendum(
+                    self.ventana, archivo=segmentado.errores
+                )
+        except FileNotFoundError:
+            tk.messagebox.showinfo(
+                "Advertencia", f"No se ha seleccionado ningún archivo."
+            )
+
     @staticmethod
-    def centrar_ventana(win, window_width, window_height):
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-        center_x = int(screen_width / 2 - window_width / 2)
-        center_y = int(screen_height / 2 - window_height / 2)
-        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
-
-    def abrir_ventana_addendum(self):
-        ventana_addendum = Ventana_addendum(self.ventana)
-
-    def abrir_ventana_errores(self):
-        ventana_errores = Ventana_errores(self.ventana)
-
-    def abrir_ventana_indices(self):
-        ventana_indices = Ventana_indices(self.ventana, self.indices)
+    def todos_unos(lista):
+        for elemento in lista:
+            if elemento.get() != 1:
+                return False
+        return True
 
 
-class Ventana_addendum(tk.Toplevel):
+class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
+    def __init__(self, ventana_principal, widgets, titulo, color_botones):
+        super().__init__(ventana_principal)
+        self.widgets = widgets
+        self.title(titulo)
+        self.ancho = 500
+        self.alto = 550
+        self.geometry(self.centrar_ventana(ventana_principal, self.ancho, self.alto))
+        self.configure(bg=self.color_back)
+        self.crear_widgets(widgets, color_botones)
+
+    def crear_widgets(self, wid, colores):
+        widgets = copy.deepcopy(wid)
+        color_botones = colores
+        widgets.append(
+            {
+                "nombre": "volver",
+                "texto": "Volver al menú",
+                "callback": lambda: self.volver_a_principal(),
+            }
+        )
+
+        estilo_fuente = ("Palatino Linotype", 16)
+        b_alto = 50
+        b_ancho = 250
+
+        separacion = b_alto * 1.8
+        x_pos = int(self.ancho / 2) - int(b_ancho / 2)
+        y_pos = (self.alto / 2) - (
+            ((b_alto * len(widgets)) + (separacion * (len(widgets) - 1))) / 1.5
+        ) / 2
+
+        for widget in widgets:
+            widget["nombre"] = tk.Button(
+                self,
+                text=widget["texto"],
+                bg=color_botones,
+                fg="black",
+                font=estilo_fuente,
+                command=widget["callback"],
+            )
+            widget["nombre"].place(
+                x=x_pos,
+                y=y_pos,
+                width=b_ancho,
+                height=b_alto,
+            )
+
+            y_pos += separacion
+
+    def volver_a_principal(self):
+        self.winfo_toplevel().deiconify()
+        self.destroy()
+
+
+class Ventana_addendum(tk.Toplevel, Ventana_Base):
     def __init__(
         self,
         ventana,
         archivo=[],
     ):
-        super().__init__()
+        super().__init__(ventana)
         self.title("Módulo Addendum")
         self.ancho = 400
         self.alto = 300
@@ -473,7 +585,6 @@ class Ventana_addendum(tk.Toplevel):
         self.registros = archivo
         self.original = ""
         self.crear_widgets()
-        self.correr()
 
     def crear_widgets(self):
         # Crear treeview con 3 columnas
@@ -492,10 +603,11 @@ class Ventana_addendum(tk.Toplevel):
         self.treeview.column("calificacion", minwidth=0, width=290, anchor="center")
 
         # Agregar datos al treeview (ejemplo)
-        for registro in self.registros:
-            self.treeview.insert(
-                "", "end", values=(registro[0], registro[1], registro[2])
-            )
+        if len(self.registros) > 0:
+            for registro in self.registros:
+                self.treeview.insert(
+                    "", "end", values=(registro[0], registro[1], registro[2])
+                )
 
         self.treeview.bind(
             "<ButtonRelease-1>",
@@ -555,103 +667,127 @@ class Ventana_addendum(tk.Toplevel):
             f"Se ha agregado la nueva carátula a la base de datos de calificaciones.",
         )
 
-    @staticmethod
-    def centrar_ventana(win, window_width, window_height):
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-        center_x = int(screen_width / 2 - window_width / 2)
-        center_y = int(screen_height / 2 - window_height / 2)
-        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
 
-    def correr(self):
-        self.mainloop()
-
-
-class Ventana_errores(tk.Toplevel):
+class Ventana_errores(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana):
-        super().__init__()
+        super().__init__(ventana)
         self.title("Módulo errores")
-        self.ancho = 400
-        self.alto = 300
+        self.ancho = 720
+        self.alto = 200
         self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.geometry("400x100")
         self.corregido = None
+        self.config(bg=self.color_back)
         self.crear_botones()
-        self.correr()
 
     def crear_botones(self):
-        # Crear un contenedor para los botones
-        contenedor_botones = tk.Frame(self)
-        contenedor_botones.pack(pady=10)
-
+        estilo_fuente = ("Palatino Linotype", 14)
+        alto = 50
+        ancho = 150
+        separacion = 85
+        y_pos = (self.alto / 2) - (alto / 2)
+        x_pos = 50
         self.boton_original = tk.Button(
-            contenedor_botones,
+            self,
             text="Original",
+            bg=self.rojo,
             width=10,
+            font=estilo_fuente,
             command=lambda: self.cargar_original(),
         )
-        self.boton_original.pack(side=tk.LEFT, padx=40)
+        self.boton_original.place(
+            x=x_pos,
+            y=y_pos,
+            width=ancho,
+            height=alto,
+        )
 
         self.boton_enmendado = tk.Button(
-            contenedor_botones,
+            self,
             text="Enmendado",
+            bg="#EA3830",
             width=10,
+            font=estilo_fuente,
             command=lambda: self.cargar_enmendado(),
         )
-        self.boton_enmendado.pack(side=tk.RIGHT, padx=40)
+        self.boton_enmendado.place(
+            x=x_pos + (separacion + ancho) * 2,
+            y=y_pos,
+            width=ancho,
+            height=alto,
+        )
 
         self.boton_corregir = tk.Button(
-            self, text="Corregir Original", command=lambda: self.corregir_original()
+            self,
+            text="Corregir Original",
+            font=estilo_fuente,
+            bg=self.amarillo,
+            command=lambda: self.corregir_original(),
         )
-        self.boton_corregir.pack(pady=10)
+        self.boton_corregir.place(
+            x=x_pos + (separacion + ancho),
+            y=y_pos,
+            width=ancho,
+            height=alto,
+        )
 
     def corregir_original(self):
-        original = model.Administrador._cargar(
-            self.path_original,
-        )
-        enmendado = model.Administrador._cargar(
-            self.path_enmendado, no_tiene_encabezados=False, es_original=False
-        )
+        try:
+            original = model.Administrador._cargar(
+                self.path_original,
+            )
+            enmendado = model.Administrador._cargar(
+                self.path_enmendado, no_tiene_encabezados=False, es_original=False
+            )
 
-        for error in enmendado:
-            original[int(error[0])][0] = error[2]
+            for error in enmendado:
+                original[int(error[0])][0] = error[2]
 
-        nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
-        ult = pd.DataFrame(original)
-        ult.to_excel(
-            rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx",
-            index=False,
-            header=False,
-        )
-        print(f"{nombre_archivo} corregido correctamente")
-        return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx"
+            nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
+            ult = pd.DataFrame(original)
+            ult.to_excel(
+                rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx",
+                index=False,
+                header=False,
+            )
+            self.boton_corregir.config(bg="#27EA00")
+            tk.messagebox.showinfo(
+                "Corregido", f"¡El archivo fue corredido correctamente!"
+            )
+            return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx"
+        except Exception as error:
+            tk.messagebox.showinfo(
+                "Advertencia", f"Ha ocurrido el siguiente error:\n {error}"
+            )
 
     def cargar_original(self):
-        self.path_original = filedialog.askopenfilename()
+        path = filedialog.askopenfilename()
+        if path:
+            self.path_original = path
+            self.boton_original.config(bg=self.verde)
+        else:
+            tk.messagebox.showinfo(
+                "Advertencia", f"No se ha seleccionado ningún archivo."
+            )
 
     def cargar_enmendado(self):
-        self.path_enmendado = filedialog.askopenfilename()
-
-    def correr(self):
-        self.mainloop()
-
-    @staticmethod
-    def centrar_ventana(win, window_width, window_height):
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-        center_x = int(screen_width / 2 - window_width / 2)
-        center_y = int(screen_height / 2 - window_height / 2)
-        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
+        path = filedialog.askopenfilename()
+        if path:
+            self.path_enmendado = path
+            self.boton_enmendado.config(bg="#27EA00")
+        else:
+            tk.messagebox.showinfo(
+                "Advertencia", f"No se ha seleccionado ningún archivo."
+            )
 
 
-class Ventana_indices(tk.Toplevel):
+class Ventana_indices(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana, indices):
-        super().__init__()
+        super().__init__(ventana)
         self.title("Etiquetas y Cuadros de Texto")
         self.ancho = 360
         self.alto = 300
         self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.configure(bg="gray")
+        self.configure(bg=self.color_back)
         self.crear_widgets(indices)
 
     def crear_widgets(self, indices):
@@ -676,7 +812,8 @@ class Ventana_indices(tk.Toplevel):
                 self,
                 text=etiqueta_texto,
                 font=font_label,
-                bg="gray",
+                fg="white",
+                bg=self.color_back,
             )
             etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
             self.etiquetas_labels.append(etiqueta)
@@ -715,19 +852,10 @@ class Ventana_indices(tk.Toplevel):
     def actualizar_indices(self, indices, entries):
         for i, ind in enumerate(indices):
             ind.set(entries[i].get())
-        self.withdraw()
         tk.messagebox.showinfo(
             "Indices configurados", f"Los índices fueron configurados correctamente"
         )
         self.destroy()
-
-    @staticmethod
-    def centrar_ventana(win, window_width, window_height):
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-        center_x = int(screen_width / 2 - window_width / 2)
-        center_y = int(screen_height / 2 - window_height / 2)
-        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
 
     def conectar_con_base(self):
         try:
@@ -810,3 +938,144 @@ class Ventana_indices(tk.Toplevel):
 
         except FileNotFoundError:
             tk.messagebox.showinfo("!!", f"No se ha seleccionado ningún archivo")
+
+
+class Ventana_conectar(tk.Toplevel, Ventana_Base):
+    def __init__(self, ventana):
+        super().__init__(ventana)
+        self.title("Etiquetas y Cuadros de Texto")
+        self.ancho = 360
+        self.alto = 360
+        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
+        self.configure(bg=self.color_back)
+
+        self.host = tk.StringVar()
+        self.user = tk.StringVar()
+        self.passw = tk.StringVar()
+        self.base = tk.StringVar()
+
+        self.host.set("localhost")
+        self.user.set("root")
+        self.passw.set("")
+        self.base.set("monitoreo")
+
+        self.set_vars = [self.host, self.user, self.passw, self.base]
+
+        self.crear_widgets()
+
+    def crear_widgets(
+        self,
+    ):
+        etiquetas = [
+            "HOST: ",
+            "USER: ",
+            "PASS: ",
+            "DATABASE: ",
+        ]
+
+        sep_x = 30
+        sep_y = 0.5
+        font_label = Font(weight="bold", size=9)
+        self.etiquetas_labels = []
+        self.etiquetas_entries = []
+
+        for i, etiqueta_texto in enumerate(etiquetas):
+            etiqueta = tk.Label(
+                self,
+                text=etiqueta_texto,
+                font=font_label,
+                fg="white",
+                bg=self.color_back,
+            )
+            etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
+            self.etiquetas_labels.append(etiqueta)
+
+            cuadro_texto = tk.Entry(
+                self,
+                textvariable=self.set_vars[i],
+            )
+            cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
+            self.etiquetas_entries.append(cuadro_texto)
+
+        self.btn_base = tk.Button(
+            self,
+            text="Conectar a base",
+            bg=self.amarillo,
+            command=lambda: self.conectar_con_base(),
+        )
+        self.btn_base.place(x=150, y=310)
+
+    def conectar_con_base(self):
+        try:
+
+            indices = []
+
+            datos_conexion = [
+                self.etiquetas_entries[0].get(),
+                self.etiquetas_entries[1].get(),
+                self.etiquetas_entries[2].get(),
+                self.etiquetas_entries[3].get(),
+            ]
+
+            conexion = mysql.connector.connect(
+                host=datos_conexion[0],
+                user=datos_conexion[1],
+                password=datos_conexion[2],
+                database=datos_conexion[3],
+            )
+
+            # Crear un cursor para ejecutar consultas
+            cursor = conexion.cursor()
+
+            consulta = "SELECT max(id_hecho) FROM hechos"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            consulta = "SELECT max(id) FROM armas"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            consulta = "SELECT max(id) FROM automotores"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            consulta = "SELECT max(id) FROM objetos"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            consulta = "SELECT max(id) FROM secuestros"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            consulta = "SELECT max(id) FROM involucrados"
+            cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            for fila in resultados:
+                indices.append(fila[0])
+
+            # Cerrar el cursor y la conexión
+            cursor.close()
+            conexion.close()
+
+            self.btn_base.config(bg=self.verde)
+
+            tk.messagebox.showinfo(
+                "Conexión satisfactoria",
+                "Se ha logrado establecer conexión con la base de datos",
+            )
+
+            for i in range(0, len(datos_conexion)):
+                self.set_vars[i].set(datos_conexion[i])
+
+        except Exception:
+            tk.messagebox.showinfo("-.-", "Fijate de abrir el XAMPP, genio")

@@ -1,6 +1,8 @@
 import view
+import tkinter as tk
 
 
 if __name__ == "__main__":
-    app = view.Ventana_principal()
+    master = tk.Tk()
+    app = view.Ventana_Principal(master)
     app.iniciar()

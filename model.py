@@ -719,7 +719,6 @@ class Inicial(Core_Inicial):
                 lambda lista: self._formatear_fecha(lista), self.sin_duplicados
             )  # da el formato correcto a las columnas "fecha_carga","fecha_inicio_hecho" y "fecha_final_hecho"
         )
-        print(self.sin_duplicados[0])
         self.sin_duplicados = list(
             map(lambda registro: self.limpiar_relato(registro), self.sin_duplicados)
         )
