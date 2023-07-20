@@ -1,14 +1,20 @@
 import tkinter as tk
 import model
 import mysql.connector
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter.font import Font
-import checkpoints as ck
-import pandas as pd
-from pathlib import Path as Ph
+import locale
+import datetime
 import os
 import copy
+import checkpoints as ck
+import pandas as pd
+import numpy as np
+from tkinter import filedialog
+from tkinter import messagebox
+from tkinter import ttk
+from tkinter.font import Font
+from pathlib import Path as Ph
+
+locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
 class Ventana_Base:
@@ -95,12 +101,12 @@ class Ventana_Principal(Ventana_Base):
             {
                 "nombre": "testear",
                 "texto": "Testear integridad",
-                "callback": lambda: None,
+                "callback": lambda: self.chequear_integridad(self.ventana_top),
             },
             {
                 "nombre": "subir",
                 "texto": "Subir a Base",
-                "callback": lambda: None,
+                "callback": lambda: self.subir_a_base(self.ventana_top),
             },
         ]
 
@@ -453,6 +459,57 @@ class Ventana_Principal(Ventana_Base):
                     n += 1  # Incrementar n para verificar el siguiente número
         return True
 
+    def comprobar_fechas(self, archivo, fecha=True):
+        xls = pd.ExcelFile(archivo)
+        df = pd.read_excel(xls, sheet_name="datos_hecho")
+        columna = df.iloc[:, 3]
+        fechas = sorted(list(set(columna.astype(str).values[0:])))
+        if fecha:
+            if len(fechas) == 1:
+                return True, "(FECHA INDIVIDUAL) Coherencia comprobada"
+            else:
+                return (
+                    False,
+                    f"(FECHA INDIVIDUAL) Error en coherencia. Demasiadas fechas en archivo: {fechas}",
+                )
+
+        else:
+            mes = []
+            for fecha in fechas:
+                fecha_ = datetime.datetime.strptime(fecha, "%Y-%m-%d")
+                mes.append(fecha_.strftime("%B"))
+            mes_final = list(set(mes))
+            if 29 < len(fechas) < 32:
+                if len(mes_final) == 1:
+                    return (
+                        True,
+                        f"(MES) Coherencia comprobada. Fechas correspondientes a: {mes_final[0]}",
+                    )
+                else:
+                    return (
+                        False,
+                        f"(MES) Error en coherencia. Demasiados meses en archivo: {mes_final}",
+                    )
+            elif 27 < len(fechas) < 30:
+                if mes_final[0] == "febrero":
+                    if len(mes_final) == 1:
+                        return (
+                            True,
+                            f"(MES) Coherencia comprobada. Fechas correspondientes a: {mes_final[0]}",
+                        )
+                    else:
+                        return (
+                            False,
+                            f"(MES) Error en coherencia. Demasiados meses en archivo: {mes_final}",
+                        )
+            else:
+                return False, f"(MES) Error en coherencia: {fechas}"
+
+    def comprobar_nulos(self, archivo, advertencias=True):
+        adm = model.Administrador._cargar_final(archivo)
+        res2 = model.Formateador.comprobar_salida(adm, advertencias=advertencias)
+        return res2
+
     def abrir_ventana_intermedia(self, widgets, titulo, colores_botones):
         self.ventana_top = Ventana_Intermedia(
             self.ventana, widgets, titulo, colores_botones
@@ -508,6 +565,104 @@ class Ventana_Principal(Ventana_Base):
                 "Advertencia", f"No se ha seleccionado ningún archivo."
             )
 
+    def chequear_integridad(self, ventana):
+        path = filedialog.askopenfilename()
+        respuesta = messagebox.askyesno(
+            "Selecciona tipo de archivo",
+            "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
+        )
+        # COMPROBAR FECHAS
+        if respuesta:
+            # COMPROBAR INDICES DE FECHA
+            try:
+                if self.comprobar_indices(path):
+                    tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    # COMPROBAR COHERENCIA DE FECHA
+                    try:
+                        res = self.comprobar_fechas(path)
+                        if res[0]:
+                            tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
+                            try:
+                                res2 = self.comprobar_nulos(path, advertencias=False)
+                                if res2 == "":
+                                    tk.messagebox.showinfo(
+                                        "Tablas comprobadas",
+                                        f"Comprobada integridad de campos vacios y campos no nulos.",
+                                    )
+                                    ventana.botones[1].config(bg=self.verde)
+                                    ventana.a_subir = model.Administrador._cargar_final(
+                                        path
+                                    )
+                                else:
+                                    tk.messagebox.showwarning("Advertencia", f"{res2}")
+                                    ventana.botones[1].config(bg=self.amarillo)
+                            except Exception as error:
+                                tk.messagebox.showerror(
+                                    "Error", f"Error al comprobar nulos: {error}"
+                                )
+                                ventana.botones[1].config(bg=self.rojo)
+                        else:
+                            tk.messagebox.showwarning("Advertencia", f"{res[1]}")
+                            ventana.botones[1].config(bg=self.amarillo)
+                    except Exception as error:
+                        tk.messagebox.showerror(
+                            "Error", f"Error al comprobar fechas: {error}"
+                        )
+                        ventana.botones[1].config(bg=self.rojo)
+                else:
+                    tk.messagebox.showwarning("Advertencia", f"Indices no correctos.")
+                    ventana.botones[1].config(bg=self.amarillo)
+            except Exception as error:
+                tk.messagebox.showerror("Error", f"Error al comprobar índices: {error}")
+                ventana.botones[1].config(bg=self.rojo)
+
+        # COMPROBAR MES
+        else:
+            # COMPROBAR INDICES DE MES
+            try:
+                if self.comprobar_indices(path):
+                    tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    # COMPROBAR COHERENCIA DE MES
+                    try:
+                        res = self.comprobar_fechas(path, fecha=False)
+                        if res[0]:
+                            tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
+                            try:
+                                res2 = self.comprobar_nulos(path, advertencias=False)
+                                if res2 == "":
+                                    tk.messagebox.showinfo(
+                                        "Tablas comprobadas",
+                                        f"Comprobada integridad de campos vacios y campos no nulos.",
+                                    )
+                                    ventana.botones[1].config(bg=self.verde)
+                                    ventana.a_subir = model.Administrador._cargar_final(
+                                        path
+                                    )
+                                else:
+                                    tk.messagebox.showwarning("Advertencia", f"{res2}")
+                                    ventana.botones[1].config(bg=self.amarillo)
+                            except Exception as error:
+                                tk.messagebox.showerror(
+                                    "Error", f"Error al comprobar nulos: {error}"
+                                )
+                                ventana.botones[1].config(bg=self.rojo)
+                        else:
+                            tk.messagebox.showwarning("Advertencia", f"{res[1]}")
+                            ventana.botones[1].config(bg=self.amarillo)
+                    except Exception as error:
+                        tk.messagebox.showerror(
+                            "Error", f"Error al comprobar fechas: {error}"
+                        )
+                        ventana.botones[1].config(bg=self.rojo)
+                else:
+                    tk.messagebox.showwarning("Advertencia", f"Indices no correctos.")
+                    ventana.botones[1].config(bg=self.amarillo)
+            except Exception as error:
+                tk.messagebox.showerror("Error", f"Error al comprobar índices: {error}")
+                ventana.botones[1].config(bg=self.rojo)
+
     @staticmethod
     def todos_unos(lista):
         for elemento in lista:
@@ -515,14 +670,43 @@ class Ventana_Principal(Ventana_Base):
                 return False
         return True
 
+    def subir_a_base(self, ventana):
+        def filtrar(lista):
+            final = [
+                lista[i]
+                for i in [0, 1, 3, 4, 7, 10, 11, 14, 15, 17, 18, 19, 20, 24, 26, 29]
+            ]
+            final2 = [None if pd.isnull(value) else value for value in final]
+            return final2
+
+        conexion = mysql.connector.connect(
+            host=ventana.conexion[0],
+            user=ventana.conexion[1],
+            password=ventana.conexion[2],
+            database=ventana.conexion[3],
+        )
+
+        cursor = conexion.cursor()
+        lista = ventana.a_subir[0]
+        lista2 = list(map(lambda x: filtrar(x), lista))
+
+        try:
+            consulta = "INSERT INTO datos_hecho (id_hecho, nro_registro, fecha_carga, hora_carga, dependencia, fecha_inicio_hecho, hora_inicio_hecho, partido_hecho, localidad_hecho, latitud, calle, longitud, altura, entre, calificaciones, relato) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            cursor.executemany(consulta, lista2)
+            conexion.commit()
+            tk.messagebox.showinfo("Todo OK", f"¡Archivo insertado correctamente!")
+        except Exception as error:
+            tk.messagebox.showerror("Error durante la inserción", f"{error}")
+        conexion.close()
+
 
 class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana_principal, widgets, titulo, color_botones):
         super().__init__(ventana_principal)
         self.widgets = widgets
         self.title(titulo)
-        self.ancho = 500
-        self.alto = 550
+        self.ancho = 400
+        self.alto = 450
         self.geometry(self.centrar_ventana(ventana_principal, self.ancho, self.alto))
         self.configure(bg=self.color_back)
         self.crear_widgets(widgets, color_botones)
@@ -548,6 +732,8 @@ class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
             ((b_alto * len(widgets)) + (separacion * (len(widgets) - 1))) / 1.5
         ) / 2
 
+        self.botones = []
+
         for widget in widgets:
             widget["nombre"] = tk.Button(
                 self,
@@ -563,6 +749,8 @@ class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
                 width=b_ancho,
                 height=b_alto,
             )
+
+            self.botones.append(widget["nombre"])
 
             y_pos += separacion
 
@@ -961,11 +1149,9 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
 
         self.set_vars = [self.host, self.user, self.passw, self.base]
 
-        self.crear_widgets()
+        self.crear_widgets(ventana)
 
-    def crear_widgets(
-        self,
-    ):
+    def crear_widgets(self, ventana):
         etiquetas = [
             "HOST: ",
             "USER: ",
@@ -1001,11 +1187,16 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             self,
             text="Conectar a base",
             bg=self.amarillo,
-            command=lambda: self.conectar_con_base(),
+            command=lambda: self.conectar_con_base(ventana),
         )
-        self.btn_base.place(x=150, y=310)
+        self.btn_base.place(x=140, y=310)
 
-    def conectar_con_base(self):
+    def conectar_con_base(self, ventana):
+
+        output = tk.Text(self, background=self.color_botones)
+        output.config(borderwidth=2, relief="sunken")
+        output.place(x=58, y=135, width=250, height=165)
+
         try:
 
             indices = []
@@ -1027,41 +1218,89 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             # Crear un cursor para ejecutar consultas
             cursor = conexion.cursor()
 
-            consulta = "SELECT max(id_hecho) FROM hechos"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id_hecho) FROM datos_hecho"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'datos_hecho'"
+                )
 
-            consulta = "SELECT max(id) FROM armas"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id) FROM armas"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'armas'"
+                )
 
-            consulta = "SELECT max(id) FROM automotores"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id) FROM automotores"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'automotores'"
+                )
 
-            consulta = "SELECT max(id) FROM objetos"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id) FROM objetos"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'objetos'"
+                )
 
-            consulta = "SELECT max(id) FROM secuestros"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id) FROM secuestros"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'secuestros'"
+                )
 
-            consulta = "SELECT max(id) FROM involucrados"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
+            try:
+                consulta = "SELECT max(id) FROM involucrados"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                tk.messagebox.showwarning(
+                    "Advertencia", f"No se ha encontrado tabla 'involucrados'"
+                )
 
             # Cerrar el cursor y la conexión
             cursor.close()
@@ -1074,8 +1313,26 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 "Se ha logrado establecer conexión con la base de datos",
             )
 
-            for i in range(0, len(datos_conexion)):
-                self.set_vars[i].set(datos_conexion[i])
+            ventana.botones[0].config(bg=self.verde)
 
-        except Exception:
-            tk.messagebox.showinfo("-.-", "Fijate de abrir el XAMPP, genio")
+            ventana.conexion = datos_conexion.copy()
+
+            texto = "Conexión satisfactoria! \n\n"
+            tags = (
+                "Hechos: ",
+                "Armas: ",
+                "Automotores: ",
+                "Objetos: ",
+                "Secuestros: ",
+                "Involucrados: ",
+            )
+            for i in range(0, len(indices)):
+                texto += tags[i] + str(indices[i]) + "\n"
+
+            print(texto)
+            output.insert(tk.END, texto)
+
+        except Exception as error:
+            tk.messagebox.showinfo("-.-", error)
+            texto = "No se ha podido establecer conexión..."
+            output.insert(tk.END, texto)

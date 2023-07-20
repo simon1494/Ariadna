@@ -11,6 +11,7 @@ locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
 class Administrador:
+    @staticmethod
     def _cargar(path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
             data = pd.read_excel(path, header=None)
@@ -138,6 +139,18 @@ class Administrador:
             else:
                 nuevos_indices.append(antiguos[i] - 1)
         return nuevos_indices
+
+    def _cargar_final(path):
+        df = pd.read_excel(path, sheet_name=None)
+        lista_anidada = []
+        for hoja, datos in df.items():
+            registros = []
+            for indice, fila in datos.iterrows():
+                registro = fila.to_list()
+                registros.append(registro)
+            lista_anidada.append(registros)
+
+        return lista_anidada
 
 
 class CoreMotor:
@@ -544,7 +557,7 @@ class Formateador(CoreMotor):
         return texto5
 
     @staticmethod
-    def comprobar_salida(archivo):
+    def comprobar_salida(archivo, advertencias=True):
         tablas = {
             "hechos": pd.DataFrame(archivo[0]),
             "armas": pd.DataFrame(archivo[2]),
@@ -555,11 +568,30 @@ class Formateador(CoreMotor):
         }
         df_vacios = []
         columnas_vacias = []
+        no_nulos_con_nulos = []
 
         for campo, df in tablas.items():
             if len(df) > 0:
+                if campo == "hechos":
+                    for columna in df.columns:
+                        if columna in [0, 1, 3, 4, 7, 14, 26, 29]:
+                            contiene_nulos = df[columna].isna().any()
+                            if contiene_nulos:
+                                no_nulos_con_nulos.append((columna, campo))
+                if campo in ["armas", "automotores", "objetos", "secuestros"]:
+                    for columna in df.columns:
+                        if columna in [0, 1, 2, 8]:
+                            contiene_nulos = df[columna].isna().any()
+                            if contiene_nulos:
+                                no_nulos_con_nulos.append((columna, campo))
+                if campo == "involucrados":
+                    for columna in df.columns:
+                        if columna in [0, 1, 2]:
+                            contiene_nulos = df[columna].isna().any()
+                            if contiene_nulos:
+                                no_nulos_con_nulos.append((columna, campo))
                 for columna in df.columns:
-                    if columna != 27:
+                    if columna not in [7, 27, 30]:
                         contiene_nan = df[columna].isna().all()
                         if contiene_nan:
                             columnas_vacias.append((columna, campo))
@@ -568,21 +600,29 @@ class Formateador(CoreMotor):
 
         mensaje = ""
 
-        if len(df_vacios) > 0:
-            mensaje = mensaje + "Las siguientes tablas estan vacías:\n"
-            for item in df_vacios:
-                mensaje = mensaje + f"\n -'{item}'"
-
         if len(columnas_vacias) > 0:
             mensaje = mensaje + "\n\nLas siguientes columnas estan vacías:"
             for columna, tabla in columnas_vacias:
                 mensaje = mensaje + f"\n -Columna {columna} de la tabla '{tabla}'"
 
-        if 1200 > len(tablas["hechos"]) > 2400:
-            if 1200 > len(tablas["hechos"]):
-                mensaje = mensaje + "\n\nEl archivo contiene menos de 1200 registros."
-            elif len(tablas["hechos"]) > 2400:
-                mensaje = mensaje + "\n\nEl archivo contiene más de 2400 registros."
+        if len(no_nulos_con_nulos) > 0:
+            mensaje = mensaje + "\n\nLas siguientes columnas no nulas contienen nulos:"
+            for columna, tabla in no_nulos_con_nulos:
+                mensaje = mensaje + f"\n -Columna {columna} de la tabla '{tabla}'"
+
+        if advertencias:
+            if len(df_vacios) > 0:
+                mensaje = mensaje + "Las siguientes tablas estan vacías:\n"
+                for item in df_vacios:
+                    mensaje = mensaje + f"\n -'{item}'"
+
+            if 1200 > len(tablas["hechos"]) > 2400:
+                if 1200 > len(tablas["hechos"]):
+                    mensaje = (
+                        mensaje + "\n\nEl archivo contiene menos de 1200 registros."
+                    )
+                elif len(tablas["hechos"]) > 2400:
+                    mensaje = mensaje + "\n\nEl archivo contiene más de 2400 registros."
 
         return mensaje
 
