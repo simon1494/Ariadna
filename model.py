@@ -383,6 +383,14 @@ class Core_Final(CoreMotor):
         return self._separar(nuevo, self._seleccionar_splitter(columna))
 
     def _separar(self, archivo, splitter):
+        def mapear_elemento(item, splitter):
+            if splitter == "OTROS OBJETOS Tipo ":
+                item = item.replace("OTROS OBJETOS ", "")
+                return item
+            if splitter == "ELEMENTOS SECUESTRADOS Tipo ":
+                item = item.replace("ELEMENTOS SECUESTRADOS ", "")
+                return item
+
         nuevo = []
         for i in range(0, len(archivo)):
             texto = archivo[i][1]
@@ -392,6 +400,11 @@ class Core_Final(CoreMotor):
             del matches[0]
             matches = list(map(lambda x: a + x, matches))
             matches = list(map(lambda x: id + x, matches))
+            if (
+                splitter == "OTROS OBJETOS Tipo "
+                or splitter == "ELEMENTOS SECUESTRADOS Tipo "
+            ):
+                matches = list(map(lambda x: mapear_elemento(x, splitter), matches))
             nuevo.extend(matches)
         return nuevo
 
@@ -480,9 +493,9 @@ class Core_Final(CoreMotor):
             case 43:
                 return ck.splitters["armas"]
             case 44:
-                return ck.splitters["elementos"]
+                return ck.splitters["secuestros"]
             case 45:
-                return ck.splitters["elementos"]
+                return ck.splitters["objetos"]
 
     def _todos_los_involucrados(self, involucrados, indice, limpiar=False):
         nuevo = []
@@ -533,6 +546,7 @@ class Formateador(CoreMotor):
             texto2 = texto.replace("\n", " ")
             texto2 = texto2.replace("  ", " ")
             texto2 = self._clean_regexs(texto2)
+            texto2 = texto2.replace("  ", " ")
             final.append(texto2)
             valor = iden.pop(que_uso[0])
             iden[" Nro registro: "] = valor

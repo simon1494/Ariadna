@@ -39,7 +39,7 @@ class Ventana_Base:
 class Ventana_Principal(Ventana_Base):
     def __init__(self, master):
         self.ventana = master
-        self.ventana.title("Ariadna b-1.0.1")
+        self.ventana.title("Ariadna b-2.1.0")
         self.ventana.ancho = 900
         self.ventana.alto = 250
         self.ventana.geometry(
@@ -317,76 +317,159 @@ class Ventana_Principal(Ventana_Base):
             )
 
     def procesar_varios(self):
-        try:
-            carpeta = filedialog.askdirectory()
-            archivos = os.listdir(carpeta)
+        if not self.todos_unos(self.indices):
+            try:
+                carpeta = filedialog.askdirectory()
+                archivos = os.listdir(carpeta)
 
-            indices = list(map(lambda var: var.get(), self.indices))
-            for archivo in archivos:
-                path = os.path.join(
-                    carpeta, archivo
-                )  # Obtener la ruta completa del archivo
-                if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
-                    try:
-                        archivo1 = model.Administrador._cargar(
-                            path, no_tiene_encabezados=False
-                        )
+                indices = list(map(lambda var: var.get(), self.indices))
+                for archivo in archivos:
+                    path = os.path.join(
+                        carpeta, archivo
+                    )  # Obtener la ruta completa del archivo
+                    if os.path.isfile(
+                        path
+                    ):  # Comprobar si es un archivo (no una carpeta)
                         try:
-                            segmentado = model.Segmentado(
-                                archivo1, indices, carpeta=True
+                            archivo1 = model.Administrador._cargar(
+                                path, no_tiene_encabezados=False
                             )
                             try:
-                                mensaje = model.Formateador.comprobar_salida(
-                                    segmentado.final
+                                segmentado = model.Segmentado(
+                                    archivo1, indices, carpeta=True
                                 )
-                                if mensaje != "":
-                                    tk.messagebox.showinfo("Advertencia", mensaje)
                                 try:
-                                    model.Administrador._convertir_segmentado(
-                                        segmentado.final, nombre=archivo
+                                    mensaje = model.Formateador.comprobar_salida(
+                                        segmentado.final
                                     )
-                                    print(f"\nPreparando {archivo}")
+                                    if mensaje != "":
+                                        tk.messagebox.showinfo("Advertencia", mensaje)
                                     try:
-                                        indices_finales = (
-                                            model.Administrador._obtener_indices(
-                                                segmentado.final, indices
+                                        model.Administrador._convertir_segmentado(
+                                            segmentado.final, nombre=archivo
+                                        )
+                                        print(f"\nPreparando {archivo}")
+                                        try:
+                                            indices_finales = (
+                                                model.Administrador._obtener_indices(
+                                                    segmentado.final, indices
+                                                )
                                             )
-                                        )
-                                        print(f"Iniciales: {str(indices)}")
-                                        print(f"Finales: {str(indices_finales)}")
-                                        indices = list(
-                                            map(lambda x: x + 1, indices_finales)
-                                        )
-                                        print(f"Siguientes: {str(indices)}")
+                                            print(f"Iniciales: {str(indices)}")
+                                            print(f"Finales: {str(indices_finales)}")
+                                            indices = list(
+                                                map(lambda x: x + 1, indices_finales)
+                                            )
+                                            print(f"Siguientes: {str(indices)}")
+                                        except Exception as error:
+                                            print(
+                                                f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                            )
                                     except Exception as error:
                                         print(
-                                            f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                            f"({archivo}) Error en conversión final a formato Excel: {error}"
                                         )
                                 except Exception as error:
                                     print(
-                                        f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                        f"({archivo}) Error en la comprobación de datos salientes: {error}"
                                     )
                             except Exception as error:
                                 print(
-                                    f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                    f"({archivo}) Error en etapa de procesado: {error}"
                                 )
                         except Exception as error:
-                            print(f"({archivo}) Error en etapa de procesado: {error}")
-                    except Exception as error:
-                        print(f"({archivo}) Error en etapa de carga: {error}")
-                print(f"Listo {archivo}")
+                            print(f"({archivo}) Error en etapa de carga: {error}")
+                    print(f"Listo {archivo}")
+                tk.messagebox.showinfo(
+                    "Aviso",
+                    "El procesado de no segmentados ha sido completado.",
+                )
+            except FileNotFoundError:
+                tk.messagebox.showinfo(
+                    "Advertencia", f"No se ha seleccionado ninguna carpeta."
+                )
+        else:
             tk.messagebox.showinfo(
-                "Aviso",
-                "El procesado de no segmentados ha sido completado.",
+                "Advertencia", f"Antes de segmentar, primero setee los indices."
             )
-        except FileNotFoundError:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ninguna carpeta."
+            self.abrir_ventana_top_intermedia(
+                self.ventana_top, Ventana_indices, self.indices
             )
+            indices = list(map(lambda var: var.get(), self.indices))
+            try:
+                carpeta = filedialog.askdirectory()
+                archivos = os.listdir(carpeta)
+
+                indices = list(map(lambda var: var.get(), self.indices))
+                for archivo in archivos:
+                    path = os.path.join(
+                        carpeta, archivo
+                    )  # Obtener la ruta completa del archivo
+                    if os.path.isfile(
+                        path
+                    ):  # Comprobar si es un archivo (no una carpeta)
+                        try:
+                            archivo1 = model.Administrador._cargar(
+                                path, no_tiene_encabezados=False
+                            )
+                            try:
+                                segmentado = model.Segmentado(
+                                    archivo1, indices, carpeta=True
+                                )
+                                try:
+                                    mensaje = model.Formateador.comprobar_salida(
+                                        segmentado.final
+                                    )
+                                    if mensaje != "":
+                                        tk.messagebox.showinfo("Advertencia", mensaje)
+                                    try:
+                                        model.Administrador._convertir_segmentado(
+                                            segmentado.final, nombre=archivo
+                                        )
+                                        print(f"\nPreparando {archivo}")
+                                        try:
+                                            indices_finales = (
+                                                model.Administrador._obtener_indices(
+                                                    segmentado.final, indices
+                                                )
+                                            )
+                                            print(f"Iniciales: {str(indices)}")
+                                            print(f"Finales: {str(indices_finales)}")
+                                            indices = list(
+                                                map(lambda x: x + 1, indices_finales)
+                                            )
+                                            print(f"Siguientes: {str(indices)}")
+                                        except Exception as error:
+                                            print(
+                                                f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                            )
+                                    except Exception as error:
+                                        print(
+                                            f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                        )
+                                except Exception as error:
+                                    print(
+                                        f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                    )
+                            except Exception as error:
+                                print(
+                                    f"({archivo}) Error en etapa de procesado: {error}"
+                                )
+                        except Exception as error:
+                            print(f"({archivo}) Error en etapa de carga: {error}")
+                    print(f"Listo {archivo}")
+                tk.messagebox.showinfo(
+                    "Aviso",
+                    "El procesado de no segmentados ha sido completado.",
+                )
+            except FileNotFoundError:
+                tk.messagebox.showinfo(
+                    "Advertencia", f"No se ha seleccionado ninguna carpeta."
+                )
 
     def compilar_archivos(self):
         carpeta = filedialog.askdirectory()
-        print(carpeta)
+        print("\n")
         archivos = os.listdir(carpeta)
 
         # Nombre del archivo final
@@ -450,7 +533,7 @@ class Ventana_Principal(Ventana_Base):
             # Verificar si la lista contiene enteros consecutivos en orden ascendente
             for tupla in tuplas_hojas:
                 if not tupla:  # Si la lista está vacía, no se considera consecutiva
-                    return False
+                    break
 
                 n = tupla[0]  # Primer elemento de la lista
                 for num in tupla:
@@ -663,21 +746,46 @@ class Ventana_Principal(Ventana_Base):
                 tk.messagebox.showerror("Error", f"Error al comprobar índices: {error}")
                 ventana.botones[1].config(bg=self.rojo)
 
-    @staticmethod
-    def todos_unos(lista):
-        for elemento in lista:
-            if elemento.get() != 1:
-                return False
-        return True
-
     def subir_a_base(self, ventana):
-        def filtrar(lista):
-            final = [
-                lista[i]
-                for i in [0, 1, 3, 4, 7, 10, 11, 14, 15, 17, 18, 19, 20, 24, 26, 29]
-            ]
+        def obtener_indices_archivo(lista_compuesta):
+            primeros_elementos = []
+            for lista_anidada in lista_compuesta:
+                if lista_anidada:  # Comprobar si la lista anidada no está vacía
+                    primera_lista_anidada = lista_anidada[0]
+                    if (
+                        primera_lista_anidada
+                    ):  # Comprobar si la última lista anidada no está vacía
+                        primer_elemento_ultima_lista = primera_lista_anidada[0]
+                        primeros_elementos.append(primer_elemento_ultima_lista)
+                else:
+                    primeros_elementos.append(None)
+            del primeros_elementos[1]
+            return primeros_elementos
+
+        def chequear_continuidad(indices_base, indices_archivo):
+            for i in range(0, len(indices_base)):
+                if indices_base[i] != indices_archivo[i] - 1:
+                    return False
+                return True
+
+        def filtrar(lista, campos_a_recortar):
+            final = [lista[i] for i in campos_a_recortar]
             final2 = [None if pd.isnull(value) else value for value in final]
             return final2
+
+        def insertar(conexion, cursor, nombre_tabla, data, recorte, campos):
+            data2 = list(map(lambda x: filtrar(x, recorte), data))
+            try:
+                consulta = rf"INSERT INTO {nombre_tabla} ({', '.join(campos)}) VALUES ({', '.join('%s' for _ in data2[0])})"
+                cursor.executemany(consulta, data2)
+                tk.messagebox.showinfo(
+                    "Todo OK", f"Archivo '{nombre_tabla}' a la espera de inserción!"
+                )
+            except Exception as error:
+                tk.messagebox.showerror(
+                    f"Error durante la inserción en {nombre_tabla}", f"{error}"
+                )
+                raise error
 
         conexion = mysql.connector.connect(
             host=ventana.conexion[0],
@@ -687,17 +795,118 @@ class Ventana_Principal(Ventana_Base):
         )
 
         cursor = conexion.cursor()
-        lista = ventana.a_subir[0]
-        lista2 = list(map(lambda x: filtrar(x), lista))
 
-        try:
-            consulta = "INSERT INTO datos_hecho (id_hecho, nro_registro, fecha_carga, hora_carga, dependencia, fecha_inicio_hecho, hora_inicio_hecho, partido_hecho, localidad_hecho, latitud, calle, longitud, altura, entre, calificaciones, relato) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            cursor.executemany(consulta, lista2)
-            conexion.commit()
-            tk.messagebox.showinfo("Todo OK", f"¡Archivo insertado correctamente!")
-        except Exception as error:
-            tk.messagebox.showerror("Error durante la inserción", f"{error}")
+        indices_archivo = obtener_indices_archivo(ventana.a_subir)
+        if chequear_continuidad(ventana.indices, indices_archivo):
+            try:
+                if indices_archivo[0]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "datos_hecho",
+                        ventana.a_subir[0],
+                        ck.base_de_datos_recortes["datos_hecho"],
+                        ck.base_de_datos["datos_hecho"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
+                    )
+
+                if indices_archivo[1]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "armas",
+                        ventana.a_subir[2],
+                        ck.base_de_datos_recortes["elementos"],
+                        ck.base_de_datos["armas"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"No se ha insertado la tabla 'armas' ya que no contenía registros."
+                    )
+
+                if indices_archivo[2]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "automotores",
+                        ventana.a_subir[3],
+                        ck.base_de_datos_recortes["elementos"],
+                        ck.base_de_datos["automotores"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"No se ha insertado la tabla 'automotores' ya que no contenía registros."
+                    )
+
+                if indices_archivo[3]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "objetos",
+                        ventana.a_subir[4],
+                        ck.base_de_datos_recortes["elementos"],
+                        ck.base_de_datos["elementos"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"No se ha insertado la tabla 'objetos' ya que no contenía registros."
+                    )
+
+                if indices_archivo[4]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "secuestros",
+                        ventana.a_subir[5],
+                        ck.base_de_datos_recortes["elementos"],
+                        ck.base_de_datos["elementos"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"No se ha insertado la tabla 'secuestros' ya que no contenía registros."
+                    )
+
+                if indices_archivo[5]:
+                    insertar(
+                        conexion,
+                        cursor,
+                        "involucrados",
+                        ventana.a_subir[6],
+                        ck.base_de_datos_recortes["involucrados"],
+                        ck.base_de_datos["involucrados"],
+                    )
+                else:
+                    tk.messagebox.showwarning(
+                        f"Advertencia",
+                        f"No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
+                    )
+                conexion.commit()
+                tk.messagebox.showinfo(
+                    f"Éxito",
+                    f"Archivo insertado correctamente.",
+                )
+                ventana.destroy()
+            except Exception:
+                tk.messagebox.showwarning(
+                    f"Advertencia",
+                    f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base.",
+                )
+        else:
+            tk.messagebox.showwarning(
+                f"Advertencia",
+                f"Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+            )
         conexion.close()
+
+    @staticmethod
+    def todos_unos(lista):
+        for elemento in lista:
+            if elemento.get() != 1:
+                return False
+        return True
 
 
 class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
@@ -1050,19 +1259,19 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
             indices = []
 
             conexion = mysql.connector.connect(
-                host="localhost", user="root", password="", database="monitoreo"
+                host="localhost", user="root", password="", database="delitos"
             )
 
             # Crear un cursor para ejecutar consultas
             cursor = conexion.cursor()
 
-            consulta = "SELECT max(id_hecho) FROM hechos"
+            consulta = "SELECT max(id_hecho) FROM datos_hecho"
             cursor.execute(consulta)
             resultados = cursor.fetchall()
             for fila in resultados:
                 indices.append(fila[0])
 
-            indices.append(1)
+            indices.append(0)
 
             consulta = "SELECT max(id) FROM armas"
             cursor.execute(consulta)
@@ -1131,7 +1340,7 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
 class Ventana_conectar(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana):
         super().__init__(ventana)
-        self.title("Etiquetas y Cuadros de Texto")
+        self.title("Conectar con base")
         self.ancho = 360
         self.alto = 360
         self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
@@ -1145,9 +1354,11 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.host.set("localhost")
         self.user.set("root")
         self.passw.set("")
-        self.base.set("monitoreo")
+        self.base.set("delitos")
 
         self.set_vars = [self.host, self.user, self.passw, self.base]
+
+        self.indices = []
 
         self.crear_widgets(ventana)
 
@@ -1189,7 +1400,19 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             bg=self.amarillo,
             command=lambda: self.conectar_con_base(ventana),
         )
-        self.btn_base.place(x=140, y=310)
+        self.btn_base.place(x=58, y=310)
+
+        self.crear_base_ = tk.Button(
+            self,
+            text="Crear base",
+            bg=self.amarillo,
+            command=lambda: self.crear_base(
+                self.etiquetas_entries[0].get(),
+                self.etiquetas_entries[1].get(),
+                self.etiquetas_entries[2].get(),
+            ),
+        )
+        self.crear_base_.place(x=200, y=310)
 
     def conectar_con_base(self, ventana):
 
@@ -1329,10 +1552,186 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             for i in range(0, len(indices)):
                 texto += tags[i] + str(indices[i]) + "\n"
 
-            print(texto)
             output.insert(tk.END, texto)
+            ventana.indices = indices
 
         except Exception as error:
             tk.messagebox.showinfo("-.-", error)
             texto = "No se ha podido establecer conexión..."
             output.insert(tk.END, texto)
+
+    def crear_base(self, host, user, passw):
+        conn = mysql.connector.connect(host=host, user=user, password=passw)
+        conn.cursor().execute("CREATE DATABASE IF NOT EXISTS Delitos")
+        conn.database = "Delitos"
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS datos_hecho (
+                id_hecho INT PRIMARY KEY,
+                nro_registro VARCHAR(30),
+                pp VARCHAR(30),
+                fecha_carga DATE NOT NULL,
+                hora_carga TIME,
+                dependencia VARCHAR(100) NOT NULL,
+                fecha_inicio_hecho DATE,
+                hora_inicio_hecho TIME,
+                partido_hecho VARCHAR(50) NOT NULL,
+                localidad_hecho VARCHAR(50),
+                latitud VARCHAR(50),
+                calle VARCHAR(50),
+                longitud VARCHAR(50),
+                altura VARCHAR(10),
+                piso VARCHAR(10),
+                depto VARCHAR(10),
+                entre VARCHAR(50),
+                calificaciones VARCHAR(5000) NOT NULL,
+                relato VARCHAR(32767) NOT NULL
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS automotores (
+                id INT PRIMARY KEY,
+                id_hecho INT,
+                marca VARCHAR(50),
+                modelo VARCHAR(50),
+                color VARCHAR(50),
+                dominio VARCHAR(50),
+                nro_motor VARCHAR(50),
+                nro_chasis VARCHAR(50),
+                vinculo VARCHAR(50),
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS armas (
+                id INT PRIMARY KEY,
+                id_hecho INT,
+                tipo_arma VARCHAR(100),
+                marca VARCHAR(50),
+                modelo VARCHAR(50),
+                nro_serie VARCHAR(50),
+                calibre VARCHAR(50),
+                observaciones VARCHAR(200),
+                implicacion VARCHAR(50),
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+            )
+        """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)")
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS secuestros (
+                id INT PRIMARY KEY,
+                id_hecho INT,
+                tipo VARCHAR(50),
+                marca VARCHAR(50),
+                modelo VARCHAR(50),
+                cantidad VARCHAR(50),
+                valor VARCHAR(50),
+                descripcion VARCHAR(200),
+                implicacion VARCHAR(50),
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS objetos (
+                id INT PRIMARY KEY,
+                id_hecho INT,
+                tipo VARCHAR(50),
+                marca VARCHAR(50),
+                modelo VARCHAR(50),
+                cantidad VARCHAR(50),
+                valor VARCHAR(50),
+                descripcion VARCHAR(200),
+                implicacion VARCHAR(50),
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS involucrados (
+                id INT PRIMARY KEY,
+                id_hecho INT,
+                involucrado VARCHAR(30),
+                pais_origen VARCHAR(50),
+                tipo_dni VARCHAR(10),
+                nro_dni VARCHAR(20),
+                genero VARCHAR(20),
+                apellido VARCHAR(50),
+                nombre VARCHAR(50),
+                provincia_nacimiento VARCHAR(50),
+                ciudad_nacimiento VARCHAR(50),
+                fecha_nacimiento DATE,
+                observaciones VARCHAR(500),
+                provincia_domicilio VARCHAR(50),
+                partido_domicilio VARCHAR(50),
+                localidad_domicilio VARCHAR(50),
+                calle_domicilio VARCHAR(50),
+                nro_domicilio VARCHAR(20),
+                entre VARCHAR(50),
+                piso VARCHAR(20),
+                departamento VARCHAR(20),
+                caracteristicas_fisicas VARCHAR(100),
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
+        )
+
+        conn.commit()
+        conn.close()
