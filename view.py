@@ -562,7 +562,7 @@ class Ventana_Principal(Ventana_Base):
                 fecha_ = datetime.datetime.strptime(fecha, "%Y-%m-%d")
                 mes.append(fecha_.strftime("%B"))
             mes_final = list(set(mes))
-            if 29 < len(fechas) < 32:
+            if 29 < len(fechas) < 32 or len(fechas) == 21:
                 if len(mes_final) == 1:
                     return (
                         True,
@@ -589,8 +589,7 @@ class Ventana_Principal(Ventana_Base):
                 return False, f"(MES) Error en coherencia: {fechas}"
 
     def comprobar_nulos(self, archivo, advertencias=True):
-        adm = model.Administrador._cargar_final(archivo)
-        res2 = model.Formateador.comprobar_salida(adm, advertencias=advertencias)
+        res2 = model.Formateador.comprobar_salida(archivo, advertencias=advertencias)
         return res2
 
     def abrir_ventana_intermedia(self, widgets, titulo, colores_botones):
@@ -659,24 +658,25 @@ class Ventana_Principal(Ventana_Base):
             # COMPROBAR INDICES DE FECHA
             try:
                 if self.comprobar_indices(path):
-                    tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    # tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
                     # COMPROBAR COHERENCIA DE FECHA
                     try:
                         res = self.comprobar_fechas(path)
                         if res[0]:
-                            tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            # tk.messagebox.showinfo("Comprobados", f"{res[1]}")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
-                                res2 = self.comprobar_nulos(path, advertencias=False)
+                                archivo_final = model.Administrador._cargar_final(path)
+                                res2 = self.comprobar_nulos(
+                                    archivo_final, advertencias=False
+                                )
                                 if res2 == "":
                                     tk.messagebox.showinfo(
-                                        "Tablas comprobadas",
-                                        f"Comprobada integridad de campos vacios y campos no nulos.",
+                                        "Archivo comprobado",
+                                        f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
                                     )
                                     ventana.botones[1].config(bg=self.verde)
-                                    ventana.a_subir = model.Administrador._cargar_final(
-                                        path
-                                    )
+                                    ventana.a_subir = archivo_final
                                 else:
                                     tk.messagebox.showwarning("Advertencia", f"{res2}")
                                     ventana.botones[1].config(bg=self.amarillo)
@@ -705,24 +705,25 @@ class Ventana_Principal(Ventana_Base):
             # COMPROBAR INDICES DE MES
             try:
                 if self.comprobar_indices(path):
-                    tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    # tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
                     # COMPROBAR COHERENCIA DE MES
                     try:
                         res = self.comprobar_fechas(path, fecha=False)
                         if res[0]:
-                            tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            # tk.messagebox.showinfo("Comprobados", f"{res[1]}")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
-                                res2 = self.comprobar_nulos(path, advertencias=False)
+                                archivo_final = model.Administrador._cargar_final(path)
+                                res2 = self.comprobar_nulos(
+                                    archivo_final, advertencias=False
+                                )
                                 if res2 == "":
                                     tk.messagebox.showinfo(
-                                        "Tablas comprobadas",
-                                        f"Comprobada integridad de campos vacios y campos no nulos.",
+                                        "Archivo comprobado",
+                                        f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
                                     )
                                     ventana.botones[1].config(bg=self.verde)
-                                    ventana.a_subir = model.Administrador._cargar_final(
-                                        path
-                                    )
+                                    ventana.a_subir = archivo_final
                                 else:
                                     tk.messagebox.showwarning("Advertencia", f"{res2}")
                                     ventana.botones[1].config(bg=self.amarillo)
@@ -773,14 +774,14 @@ class Ventana_Principal(Ventana_Base):
             final2 = [None if pd.isnull(value) else value for value in final]
             return final2
 
-        def insertar(conexion, cursor, nombre_tabla, data, recorte, campos):
+        def insertar(cursor, nombre_tabla, data, recorte, campos):
             data2 = list(map(lambda x: filtrar(x, recorte), data))
             try:
                 consulta = rf"INSERT INTO {nombre_tabla} ({', '.join(campos)}) VALUES ({', '.join('%s' for _ in data2[0])})"
                 cursor.executemany(consulta, data2)
-                tk.messagebox.showinfo(
-                    "Todo OK", f"Archivo '{nombre_tabla}' a la espera de inserción!"
-                )
+                """tk.messagebox.showinfo(
+                    "Todo OK", f"Archivo '{nombre_tabla}' a la espera de inserción..."
+                )"""
             except Exception as error:
                 tk.messagebox.showerror(
                     f"Error durante la inserción en {nombre_tabla}", f"{error}"
@@ -801,7 +802,6 @@ class Ventana_Principal(Ventana_Base):
             try:
                 if indices_archivo[0]:
                     insertar(
-                        conexion,
                         cursor,
                         "datos_hecho",
                         ventana.a_subir[0],
@@ -815,7 +815,6 @@ class Ventana_Principal(Ventana_Base):
 
                 if indices_archivo[1]:
                     insertar(
-                        conexion,
                         cursor,
                         "armas",
                         ventana.a_subir[2],
@@ -829,7 +828,6 @@ class Ventana_Principal(Ventana_Base):
 
                 if indices_archivo[2]:
                     insertar(
-                        conexion,
                         cursor,
                         "automotores",
                         ventana.a_subir[3],
@@ -843,7 +841,6 @@ class Ventana_Principal(Ventana_Base):
 
                 if indices_archivo[3]:
                     insertar(
-                        conexion,
                         cursor,
                         "objetos",
                         ventana.a_subir[4],
@@ -857,7 +854,6 @@ class Ventana_Principal(Ventana_Base):
 
                 if indices_archivo[4]:
                     insertar(
-                        conexion,
                         cursor,
                         "secuestros",
                         ventana.a_subir[5],
@@ -871,7 +867,6 @@ class Ventana_Principal(Ventana_Base):
 
                 if indices_archivo[5]:
                     insertar(
-                        conexion,
                         cursor,
                         "involucrados",
                         ventana.a_subir[6],
@@ -889,10 +884,10 @@ class Ventana_Principal(Ventana_Base):
                     f"Archivo insertado correctamente.",
                 )
                 ventana.destroy()
-            except Exception:
+            except Exception as error:
                 tk.messagebox.showwarning(
                     f"Advertencia",
-                    f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base.",
+                    f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
                 )
         else:
             tk.messagebox.showwarning(
@@ -1525,6 +1520,17 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     "Advertencia", f"No se ha encontrado tabla 'involucrados'"
                 )
 
+            try:
+                consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
+                cursor.execute(consulta)
+                ultima_fecha = cursor.fetchone()
+                ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
+            except Exception as error:
+                tk.messagebox.showwarning(
+                    "Advertencia",
+                    f"No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                )
+
             # Cerrar el cursor y la conexión
             cursor.close()
             conexion.close()
@@ -1540,7 +1546,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
 
             ventana.conexion = datos_conexion.copy()
 
-            texto = "Conexión satisfactoria! \n\n"
+            texto = f"Conexión satisfactoria!\n\nÚltima fecha: {ultima_fecha}\n\n"
             tags = (
                 "Hechos: ",
                 "Armas: ",
@@ -1570,10 +1576,9 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             """
             CREATE TABLE IF NOT EXISTS datos_hecho (
                 id_hecho INT PRIMARY KEY,
-                nro_registro VARCHAR(30),
-                pp VARCHAR(30),
-                fecha_carga DATE NOT NULL,
-                hora_carga TIME,
+                nro_registro VARCHAR(30) NOT NULL,
+                fecha_carga DATE NOT NULL NOT NULL,
+                hora_carga TIME NOT NULL,
                 dependencia VARCHAR(100) NOT NULL,
                 fecha_inicio_hecho DATE,
                 hora_inicio_hecho TIME,
@@ -1583,8 +1588,6 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 calle VARCHAR(50),
                 longitud VARCHAR(50),
                 altura VARCHAR(10),
-                piso VARCHAR(10),
-                depto VARCHAR(10),
                 entre VARCHAR(50),
                 calificaciones VARCHAR(5000) NOT NULL,
                 relato VARCHAR(32767) NOT NULL
@@ -1605,15 +1608,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             """
             CREATE TABLE IF NOT EXISTS automotores (
                 id INT PRIMARY KEY,
-                id_hecho INT,
-                marca VARCHAR(50),
+                id_hecho INT NOT NULL,
+                marca VARCHAR(50) NOT NULL,
                 modelo VARCHAR(50),
                 color VARCHAR(50),
                 dominio VARCHAR(50),
                 nro_motor VARCHAR(50),
                 nro_chasis VARCHAR(50),
-                vinculo VARCHAR(50),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+                vinculo VARCHAR(50) NOT NULL,
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
         )
@@ -1634,15 +1637,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             """
             CREATE TABLE IF NOT EXISTS armas (
                 id INT PRIMARY KEY,
-                id_hecho INT,
-                tipo_arma VARCHAR(100),
-                marca VARCHAR(50),
+                id_hecho INT NOT NULL,
+                tipo_arma VARCHAR(100) NOT NULL,
+                marca VARCHAR(50) NOT NULL,
                 modelo VARCHAR(50),
                 nro_serie VARCHAR(50),
                 calibre VARCHAR(50),
                 observaciones VARCHAR(200),
-                implicacion VARCHAR(50),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+                implicacion VARCHAR(50) NOT NULL,
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
         )
@@ -1652,15 +1655,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             """
             CREATE TABLE IF NOT EXISTS secuestros (
                 id INT PRIMARY KEY,
-                id_hecho INT,
-                tipo VARCHAR(50),
+                id_hecho INT NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
                 marca VARCHAR(50),
                 modelo VARCHAR(50),
                 cantidad VARCHAR(50),
                 valor VARCHAR(50),
                 descripcion VARCHAR(200),
-                implicacion VARCHAR(50),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+                implicacion VARCHAR(50) NOT NULL,
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
         )
@@ -1672,15 +1675,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             """
             CREATE TABLE IF NOT EXISTS objetos (
                 id INT PRIMARY KEY,
-                id_hecho INT,
-                tipo VARCHAR(50),
+                id_hecho INT NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
                 marca VARCHAR(50),
                 modelo VARCHAR(50),
                 cantidad VARCHAR(50),
                 valor VARCHAR(50),
                 descripcion VARCHAR(200),
-                implicacion VARCHAR(50),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+                implicacion VARCHAR(50) NOT NULL,
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
         )
@@ -1713,7 +1716,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 piso VARCHAR(20),
                 departamento VARCHAR(20),
                 caracteristicas_fisicas VARCHAR(100),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho)
+                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
         )
