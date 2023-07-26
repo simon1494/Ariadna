@@ -1137,7 +1137,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
             ult = pd.DataFrame(original)
             ult.to_excel(
-                rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx",
+                rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
                 index=False,
                 header=False,
             )
@@ -1145,7 +1145,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             tk.messagebox.showinfo(
                 "Corregido", f"¡El archivo fue corredido correctamente!"
             )
-            return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo}.xlsx"
+            return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
         except Exception as error:
             tk.messagebox.showinfo(
                 "Advertencia", f"Ha ocurrido el siguiente error:\n {error}"
