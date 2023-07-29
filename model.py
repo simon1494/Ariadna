@@ -555,8 +555,6 @@ class Formateador(CoreMotor):
                 identificadores.append(iden.copy())
             else:
                 quitados += 1
-            if texto2.find(" Ciudad Natal: ") > 0:
-                texto2.replace(" Ciudad Natal: ")
         if quitados > 0:
             mensaje = f"Se filtraron {quitados} registros no asignados a fiscalía."
             imprimir_con_color(mensaje, "amarillo")
@@ -723,7 +721,6 @@ class Tester(Formateador):
 
 class Inicial(Core_Inicial):
     def __init__(self, archivo, identificadores):
-
         # checkpoints
         self._checkpoints = ck.cp_iniciales
         self._ident = ck.cp_iden

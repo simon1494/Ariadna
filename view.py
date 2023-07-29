@@ -19,6 +19,7 @@ locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
 class Ventana_Base:
+    directorio_base = os.path.abspath(os.path.dirname(__file__))
     color_botones = "#8CA2EA"
     botones_iniciales = "#AFEB54"
     botones_segmentado = "#EBA605"
@@ -205,7 +206,9 @@ class Ventana_Principal(Ventana_Base):
     def procesar_inicial(self):
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
         try:
-            path = filedialog.askopenfilename()
+            path = filedialog.askopenfilename(
+                initialdir=self.directorio_base + "/Exportaciones/Crudos/"
+            )
 
             nombre_archivo = os.path.splitext(os.path.basename(path))[0]
 
@@ -261,7 +264,7 @@ class Ventana_Principal(Ventana_Base):
 
     def procesar_crudos(self, path=False):
         try:
-            carpeta = filedialog.askdirectory()
+            carpeta = filedialog.askdirectory(initialdir=self.directorio_base + "/Exportaciones/Crudos/")
             archivos = os.listdir(carpeta)
             formateador = model.Formateador()
 
@@ -323,7 +326,9 @@ class Ventana_Principal(Ventana_Base):
     def procesar_varios(self):
         if not self.todos_unos(self.indices):
             try:
-                carpeta = filedialog.askdirectory()
+                carpeta = filedialog.askdirectory(
+                    initialdir=self.directorio_base + "/Exportaciones/No segmentados/"
+                )
                 archivos = os.listdir(carpeta)
 
                 indices = list(map(lambda var: var.get(), self.indices))
@@ -419,7 +424,7 @@ class Ventana_Principal(Ventana_Base):
             )
             indices = list(map(lambda var: var.get(), self.indices))
             try:
-                carpeta = filedialog.askdirectory()
+                carpeta = filedialog.askdirectory(initialdir=self.directorio_base + "/Exportaciones/No segmentados/")
                 archivos = os.listdir(carpeta)
 
                 indices = list(map(lambda var: var.get(), self.indices))
@@ -507,7 +512,9 @@ class Ventana_Principal(Ventana_Base):
                 )
 
     def compilar_archivos(self):
-        carpeta = filedialog.askdirectory()
+        carpeta = filedialog.askdirectory(
+            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
+        )
         print("\n")
         archivos = os.listdir(carpeta)
 
@@ -608,7 +615,7 @@ class Ventana_Principal(Ventana_Base):
                 fecha_ = datetime.datetime.strptime(fecha, "%Y-%m-%d")
                 mes.append(fecha_.strftime("%B").upper())
             mes_final = list(set(mes))
-            if 29 < len(fechas) < 32 or len(fechas) == 25:
+            if 29 < len(fechas) < 32 or len(fechas) == 27:
                 if len(mes_final) == 1:
                     return (
                         True,
@@ -664,7 +671,11 @@ class Ventana_Principal(Ventana_Base):
         try:
             if path is False:
                 archivo1 = model.Administrador._cargar(
-                    filedialog.askopenfilename(), no_tiene_encabezados=False
+                    filedialog.askopenfilename(
+                        initialdir=self.directorio_base
+                        + "/Exportaciones/No segmentados/"
+                    ),
+                    no_tiene_encabezados=False,
                 )
                 segmentado = model.Segmentado(archivo1, indices)
             else:
@@ -695,7 +706,9 @@ class Ventana_Principal(Ventana_Base):
 
     def chequear_integridad(self, ventana):
         imprimir_con_color("\n\n")
-        path = filedialog.askopenfilename()
+        path = filedialog.askopenfilename(
+            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
+        )
         respuesta = messagebox.askyesno(
             "Selecciona tipo de archivo",
             "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
@@ -1215,7 +1228,9 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             )
 
     def cargar_original(self):
-        path = filedialog.askopenfilename()
+        path = filedialog.askopenfilename(
+            initialdir=self.directorio_base + "/Exportaciones/Crudos/"
+        )
         if path:
             self.path_original = path
             self.boton_original.config(bg=self.verde)
@@ -1225,7 +1240,9 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             )
 
     def cargar_enmendado(self):
-        path = filedialog.askopenfilename()
+        path = filedialog.askopenfilename(
+            initialdir=self.directorio_base + "/Exportaciones/Corregidos/"
+        )
         if path:
             self.path_enmendado = path
             self.boton_enmendado.config(bg="#27EA00")
@@ -1373,7 +1390,9 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
             tk.messagebox.showinfo("!!", error)
 
     def conectar_con_archivo(self):
-        ruta_archivo = filedialog.askopenfilename()
+        ruta_archivo = filedialog.askopenfilename(
+            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
+        )
         try:
             # Cargar el archivo Excel
             df = pd.read_excel(ruta_archivo, sheet_name=None)
@@ -1473,13 +1492,11 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.crear_base_.place(x=200, y=310)
 
     def conectar_con_base(self, ventana):
-
         output = tk.Text(self, background=self.color_botones)
         output.config(borderwidth=2, relief="sunken")
         output.place(x=58, y=135, width=250, height=165)
 
         try:
-
             indices = []
 
             datos_conexion = [
