@@ -6,6 +6,7 @@ import checkpoints as ck
 import pandas as pd
 from datetime import datetime
 from pathlib import Path as Ph
+from decorators import imprimir_con_color
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
@@ -276,7 +277,7 @@ class CoreMotor:
                     fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
                     _registro[11] = fecha_formateada
             except Exception as error:
-                print(error)
+                imprimir_con_color(error, "rojo")
             return _registro
         else:
             try:
@@ -285,7 +286,7 @@ class CoreMotor:
                     fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
                     _registro[15] = fecha_formateada
             except Exception as error:
-                print(error)
+                imprimir_con_color(error, "rojo")
             return _registro
 
 
@@ -383,13 +384,13 @@ class Core_Final(CoreMotor):
         return self._separar(nuevo, self._seleccionar_splitter(columna))
 
     def _separar(self, archivo, splitter):
-        def mapear_elemento(item, splitter):
-            if splitter == "OTROS OBJETOS Tipo ":
-                item = item.replace("OTROS OBJETOS ", "")
-                return item
-            if splitter == "ELEMENTOS SECUESTRADOS Tipo ":
-                item = item.replace("ELEMENTOS SECUESTRADOS ", "")
-                return item
+        """def mapear_elemento(item, splitter): # Parche antiguo que se verificó erroneo el 28-07-23. Pretendia separar mejor Objetos y Secuestros.
+        if splitter == " Tipo ":
+            item = item.replace("OTROS OBJETOS ", "")
+            return item
+        if splitter == " Tipo ":
+            item = item.replace("ELEMENTOS SECUESTRADOS ", "")
+            return item"""
 
         nuevo = []
         for i in range(0, len(archivo)):
@@ -400,11 +401,8 @@ class Core_Final(CoreMotor):
             del matches[0]
             matches = list(map(lambda x: a + x, matches))
             matches = list(map(lambda x: id + x, matches))
-            if (
-                splitter == "OTROS OBJETOS Tipo "
-                or splitter == "ELEMENTOS SECUESTRADOS Tipo "
-            ):
-                matches = list(map(lambda x: mapear_elemento(x, splitter), matches))
+            """if splitter == " Tipo " or splitter == " Tipo ":
+                matches = list(map(lambda x: mapear_elemento(x, splitter), matches))"""  # Parche antiguo que se verificó erroneo el 28-07-23. Pretendia separar mejor Objetos y Secuestros.
             nuevo.extend(matches)
         return nuevo
 
@@ -533,6 +531,7 @@ class Core_Final(CoreMotor):
 
 class Formateador(CoreMotor):
     def _formatear(self, lista, identi):
+        quitados = 0
         final = []
         identificadores = []
         for i in lista:
@@ -547,11 +546,20 @@ class Formateador(CoreMotor):
             texto2 = texto2.replace("  ", " ")
             texto2 = self._clean_regexs(texto2)
             texto2 = texto2.replace("  ", " ")
-            final.append(texto2)
-            valor = iden.pop(que_uso[0])
-            iden[" Nro registro: "] = valor
-            del iden[que_uso[2]]
-            identificadores.append(iden.copy())
+            if texto2.find("NO VÁLIDO COMO DOCUMENTO LEGAL") == -1:
+                # AGREGADO 2023-07-28 para filtrar registros no asignados a fiscalía
+                final.append(texto2)
+                valor = iden.pop(que_uso[0])
+                iden[" Nro registro: "] = valor
+                del iden[que_uso[2]]
+                identificadores.append(iden.copy())
+            else:
+                quitados += 1
+            if texto2.find(" Ciudad Natal: ") > 0:
+                texto2.replace(" Ciudad Natal: ")
+        if quitados > 0:
+            mensaje = f"Se filtraron {quitados} registros no asignados a fiscalía."
+            imprimir_con_color(mensaje, "amarillo")
         return final, identificadores
 
     def _clean_regexs(self, text):
@@ -807,7 +815,9 @@ class Inicial(Core_Inicial):
                 try:
                     item[" Descripción:"] = hechos[i][" Descripcion:"]
                 except Exception as error:
-                    print(f"Error en la 'Descripcion' del index {i}: {error}")
+                    imprimir_con_color(
+                        f"Error en la 'Descripcion' del index {i}: {error}", "amarillo"
+                    )
             for key in involucrados[i].keys():
                 if key in item:
                     item[key] = involucrados[i][key].strip()
@@ -862,7 +872,10 @@ class Inicial(Core_Inicial):
                             contador2 += 1
                             break
             if len(duplicados) > 0:
-                print(f"Se han eliminado {contador2} duplicados.\n")
+                imprimir_con_color("\n")
+                imprimir_con_color(
+                    f"Se han eliminado {contador2} duplicados.", "blanco"
+                )
         return lista
 
 
@@ -894,8 +907,8 @@ class Addendum:
 
     @staticmethod
     def simplificada(calificacion):
-        calificacion3 = calificacion.replace("Consumado: Si", "")
-        calificacion4 = calificacion3.replace("Consumado: No", "")
+        calificacion3 = calificacion.split(" Consumado: ")  # MODIFICADO 28-07-23
+        calificacion4 = calificacion3[0]  # MODIFICADO 28-07-23
         calificacion0 = calificacion4.replace(" ", "")
         calificacion1 = calificacion0.replace("-", "")
         calificacion2 = calificacion1.replace(".", "")

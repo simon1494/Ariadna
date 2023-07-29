@@ -13,6 +13,7 @@ from tkinter import messagebox
 from tkinter import ttk
 from tkinter.font import Font
 from pathlib import Path as Ph
+from decorators import imprimir_con_color
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
@@ -37,9 +38,9 @@ class Ventana_Base:
 
 
 class Ventana_Principal(Ventana_Base):
-    def __init__(self, master):
+    def __init__(self, master, version):
         self.ventana = master
-        self.ventana.title("Ariadna b-2.1.0")
+        self.ventana.title(f"ARIADNA -- {version}")
         self.ventana.ancho = 900
         self.ventana.alto = 250
         self.ventana.geometry(
@@ -295,18 +296,21 @@ class Ventana_Principal(Ventana_Base):
                                         nombre=nombre_archivo,
                                     )
                             except Exception as error:
-                                print(
-                                    f"({archivo}) Error en etapa de procesado del archivo: {error}"
+                                imprimir_con_color(
+                                    f"({archivo}) Error en etapa de procesado del archivo: {error}",
+                                    "rojo",
                                 )
                         except Exception as error:
-                            print(
-                                f"({archivo}) Error en etapa de testeo de información entrante: {error}"
+                            imprimir_con_color(
+                                f"({archivo}) Error en etapa de testeo de información entrante: {error}",
+                                "rojo",
                             )
                     except Exception as error:
-                        print(
-                            f"({archivo}) Error en etapa de carga del archivo crudo: {error}"
+                        imprimir_con_color(
+                            f"({archivo}) Error en etapa de carga del archivo crudo: {error}",
+                            "rojo",
                         )
-                print(f"Listo {archivo}")
+                imprimir_con_color(f"Listo {archivo}", "verde")
             tk.messagebox.showinfo(
                 "Aviso",
                 "El procesado de crudos ha sido completado.",
@@ -343,43 +347,61 @@ class Ventana_Principal(Ventana_Base):
                                         segmentado.final
                                     )
                                     if mensaje != "":
-                                        tk.messagebox.showinfo("Advertencia", mensaje)
+                                        imprimir_con_color(
+                                            f"Advertencia {mensaje}", "amarillo"
+                                        )
                                     try:
+                                        imprimir_con_color(
+                                            f"\nPreparando {archivo}", "lila"
+                                        )
                                         model.Administrador._convertir_segmentado(
                                             segmentado.final, nombre=archivo
                                         )
-                                        print(f"\nPreparando {archivo}")
                                         try:
                                             indices_finales = (
                                                 model.Administrador._obtener_indices(
                                                     segmentado.final, indices
                                                 )
                                             )
-                                            print(f"Iniciales: {str(indices)}")
-                                            print(f"Finales: {str(indices_finales)}")
+                                            imprimir_con_color(
+                                                f"Iniciales:----{str(indices)}",
+                                                "blanco",
+                                            )
+                                            imprimir_con_color(
+                                                f"Finales:-----{str(indices_finales)}",
+                                                "blanco",
+                                            )
                                             indices = list(
                                                 map(lambda x: x + 1, indices_finales)
                                             )
-                                            print(f"Siguientes: {str(indices)}")
+                                            imprimir_con_color(
+                                                f"Siguientes:--{str(indices)}", "blanco"
+                                            )
                                         except Exception as error:
-                                            print(
-                                                f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                            imprimir_con_color(
+                                                f"({archivo}) Error en la obtención de índices nuevos: {error}",
+                                                "rojo",
                                             )
                                     except Exception as error:
-                                        print(
-                                            f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                        imprimir_con_color(
+                                            f"({archivo}) Error en conversión final a formato Excel: {error}",
+                                            "rojo",
                                         )
                                 except Exception as error:
-                                    print(
-                                        f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                    imprimir_con_color(
+                                        f"({archivo}) Error en la comprobación de datos salientes: {error}",
+                                        "rojo",
                                     )
                             except Exception as error:
-                                print(
-                                    f"({archivo}) Error en etapa de procesado: {error}"
+                                imprimir_con_color(
+                                    f"({archivo}) Error en etapa de procesado: {error}",
+                                    "rojo",
                                 )
                         except Exception as error:
-                            print(f"({archivo}) Error en etapa de carga: {error}")
-                    print(f"Listo {archivo}")
+                            imprimir_con_color(
+                                f"({archivo}) Error en etapa de carga: {error}", "rojo"
+                            )
+                    imprimir_con_color(f"Listo {archivo}", "verde")
                 tk.messagebox.showinfo(
                     "Aviso",
                     "El procesado de no segmentados ha sido completado.",
@@ -421,43 +443,60 @@ class Ventana_Principal(Ventana_Base):
                                         segmentado.final
                                     )
                                     if mensaje != "":
-                                        tk.messagebox.showinfo("Advertencia", mensaje)
+                                        imprimir_con_color(
+                                            f"Advertencia {mensaje}", "amarillo"
+                                        )
                                     try:
+                                        imprimir_con_color(
+                                            f"\nPreparando {archivo}", "lila"
+                                        )
                                         model.Administrador._convertir_segmentado(
                                             segmentado.final, nombre=archivo
                                         )
-                                        print(f"\nPreparando {archivo}")
                                         try:
                                             indices_finales = (
                                                 model.Administrador._obtener_indices(
                                                     segmentado.final, indices
                                                 )
                                             )
-                                            print(f"Iniciales: {str(indices)}")
-                                            print(f"Finales: {str(indices_finales)}")
+                                            imprimir_con_color(
+                                                f"Iniciales:  {str(indices)}", "blanco"
+                                            )
+                                            imprimir_con_color(
+                                                f"Finales:    {str(indices_finales)}",
+                                                "blanco",
+                                            )
                                             indices = list(
                                                 map(lambda x: x + 1, indices_finales)
                                             )
-                                            print(f"Siguientes: {str(indices)}")
+                                            imprimir_con_color(
+                                                f"Siguientes: {str(indices)}", "blanco"
+                                            )
                                         except Exception as error:
-                                            print(
-                                                f"({archivo}) Error en la obtención de índices nuevos: {error}"
+                                            imprimir_con_color(
+                                                f"({archivo}) Error en la obtención de índices nuevos: {error}",
+                                                "rojo",
                                             )
                                     except Exception as error:
-                                        print(
-                                            f"({archivo}) Error en conversión final a formato Excel: {error}"
+                                        imprimir_con_color(
+                                            f"({archivo}) Error en conversión final a formato Excel: {error}",
+                                            "rojo",
                                         )
                                 except Exception as error:
-                                    print(
-                                        f"({archivo}) Error en la comprobación de datos salientes: {error}"
+                                    imprimir_con_color(
+                                        f"({archivo}) Error en la comprobación de datos salientes: {error}",
+                                        "rojo",
                                     )
                             except Exception as error:
-                                print(
-                                    f"({archivo}) Error en etapa de procesado: {error}"
+                                imprimir_con_color(
+                                    f"({archivo}) Error en etapa de procesado: {error}",
+                                    "rojo",
                                 )
                         except Exception as error:
-                            print(f"({archivo}) Error en etapa de carga: {error}")
-                    print(f"Listo {archivo}")
+                            imprimir_con_color(
+                                f"({archivo}) Error en etapa de carga: {error}", "rojo"
+                            )
+                    imprimir_con_color(f"Listo {archivo}", "verde")
                 tk.messagebox.showinfo(
                     "Aviso",
                     "El procesado de no segmentados ha sido completado.",
@@ -494,23 +533,30 @@ class Ventana_Principal(Ventana_Base):
                         df["Latitud:"] = df["Latitud:"].astype(str)
                         df["Longitud:"] = df["Longitud:"].astype(str)
                     datos[hoja] = pd.concat([datos[hoja], df])
-            print("Listo", archivo)
+            imprimir_con_color(f"Listo {archivo}", "verde")
 
         # Escribir los datos consolidados en un archivo de Excel
         with pd.ExcelWriter(archivo_final) as writer:
-            print("\nComenzando proceso de compilación...")
+            imprimir_con_color("\n")
+            imprimir_con_color("Comenzando proceso de compilación...", "lila")
             for hoja, df in datos.items():
                 df.to_excel(writer, sheet_name=hoja, index=False)
 
-        print("Analizando coherencia de indexados...")
+        imprimir_con_color("Analizando coherencia de indexados...", "lila")
         try:
             if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
-                print("Chequeada coherencia de indexados sin errores")
+                imprimir_con_color(
+                    "Chequeada coherencia de indexados sin errores", "verde"
+                )
             else:
-                print("Se detectaron errores de coherencia en los indexados")
+                imprimir_con_color(
+                    "Se detectaron errores de coherencia en los indexados", "rojo"
+                )
         except Exception as error:
-            print(error)
-        print("Se ha creado el archivo consolidado en:", archivo_final)
+            imprimir_con_color(error, "rojo")
+        imprimir_con_color(
+            f"Se ha creado el archivo consolidado en: {archivo_final}", "blanco"
+        )
 
     def comprobar_indices(self, archivo):
         # Leer el archivo Excel
@@ -560,9 +606,9 @@ class Ventana_Principal(Ventana_Base):
             mes = []
             for fecha in fechas:
                 fecha_ = datetime.datetime.strptime(fecha, "%Y-%m-%d")
-                mes.append(fecha_.strftime("%B"))
+                mes.append(fecha_.strftime("%B").upper())
             mes_final = list(set(mes))
-            if 29 < len(fechas) < 32 or len(fechas) == 21:
+            if 29 < len(fechas) < 32 or len(fechas) == 25:
                 if len(mes_final) == 1:
                     return (
                         True,
@@ -630,10 +676,10 @@ class Ventana_Principal(Ventana_Base):
                     if mensaje != "":
                         tk.messagebox.showinfo("Advertencia", mensaje)
                 except Exception as error:
-                    print(error)
+                    imprimir_con_color(error, "rojo")
                 model.Administrador._convertir_segmentado(segmentado.final)
                 tk.messagebox.showinfo(
-                    "Advertencia", f"El proceso se completo correctamente :)"
+                    "Exito", f"El proceso se completo correctamente."
                 )
             except AttributeError:
                 tk.messagebox.showinfo(
@@ -648,22 +694,24 @@ class Ventana_Principal(Ventana_Base):
             )
 
     def chequear_integridad(self, ventana):
+        imprimir_con_color("\n\n")
         path = filedialog.askopenfilename()
         respuesta = messagebox.askyesno(
             "Selecciona tipo de archivo",
             "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
         )
+        imprimir_con_color("Iniciando chequeo de integridad de archivo...", "lila")
         # COMPROBAR FECHAS
         if respuesta:
             # COMPROBAR INDICES DE FECHA
             try:
                 if self.comprobar_indices(path):
-                    # tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    imprimir_con_color("Indices correctos.", "verde")
                     # COMPROBAR COHERENCIA DE FECHA
                     try:
                         res = self.comprobar_fechas(path)
                         if res[0]:
-                            # tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            imprimir_con_color(f"{res[1]}", "verde")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
                                 archivo_final = model.Administrador._cargar_final(path)
@@ -671,6 +719,9 @@ class Ventana_Principal(Ventana_Base):
                                     archivo_final, advertencias=False
                                 )
                                 if res2 == "":
+                                    imprimir_con_color(
+                                        f"Comprobados campos no nulos", "verde"
+                                    )
                                     tk.messagebox.showinfo(
                                         "Archivo comprobado",
                                         f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
@@ -705,12 +756,12 @@ class Ventana_Principal(Ventana_Base):
             # COMPROBAR INDICES DE MES
             try:
                 if self.comprobar_indices(path):
-                    # tk.messagebox.showinfo("Comprobados", f"Indices correctos.")
+                    imprimir_con_color("Indices correctos.", "verde")
                     # COMPROBAR COHERENCIA DE MES
                     try:
                         res = self.comprobar_fechas(path, fecha=False)
                         if res[0]:
-                            # tk.messagebox.showinfo("Comprobados", f"{res[1]}")
+                            imprimir_con_color(f"{res[1]}", "verde")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
                                 archivo_final = model.Administrador._cargar_final(path)
@@ -718,6 +769,9 @@ class Ventana_Principal(Ventana_Base):
                                     archivo_final, advertencias=False
                                 )
                                 if res2 == "":
+                                    imprimir_con_color(
+                                        f"Comprobados campos no nulos", "verde"
+                                    )
                                     tk.messagebox.showinfo(
                                         "Archivo comprobado",
                                         f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
@@ -778,15 +832,21 @@ class Ventana_Principal(Ventana_Base):
             data2 = list(map(lambda x: filtrar(x, recorte), data))
             try:
                 consulta = rf"INSERT INTO {nombre_tabla} ({', '.join(campos)}) VALUES ({', '.join('%s' for _ in data2[0])})"
+                imprimir_con_color(
+                    f"Preparando '{nombre_tabla}' para inserción...", "lila"
+                )
                 cursor.executemany(consulta, data2)
-                """tk.messagebox.showinfo(
-                    "Todo OK", f"Archivo '{nombre_tabla}' a la espera de inserción..."
-                )"""
+                imprimir_con_color(
+                    f"Archivo '{nombre_tabla}' a la espera de commit...", "blanco"
+                )
+                imprimir_con_color("\n")
             except Exception as error:
                 tk.messagebox.showerror(
                     f"Error durante la inserción en {nombre_tabla}", f"{error}"
                 )
                 raise error
+
+        imprimir_con_color("\n\n")
 
         conexion = mysql.connector.connect(
             host=ventana.conexion[0],
@@ -797,8 +857,11 @@ class Ventana_Principal(Ventana_Base):
 
         cursor = conexion.cursor()
 
+        imprimir_con_color("Chequeando continuidad de indexados...", "lila")
         indices_archivo = obtener_indices_archivo(ventana.a_subir)
         if chequear_continuidad(ventana.indices, indices_archivo):
+            imprimir_con_color("Índices correctos.", "verde")
+            imprimir_con_color("\n")
             try:
                 if indices_archivo[0]:
                     insertar(
@@ -1643,7 +1706,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 modelo VARCHAR(50),
                 nro_serie VARCHAR(50),
                 calibre VARCHAR(50),
-                observaciones VARCHAR(200),
+                observaciones VARCHAR(1000),
                 implicacion VARCHAR(50) NOT NULL,
                 FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
@@ -1661,7 +1724,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 modelo VARCHAR(50),
                 cantidad VARCHAR(50),
                 valor VARCHAR(50),
-                descripcion VARCHAR(200),
+                descripcion VARCHAR(1000),
                 implicacion VARCHAR(50) NOT NULL,
                 FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
@@ -1681,7 +1744,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 modelo VARCHAR(50),
                 cantidad VARCHAR(50),
                 valor VARCHAR(50),
-                descripcion VARCHAR(200),
+                descripcion VARCHAR(1000),
                 implicacion VARCHAR(50) NOT NULL,
                 FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
@@ -1706,7 +1769,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 provincia_nacimiento VARCHAR(50),
                 ciudad_nacimiento VARCHAR(50),
                 fecha_nacimiento DATE,
-                observaciones VARCHAR(500),
+                observaciones VARCHAR(1000),
                 provincia_domicilio VARCHAR(50),
                 partido_domicilio VARCHAR(50),
                 localidad_domicilio VARCHAR(50),
@@ -1715,7 +1778,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 entre VARCHAR(50),
                 piso VARCHAR(20),
                 departamento VARCHAR(20),
-                caracteristicas_fisicas VARCHAR(100),
+                caracteristicas_fisicas VARCHAR(500),
                 FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
         """
