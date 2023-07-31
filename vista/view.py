@@ -1,19 +1,31 @@
-import tkinter as tk
-import model
+import sys
+
+sys.path.append("../ariadna")
+sys.path.append("../ariadna/modelos")
+
 import mysql.connector
 import locale
 import datetime
 import os
 import copy
-import checkpoints as ck
 import pandas as pd
-import numpy as np
+import tkinter as tk
+import checkpoints as ck
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter.font import Font
-from pathlib import Path as Ph
-from decorators import imprimir_con_color
+from modelos.formateador import Formateador
+from modelos.administrador import Administrador
+from modelos.testeador import Tester
+from modelos.procesadores_principales import Inicial
+from modelos.procesadores_principales import Segmentado
+from modelos.procesadores_secundarios import Addendum
+from modelos.herramientas_adicionales import imprimir_con_color
+
+
+# Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
+DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
@@ -212,11 +224,11 @@ class Ventana_Principal(Ventana_Base):
 
             nombre_archivo = os.path.splitext(os.path.basename(path))[0]
 
-            formateador = model.Formateador()
-            archivo = model.Administrador._cargar(path)
-            tester = model.Tester(archivo)
+            formateador = Formateador()
+            archivo = Administrador._cargar(path)
+            tester = Tester(archivo)
             if len(tester.errores) > 0:
-                log_errores = model.Administrador._convertir_inicial(
+                log_errores = Administrador._convertir_inicial(
                     tester.errores,
                     ["indice", "n° registro", "para enmendar"],
                     nombre=nombre_archivo,
@@ -229,8 +241,8 @@ class Ventana_Principal(Ventana_Base):
                 os.startfile(log_errores)
             else:
                 archivo, identificadores = formateador._formatear(archivo, ck.cp_iden)
-                inicial = model.Inicial(archivo, identificadores)
-                path = model.Administrador._convertir_inicial(
+                inicial = Inicial(archivo, identificadores)
+                path = Administrador._convertir_inicial(
                     inicial.sin_duplicados, ck.general, nombre=nombre_archivo
                 )
                 if tk.messagebox.askyesno(
@@ -264,9 +276,11 @@ class Ventana_Principal(Ventana_Base):
 
     def procesar_crudos(self, path=False):
         try:
-            carpeta = filedialog.askdirectory(initialdir=self.directorio_base + "/Exportaciones/Crudos/")
+            carpeta = filedialog.askdirectory(
+                initialdir=self.directorio_base + "/Exportaciones/Crudos/"
+            )
             archivos = os.listdir(carpeta)
-            formateador = model.Formateador()
+            formateador = Formateador()
 
             for archivo in archivos:
                 path = os.path.join(
@@ -275,25 +289,23 @@ class Ventana_Principal(Ventana_Base):
                 if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
                     try:
                         nombre_archivo = os.path.splitext(os.path.basename(path))[0]
-                        archivo0 = model.Administrador._cargar(path)
+                        archivo0 = Administrador._cargar(path)
                         try:
-                            tester = model.Tester(archivo0)
+                            tester = Tester(archivo0)
                             try:
                                 if len(tester.errores) > 0:
-                                    log_errores = (
-                                        model.Administrador._convertir_inicial(
-                                            tester.errores,
-                                            ["indice", "n° registro", "para enmendar"],
-                                            nombre=nombre_archivo,
-                                            error=True,
-                                        )
+                                    log_errores = Administrador._convertir_inicial(
+                                        tester.errores,
+                                        ["indice", "n° registro", "para enmendar"],
+                                        nombre=nombre_archivo,
+                                        error=True,
                                     )
                                 else:
                                     archivo0, identificadores = formateador._formatear(
                                         archivo0, ck.cp_iden
                                     )
-                                    inicial = model.Inicial(archivo0, identificadores)
-                                    path = model.Administrador._convertir_inicial(
+                                    inicial = Inicial(archivo0, identificadores)
+                                    path = Administrador._convertir_inicial(
                                         inicial.sin_duplicados,
                                         ck.general,
                                         nombre=nombre_archivo,
@@ -340,15 +352,13 @@ class Ventana_Principal(Ventana_Base):
                         path
                     ):  # Comprobar si es un archivo (no una carpeta)
                         try:
-                            archivo1 = model.Administrador._cargar(
+                            archivo1 = Administrador._cargar(
                                 path, no_tiene_encabezados=False
                             )
                             try:
-                                segmentado = model.Segmentado(
-                                    archivo1, indices, carpeta=True
-                                )
+                                segmentado = Segmentado(archivo1, indices, carpeta=True)
                                 try:
-                                    mensaje = model.Formateador.comprobar_salida(
+                                    mensaje = Formateador.comprobar_salida(
                                         segmentado.final
                                     )
                                     if mensaje != "":
@@ -359,12 +369,12 @@ class Ventana_Principal(Ventana_Base):
                                         imprimir_con_color(
                                             f"\nPreparando {archivo}", "lila"
                                         )
-                                        model.Administrador._convertir_segmentado(
+                                        Administrador._convertir_segmentado(
                                             segmentado.final, nombre=archivo
                                         )
                                         try:
                                             indices_finales = (
-                                                model.Administrador._obtener_indices(
+                                                Administrador._obtener_indices(
                                                     segmentado.final, indices
                                                 )
                                             )
@@ -424,7 +434,9 @@ class Ventana_Principal(Ventana_Base):
             )
             indices = list(map(lambda var: var.get(), self.indices))
             try:
-                carpeta = filedialog.askdirectory(initialdir=self.directorio_base + "/Exportaciones/No segmentados/")
+                carpeta = filedialog.askdirectory(
+                    initialdir=self.directorio_base + "/Exportaciones/No segmentados/"
+                )
                 archivos = os.listdir(carpeta)
 
                 indices = list(map(lambda var: var.get(), self.indices))
@@ -436,15 +448,13 @@ class Ventana_Principal(Ventana_Base):
                         path
                     ):  # Comprobar si es un archivo (no una carpeta)
                         try:
-                            archivo1 = model.Administrador._cargar(
+                            archivo1 = Administrador._cargar(
                                 path, no_tiene_encabezados=False
                             )
                             try:
-                                segmentado = model.Segmentado(
-                                    archivo1, indices, carpeta=True
-                                )
+                                segmentado = Segmentado(archivo1, indices, carpeta=True)
                                 try:
-                                    mensaje = model.Formateador.comprobar_salida(
+                                    mensaje = Formateador.comprobar_salida(
                                         segmentado.final
                                     )
                                     if mensaje != "":
@@ -455,12 +465,12 @@ class Ventana_Principal(Ventana_Base):
                                         imprimir_con_color(
                                             f"\nPreparando {archivo}", "lila"
                                         )
-                                        model.Administrador._convertir_segmentado(
+                                        Administrador._convertir_segmentado(
                                             segmentado.final, nombre=archivo
                                         )
                                         try:
                                             indices_finales = (
-                                                model.Administrador._obtener_indices(
+                                                Administrador._obtener_indices(
                                                     segmentado.final, indices
                                                 )
                                             )
@@ -642,7 +652,7 @@ class Ventana_Principal(Ventana_Base):
                 return False, f"(MES) Error en coherencia: {fechas}"
 
     def comprobar_nulos(self, archivo, advertencias=True):
-        res2 = model.Formateador.comprobar_salida(archivo, advertencias=advertencias)
+        res2 = Formateador.comprobar_salida(archivo, advertencias=advertencias)
         return res2
 
     def abrir_ventana_intermedia(self, widgets, titulo, colores_botones):
@@ -670,25 +680,25 @@ class Ventana_Principal(Ventana_Base):
     def _cargar_no_segmentado(self, path, indices):
         try:
             if path is False:
-                archivo1 = model.Administrador._cargar(
+                archivo1 = Administrador._cargar(
                     filedialog.askopenfilename(
                         initialdir=self.directorio_base
                         + "/Exportaciones/No segmentados/"
                     ),
                     no_tiene_encabezados=False,
                 )
-                segmentado = model.Segmentado(archivo1, indices)
+                segmentado = Segmentado(archivo1, indices)
             else:
-                archivo1 = model.Administrador._cargar(path, no_tiene_encabezados=False)
-                segmentado = model.Segmentado(archivo1, indices)
+                archivo1 = Administrador._cargar(path, no_tiene_encabezados=False)
+                segmentado = Segmentado(archivo1, indices)
             try:
                 try:
-                    mensaje = model.Formateador.comprobar_salida(segmentado.final)
+                    mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
                         tk.messagebox.showinfo("Advertencia", mensaje)
                 except Exception as error:
                     imprimir_con_color(error, "rojo")
-                model.Administrador._convertir_segmentado(segmentado.final)
+                Administrador._convertir_segmentado(segmentado.final)
                 tk.messagebox.showinfo(
                     "Exito", f"El proceso se completo correctamente."
                 )
@@ -727,7 +737,7 @@ class Ventana_Principal(Ventana_Base):
                             imprimir_con_color(f"{res[1]}", "verde")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
-                                archivo_final = model.Administrador._cargar_final(path)
+                                archivo_final = Administrador._cargar_final(path)
                                 res2 = self.comprobar_nulos(
                                     archivo_final, advertencias=False
                                 )
@@ -777,7 +787,7 @@ class Ventana_Principal(Ventana_Base):
                             imprimir_con_color(f"{res[1]}", "verde")
                             # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
                             try:
-                                archivo_final = model.Administrador._cargar_final(path)
+                                archivo_final = Administrador._cargar_final(path)
                                 res2 = self.comprobar_nulos(
                                     archivo_final, advertencias=False
                                 )
@@ -1110,11 +1120,11 @@ class Ventana_addendum(tk.Toplevel, Ventana_Base):
         # Leer el archivo Excel
         df = dict(
             pd.read_excel(
-                rf"{Ph(__file__).resolve().parent}\Base calificaciones\calificaciones_db.xlsx",
+                rf"{DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
                 header=None,
             ).values.tolist()
         )
-        addendum = model.Addendum()
+        addendum = Addendum()
         simplificado = addendum.simplificada(original)
 
         # Agregar un nuevo registro
@@ -1126,7 +1136,7 @@ class Ventana_addendum(tk.Toplevel, Ventana_Base):
 
         # Guardar los cambios en el archivo Excel
         df.to_excel(
-            rf"{Ph(__file__).resolve().parent}\Base calificaciones\calificaciones_db.xlsx",
+            rf"{DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
             index=False,
             header=False,
         )
@@ -1200,10 +1210,10 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
 
     def corregir_original(self):
         try:
-            original = model.Administrador._cargar(
+            original = Administrador._cargar(
                 self.path_original,
             )
-            enmendado = model.Administrador._cargar(
+            enmendado = Administrador._cargar(
                 self.path_enmendado, no_tiene_encabezados=False, es_original=False
             )
 
@@ -1213,7 +1223,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
             ult = pd.DataFrame(original)
             ult.to_excel(
-                rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
+                rf"{DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
                 index=False,
                 header=False,
             )
@@ -1221,7 +1231,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             tk.messagebox.showinfo(
                 "Corregido", f"¡El archivo fue corredido correctamente!"
             )
-            return rf"{Ph(__file__).resolve().parent}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
+            return rf"{DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
         except Exception as error:
             tk.messagebox.showinfo(
                 "Advertencia", f"Ha ocurrido el siguiente error:\n {error}"
