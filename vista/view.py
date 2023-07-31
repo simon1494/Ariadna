@@ -15,6 +15,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter.font import Font
+from controladores.controlador_logueador import iniciar_logueador
 from modelos.formateador import Formateador
 from modelos.administrador import Administrador
 from modelos.testeador import Tester
@@ -52,6 +53,8 @@ class Ventana_Base:
 
 class Ventana_Principal(Ventana_Base):
     def __init__(self, master, version):
+        Administrador.crear_directorio_de_exportaciones()
+        self.logger = iniciar_logueador()
         self.ventana = master
         self.ventana.title(f"ARIADNA -- {version}")
         self.ventana.ancho = 900
@@ -124,6 +127,7 @@ class Ventana_Principal(Ventana_Base):
             },
         ]
 
+        self.logger.loguear_info("Buenas")
         self.setear_indices()
         self.crear_botones()
 

@@ -5,12 +5,55 @@ import pandas as pd
 import tkinter as tk
 import checkpoints as ck
 import os
+from .herramientas_adicionales import imprimir_con_color
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 class Administrador:
+    @staticmethod
+    def crear_directorio_de_exportaciones():
+        RUTA_A_CHEQUEAR = f"{DIRECTORIO_PADRE}/Exportaciones"
+        if not os.path.exists(RUTA_A_CHEQUEAR):
+            imprimir_con_color(
+                "Directorio de 'Exportaciones' no encontrado. Creando directorio 'Exportaciones'...",
+                "amarillo",
+            )
+            try:
+                os.mkdir(RUTA_A_CHEQUEAR)
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/Corregidos")
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/Crudos")
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/Errores")
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/Logs")
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/No Segmentados")
+                os.mkdir(f"{RUTA_A_CHEQUEAR}/Segmentados")
+                imprimir_con_color("Directorio de 'Exportaciones' creado.", "verde")
+            except Exception as error:
+                imprimir_con_color(
+                    f"Error al crear los directorios base:\n{error}", "rojo"
+                )
+        else:
+            imprimir_con_color("Directorios de exportaciones correctos.", "verde")
+            try:
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Corregidos"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/Corregidos")
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Crudos"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/Crudos")
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Errores"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/Errores")
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Logs"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/Logs")
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/No segmentados"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/No segmentados")
+                if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Segmentados"):
+                    os.mkdir(f"{RUTA_A_CHEQUEAR}/Segmentados")
+            except Exception as error:
+                imprimir_con_color(
+                    f"Error al crear directorios de exportaciones faltantes:\n{error}",
+                    "rojo",
+                )
+
     @staticmethod
     def _cargar(path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
