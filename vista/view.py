@@ -11,28 +11,21 @@ import copy
 import pandas as pd
 import tkinter as tk
 import checkpoints as ck
-from tkinter import filedialog
-from tkinter import messagebox
 from tkinter import ttk
 from tkinter.font import Font
-from controladores.controlador_logueador import iniciar_logueador
 from modelos.formateador import Formateador
 from modelos.administrador import Administrador
 from modelos.testeador import Tester
 from modelos.procesadores_principales import Inicial
 from modelos.procesadores_principales import Segmentado
 from modelos.procesadores_secundarios import Addendum
-from modelos.herramientas_adicionales import imprimir_con_color
-
-
-# Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
-DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+from modelos.cuadros_de_mensajes import Mensajes
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
-class Ventana_Base:
-    directorio_base = os.path.abspath(os.path.dirname(__file__))
+class Ventana_Base(Mensajes, Administrador):
+    usuario = None
     color_botones = "#8CA2EA"
     botones_iniciales = "#AFEB54"
     botones_segmentado = "#EBA605"
@@ -52,9 +45,9 @@ class Ventana_Base:
 
 
 class Ventana_Principal(Ventana_Base):
-    def __init__(self, master, version):
-        Administrador.crear_directorio_de_exportaciones()
-        self.logger = iniciar_logueador()
+    def __init__(self, master, version, usuario):
+        self.crear_directorio_de_exportaciones()
+        self.usuario = usuario
         self.ventana = master
         self.ventana.title(f"ARIADNA -- {version}")
         self.ventana.ancho = 900
@@ -92,7 +85,7 @@ class Ventana_Principal(Ventana_Base):
             {
                 "nombre": "varios",
                 "texto": "Procesar Varios",
-                "callback": lambda: self.procesar_varios(),
+                "callback": lambda: self.evaluar_si_todos_unos(),
             },
             {
                 "nombre": "indices",
@@ -127,7 +120,13 @@ class Ventana_Principal(Ventana_Base):
             },
         ]
 
-        self.logger.loguear_info("Buenas")
+        self.loguear_info("")
+        self.loguear_info("")
+        self.loguear_info("")
+        self.loguear_info(
+            "------------------------ NUEVO INICIO DE SISTEMA ------------------------"
+        )
+        self.loguear_info(f"Usuario logueado: {self.usuario}")
         self.setear_indices()
         self.crear_botones()
 
@@ -222,46 +221,40 @@ class Ventana_Principal(Ventana_Base):
     def procesar_inicial(self):
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
         try:
-            path = filedialog.askopenfilename(
-                initialdir=self.directorio_base + "/Exportaciones/Crudos/"
-            )
+            path = self.seleccionar_archivo("/Exportaciones/Crudos/")
 
             nombre_archivo = os.path.splitext(os.path.basename(path))[0]
 
             formateador = Formateador()
-            archivo = Administrador._cargar(path)
+            archivo = self._cargar(path)
             tester = Tester(archivo)
             if len(tester.errores) > 0:
-                log_errores = Administrador._convertir_inicial(
+                log_errores = self._convertir_inicial(
                     tester.errores,
                     ["indice", "n° registro", "para enmendar"],
                     nombre=nombre_archivo,
                     error=True,
                 )
-                tk.messagebox.showinfo(
-                    "Advertencia",
+                self.mostrar_mensaje_advertencia(
                     "Hubo errores en los listados.\nSe ha generado un registro errores.",
                 )
                 os.startfile(log_errores)
             else:
                 archivo, identificadores = formateador._formatear(archivo, ck.cp_iden)
                 inicial = Inicial(archivo, identificadores)
-                path = Administrador._convertir_inicial(
+                path = self._convertir_inicial(
                     inicial.sin_duplicados, ck.general, nombre=nombre_archivo
                 )
-                if tk.messagebox.askyesno(
-                    "Segmentar", "¿Desea proceder a segmentar el archivo?"
+                if self.mostrar_mensaje_pregunta(
+                    "¿Desea proceder a segmentar el archivo?"
                 ):
                     self.procesar_final(path)
                 else:
-                    tk.messagebox.showinfo(
-                        "Proceso completado",
+                    self.mostrar_mensaje_info(
                         "El archivo fue procesado correctamente.",
                     )
         except FileNotFoundError:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ningún archivo."
-            )
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
         #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -269,9 +262,7 @@ class Ventana_Principal(Ventana_Base):
         if not self.todos_unos(self.indices):
             self._cargar_no_segmentado(path, self.indices)
         else:
-            tk.messagebox.showinfo(
-                "Advertencia", f"Antes de segmentar, primero setee los indices."
-            )
+            self.mostrar_mensaje_info("Antes de segmentar, primero setee los indices.")
             self.abrir_ventana_top_intermedia(
                 self.ventana_top, Ventana_indices, self.indices
             )
@@ -280,9 +271,7 @@ class Ventana_Principal(Ventana_Base):
 
     def procesar_crudos(self, path=False):
         try:
-            carpeta = filedialog.askdirectory(
-                initialdir=self.directorio_base + "/Exportaciones/Crudos/"
-            )
+            carpeta = self.seleccionar_carpeta("/Exportaciones/Crudos/")
             archivos = os.listdir(carpeta)
             formateador = Formateador()
 
@@ -293,12 +282,12 @@ class Ventana_Principal(Ventana_Base):
                 if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
                     try:
                         nombre_archivo = os.path.splitext(os.path.basename(path))[0]
-                        archivo0 = Administrador._cargar(path)
+                        archivo0 = self._cargar(path)
                         try:
                             tester = Tester(archivo0)
                             try:
                                 if len(tester.errores) > 0:
-                                    log_errores = Administrador._convertir_inicial(
+                                    log_errores = self._convertir_inicial(
                                         tester.errores,
                                         ["indice", "n° registro", "para enmendar"],
                                         nombre=nombre_archivo,
@@ -309,226 +298,132 @@ class Ventana_Principal(Ventana_Base):
                                         archivo0, ck.cp_iden
                                     )
                                     inicial = Inicial(archivo0, identificadores)
-                                    path = Administrador._convertir_inicial(
+                                    path = self._convertir_inicial(
                                         inicial.sin_duplicados,
                                         ck.general,
                                         nombre=nombre_archivo,
                                     )
                             except Exception as error:
-                                imprimir_con_color(
+                                self.imprimir_con_color(
                                     f"({archivo}) Error en etapa de procesado del archivo: {error}",
                                     "rojo",
                                 )
                         except Exception as error:
-                            imprimir_con_color(
+                            self.imprimir_con_color(
                                 f"({archivo}) Error en etapa de testeo de información entrante: {error}",
                                 "rojo",
                             )
                     except Exception as error:
-                        imprimir_con_color(
+                        self.imprimir_con_color(
                             f"({archivo}) Error en etapa de carga del archivo crudo: {error}",
                             "rojo",
                         )
-                imprimir_con_color(f"Listo {archivo}", "verde")
-            tk.messagebox.showinfo(
-                "Aviso",
+                self.imprimir_con_color(f"Listo {archivo}", "verde")
+            self.mostrar_mensaje_info(
                 "El procesado de crudos ha sido completado.",
             )
         except FileNotFoundError:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ninguna carpeta."
-            )
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ninguna carpeta.")
 
-    def procesar_varios(self):
+    def evaluar_si_todos_unos(self):
         if not self.todos_unos(self.indices):
             try:
-                carpeta = filedialog.askdirectory(
-                    initialdir=self.directorio_base + "/Exportaciones/No segmentados/"
-                )
+                carpeta = self.seleccionar_carpeta("/Exportaciones/No segmentados/")
                 archivos = os.listdir(carpeta)
-
                 indices = list(map(lambda var: var.get(), self.indices))
-                for archivo in archivos:
-                    path = os.path.join(
-                        carpeta, archivo
-                    )  # Obtener la ruta completa del archivo
-                    if os.path.isfile(
-                        path
-                    ):  # Comprobar si es un archivo (no una carpeta)
-                        try:
-                            archivo1 = Administrador._cargar(
-                                path, no_tiene_encabezados=False
-                            )
-                            try:
-                                segmentado = Segmentado(archivo1, indices, carpeta=True)
-                                try:
-                                    mensaje = Formateador.comprobar_salida(
-                                        segmentado.final
-                                    )
-                                    if mensaje != "":
-                                        imprimir_con_color(
-                                            f"Advertencia {mensaje}", "amarillo"
-                                        )
-                                    try:
-                                        imprimir_con_color(
-                                            f"\nPreparando {archivo}", "lila"
-                                        )
-                                        Administrador._convertir_segmentado(
-                                            segmentado.final, nombre=archivo
-                                        )
-                                        try:
-                                            indices_finales = (
-                                                Administrador._obtener_indices(
-                                                    segmentado.final, indices
-                                                )
-                                            )
-                                            imprimir_con_color(
-                                                f"Iniciales:----{str(indices)}",
-                                                "blanco",
-                                            )
-                                            imprimir_con_color(
-                                                f"Finales:-----{str(indices_finales)}",
-                                                "blanco",
-                                            )
-                                            indices = list(
-                                                map(lambda x: x + 1, indices_finales)
-                                            )
-                                            imprimir_con_color(
-                                                f"Siguientes:--{str(indices)}", "blanco"
-                                            )
-                                        except Exception as error:
-                                            imprimir_con_color(
-                                                f"({archivo}) Error en la obtención de índices nuevos: {error}",
-                                                "rojo",
-                                            )
-                                    except Exception as error:
-                                        imprimir_con_color(
-                                            f"({archivo}) Error en conversión final a formato Excel: {error}",
-                                            "rojo",
-                                        )
-                                except Exception as error:
-                                    imprimir_con_color(
-                                        f"({archivo}) Error en la comprobación de datos salientes: {error}",
-                                        "rojo",
-                                    )
-                            except Exception as error:
-                                imprimir_con_color(
-                                    f"({archivo}) Error en etapa de procesado: {error}",
-                                    "rojo",
-                                )
-                        except Exception as error:
-                            imprimir_con_color(
-                                f"({archivo}) Error en etapa de carga: {error}", "rojo"
-                            )
-                    imprimir_con_color(f"Listo {archivo}", "verde")
-                tk.messagebox.showinfo(
-                    "Aviso",
-                    "El procesado de no segmentados ha sido completado.",
-                )
+                self.procesar_varios(carpeta, archivos, indices)
             except FileNotFoundError:
-                tk.messagebox.showinfo(
-                    "Advertencia", f"No se ha seleccionado ninguna carpeta."
+                self.mostrar_mensaje_advertencia(
+                    "No se ha seleccionado ninguna carpeta."
                 )
         else:
-            tk.messagebox.showinfo(
-                "Advertencia", f"Antes de segmentar, primero setee los indices."
-            )
-            self.abrir_ventana_top_intermedia(
-                self.ventana_top, Ventana_indices, self.indices
-            )
-            indices = list(map(lambda var: var.get(), self.indices))
             try:
-                carpeta = filedialog.askdirectory(
-                    initialdir=self.directorio_base + "/Exportaciones/No segmentados/"
+                self.mostrar_mensaje_info(
+                    "Antes de segmentar, primero setee los indices."
                 )
-                archivos = os.listdir(carpeta)
-
+                self.abrir_ventana_top_intermedia(
+                    self.ventana_top, Ventana_indices, self.indices
+                )
                 indices = list(map(lambda var: var.get(), self.indices))
-                for archivo in archivos:
-                    path = os.path.join(
-                        carpeta, archivo
-                    )  # Obtener la ruta completa del archivo
-                    if os.path.isfile(
-                        path
-                    ):  # Comprobar si es un archivo (no una carpeta)
+                carpeta = self.seleccionar_carpeta("/Exportaciones/No segmentados/")
+                archivos = os.listdir(carpeta)
+                self.procesar_varios(carpeta, archivos, indices)
+            except FileNotFoundError:
+                self.mostrar_mensaje_advertencia(
+                    "No se ha seleccionado ninguna carpeta."
+                )
+
+    def procesar_varios(self, carpeta, archivos, indices):
+        for archivo in archivos:
+            path = os.path.join(
+                carpeta, archivo
+            )  # Obtener la ruta completa del archivo
+            if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
+                try:
+                    archivo1 = self._cargar(path, no_tiene_encabezados=False)
+                    try:
+                        segmentado = Segmentado(archivo1, indices, carpeta=True)
                         try:
-                            archivo1 = Administrador._cargar(
-                                path, no_tiene_encabezados=False
-                            )
+                            mensaje = Formateador.comprobar_salida(segmentado.final)
+                            if mensaje != "":
+                                self.imprimir_con_color(
+                                    f"Advertencia {mensaje}", "amarillo"
+                                )
                             try:
-                                segmentado = Segmentado(archivo1, indices, carpeta=True)
+                                print("\n")
+                                self.imprimir_con_color(f"Preparando {archivo}", "lila")
+                                self._convertir_segmentado(
+                                    segmentado.final, nombre=archivo
+                                )
                                 try:
-                                    mensaje = Formateador.comprobar_salida(
-                                        segmentado.final
+                                    indices_finales = self._obtener_indices(
+                                        segmentado.final, indices
                                     )
-                                    if mensaje != "":
-                                        imprimir_con_color(
-                                            f"Advertencia {mensaje}", "amarillo"
-                                        )
-                                    try:
-                                        imprimir_con_color(
-                                            f"\nPreparando {archivo}", "lila"
-                                        )
-                                        Administrador._convertir_segmentado(
-                                            segmentado.final, nombre=archivo
-                                        )
-                                        try:
-                                            indices_finales = (
-                                                Administrador._obtener_indices(
-                                                    segmentado.final, indices
-                                                )
-                                            )
-                                            imprimir_con_color(
-                                                f"Iniciales:  {str(indices)}", "blanco"
-                                            )
-                                            imprimir_con_color(
-                                                f"Finales:    {str(indices_finales)}",
-                                                "blanco",
-                                            )
-                                            indices = list(
-                                                map(lambda x: x + 1, indices_finales)
-                                            )
-                                            imprimir_con_color(
-                                                f"Siguientes: {str(indices)}", "blanco"
-                                            )
-                                        except Exception as error:
-                                            imprimir_con_color(
-                                                f"({archivo}) Error en la obtención de índices nuevos: {error}",
-                                                "rojo",
-                                            )
-                                    except Exception as error:
-                                        imprimir_con_color(
-                                            f"({archivo}) Error en conversión final a formato Excel: {error}",
-                                            "rojo",
-                                        )
+                                    self.imprimir_con_color(
+                                        f"Iniciales:---{str(indices)}",
+                                        "blanco",
+                                    )
+                                    self.imprimir_con_color(
+                                        f"Finales:-----{str(indices_finales)}",
+                                        "blanco",
+                                    )
+                                    indices = list(
+                                        map(lambda x: x + 1, indices_finales)
+                                    )
+                                    self.imprimir_con_color(
+                                        f"Siguientes:--{str(indices)}", "blanco"
+                                    )
                                 except Exception as error:
-                                    imprimir_con_color(
-                                        f"({archivo}) Error en la comprobación de datos salientes: {error}",
+                                    self.imprimir_con_color(
+                                        f"({archivo}) Error en la obtención de índices nuevos: {error}",
                                         "rojo",
                                     )
                             except Exception as error:
-                                imprimir_con_color(
-                                    f"({archivo}) Error en etapa de procesado: {error}",
+                                self.imprimir_con_color(
+                                    f"({archivo}) Error en conversión final a formato Excel: {error}",
                                     "rojo",
                                 )
                         except Exception as error:
-                            imprimir_con_color(
-                                f"({archivo}) Error en etapa de carga: {error}", "rojo"
+                            self.imprimir_con_color(
+                                f"({archivo}) Error en la comprobación de datos salientes: {error}",
+                                "rojo",
                             )
-                    imprimir_con_color(f"Listo {archivo}", "verde")
-                tk.messagebox.showinfo(
-                    "Aviso",
-                    "El procesado de no segmentados ha sido completado.",
-                )
-            except FileNotFoundError:
-                tk.messagebox.showinfo(
-                    "Advertencia", f"No se ha seleccionado ninguna carpeta."
-                )
-
-    def compilar_archivos(self):
-        carpeta = filedialog.askdirectory(
-            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
+                    except Exception as error:
+                        self.imprimir_con_color(
+                            f"({archivo}) Error en etapa de procesado: {error}",
+                            "rojo",
+                        )
+                except Exception as error:
+                    self.imprimir_con_color(
+                        f"({archivo}) Error en etapa de carga: {error}", "rojo"
+                    )
+            self.imprimir_con_color(f"Listo {archivo}", "verde")
+        self.mostrar_mensaje_info(
+            "Procesado completo.",
         )
+
+    def _archivos(self):
+        carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
         print("\n")
         archivos = os.listdir(carpeta)
 
@@ -554,28 +449,28 @@ class Ventana_Principal(Ventana_Base):
                         df["Latitud:"] = df["Latitud:"].astype(str)
                         df["Longitud:"] = df["Longitud:"].astype(str)
                     datos[hoja] = pd.concat([datos[hoja], df])
-            imprimir_con_color(f"Listo {archivo}", "verde")
+            self.imprimir_con_color(f"Listo {archivo}", "verde")
 
         # Escribir los datos consolidados en un archivo de Excel
         with pd.ExcelWriter(archivo_final) as writer:
-            imprimir_con_color("\n")
-            imprimir_con_color("Comenzando proceso de compilación...", "lila")
+            print("\n")
+            self.imprimir_con_color("Comenzando proceso de compilación...", "lila")
             for hoja, df in datos.items():
                 df.to_excel(writer, sheet_name=hoja, index=False)
 
-        imprimir_con_color("Analizando coherencia de indexados...", "lila")
+        self.imprimir_con_color("Analizando coherencia de indexados...", "lila")
         try:
             if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
-                imprimir_con_color(
+                self.imprimir_con_color(
                     "Chequeada coherencia de indexados sin errores", "verde"
                 )
             else:
-                imprimir_con_color(
+                self.imprimir_con_color(
                     "Se detectaron errores de coherencia en los indexados", "rojo"
                 )
         except Exception as error:
-            imprimir_con_color(error, "rojo")
-        imprimir_con_color(
+            self.imprimir_con_color(error, "rojo")
+        self.imprimir_con_color(
             f"Se ha creado el archivo consolidado en: {archivo_final}", "blanco"
         )
 
@@ -629,7 +524,7 @@ class Ventana_Principal(Ventana_Base):
                 fecha_ = datetime.datetime.strptime(fecha, "%Y-%m-%d")
                 mes.append(fecha_.strftime("%B").upper())
             mes_final = list(set(mes))
-            if 29 < len(fechas) < 32 or len(fechas) == 27:
+            if 29 < len(fechas) < 32:
                 if len(mes_final) == 1:
                     return (
                         True,
@@ -652,6 +547,11 @@ class Ventana_Principal(Ventana_Base):
                             False,
                             f"(MES) Error en coherencia. Demasiados meses en archivo: {mes_final}",
                         )
+                else:
+                    return (
+                        False,
+                        f"(MES) Error en coherencia. El mes no contiene 28 o 29 días y no es febrero: {mes_final}",
+                    )
             else:
                 return False, f"(MES) Error en coherencia: {fechas}"
 
@@ -684,149 +584,145 @@ class Ventana_Principal(Ventana_Base):
     def _cargar_no_segmentado(self, path, indices):
         try:
             if path is False:
-                archivo1 = Administrador._cargar(
-                    filedialog.askopenfilename(
-                        initialdir=self.directorio_base
-                        + "/Exportaciones/No segmentados/"
-                    ),
+                archivo1 = self._cargar(
+                    self.seleccionar_archivo("/Exportaciones/No segmentados/"),
                     no_tiene_encabezados=False,
                 )
                 segmentado = Segmentado(archivo1, indices)
             else:
-                archivo1 = Administrador._cargar(path, no_tiene_encabezados=False)
+                archivo1 = self._cargar(path, no_tiene_encabezados=False)
                 segmentado = Segmentado(archivo1, indices)
             try:
                 try:
                     mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
-                        tk.messagebox.showinfo("Advertencia", mensaje)
+                        self.mostrar_mensaje_advertencia(mensaje)
                 except Exception as error:
-                    imprimir_con_color(error, "rojo")
-                Administrador._convertir_segmentado(segmentado.final)
-                tk.messagebox.showinfo(
-                    "Exito", f"El proceso se completo correctamente."
-                )
+                    self.imprimir_con_color(error, "rojo")
+                self._convertir_segmentado(segmentado.final)
+                self.mostrar_mensaje_info("El proceso se completo correctamente.")
             except AttributeError:
-                tk.messagebox.showinfo(
-                    "Advertencia", f"El proceso de segmentado se ha abortado."
+                self.mostrar_mensaje_advertencia(
+                    "El proceso de segmentado se ha abortado."
                 )
                 ventana_errores = Ventana_addendum(
                     self.ventana, archivo=segmentado.errores
                 )
         except FileNotFoundError:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ningún archivo."
-            )
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
     def chequear_integridad(self, ventana):
-        imprimir_con_color("\n\n")
-        path = filedialog.askopenfilename(
-            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
-        )
-        respuesta = messagebox.askyesno(
-            "Selecciona tipo de archivo",
-            "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
-        )
-        imprimir_con_color("Iniciando chequeo de integridad de archivo...", "lila")
-        # COMPROBAR FECHAS
-        if respuesta:
-            # COMPROBAR INDICES DE FECHA
-            try:
-                if self.comprobar_indices(path):
-                    imprimir_con_color("Indices correctos.", "verde")
-                    # COMPROBAR COHERENCIA DE FECHA
-                    try:
-                        res = self.comprobar_fechas(path)
-                        if res[0]:
-                            imprimir_con_color(f"{res[1]}", "verde")
-                            # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
-                            try:
-                                archivo_final = Administrador._cargar_final(path)
-                                res2 = self.comprobar_nulos(
-                                    archivo_final, advertencias=False
-                                )
-                                if res2 == "":
-                                    imprimir_con_color(
-                                        f"Comprobados campos no nulos", "verde"
+        print("\n\n")
+        path = self.seleccionar_archivo("/Exportaciones/Segmentados")
+        if path:
+            respuesta = self.mostrar_mensaje_pregunta(
+                "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
+            )
+            self.imprimir_con_color(
+                "Iniciando chequeo de integridad de archivo...", "lila"
+            )
+            self.imprimir_con_color(f"{path}", "lila")
+            # COMPROBAR FECHAS
+            if respuesta:
+                # COMPROBAR INDICES DE FECHA
+                try:
+                    if self.comprobar_indices(path):
+                        self.imprimir_con_color("CHEQUEO: Indices correctos", "verde")
+                        # COMPROBAR COHERENCIA DE FECHA
+                        try:
+                            res = self.comprobar_fechas(path)
+                            if res[0]:
+                                self.imprimir_con_color(f"CHEQUEO: {res[1]}", "verde")
+                                # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
+                                try:
+                                    archivo_final = self._cargar_final(path)
+                                    res2 = self.comprobar_nulos(
+                                        archivo_final, advertencias=False
                                     )
-                                    tk.messagebox.showinfo(
-                                        "Archivo comprobado",
-                                        f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                    if res2 == "":
+                                        self.imprimir_con_color(
+                                            f"CHEQUEO: Comprobados campos no nulos",
+                                            "verde",
+                                        )
+                                        self.mostrar_mensaje_info(
+                                            "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                        )
+                                        ventana.botones[1].config(bg=self.verde)
+                                        ventana.a_subir = archivo_final
+                                    else:
+                                        self.mostrar_mensaje_advertencia(f"{res2}")
+                                        ventana.botones[1].config(bg=self.amarillo)
+                                except Exception as error:
+                                    self.mostrar_mensaje_error(
+                                        f"Error al comprobar nulos: {error}"
                                     )
-                                    ventana.botones[1].config(bg=self.verde)
-                                    ventana.a_subir = archivo_final
-                                else:
-                                    tk.messagebox.showwarning("Advertencia", f"{res2}")
-                                    ventana.botones[1].config(bg=self.amarillo)
-                            except Exception as error:
-                                tk.messagebox.showerror(
-                                    "Error", f"Error al comprobar nulos: {error}"
-                                )
-                                ventana.botones[1].config(bg=self.rojo)
-                        else:
-                            tk.messagebox.showwarning("Advertencia", f"{res[1]}")
-                            ventana.botones[1].config(bg=self.amarillo)
-                    except Exception as error:
-                        tk.messagebox.showerror(
-                            "Error", f"Error al comprobar fechas: {error}"
-                        )
-                        ventana.botones[1].config(bg=self.rojo)
-                else:
-                    tk.messagebox.showwarning("Advertencia", f"Indices no correctos.")
-                    ventana.botones[1].config(bg=self.amarillo)
-            except Exception as error:
-                tk.messagebox.showerror("Error", f"Error al comprobar índices: {error}")
-                ventana.botones[1].config(bg=self.rojo)
+                                    ventana.botones[1].config(bg=self.rojo)
+                            else:
+                                self.mostrar_mensaje_advertencia(f"{res[1]}")
+                                ventana.botones[1].config(bg=self.amarillo)
+                        except Exception as error:
+                            self.mostrar_mensaje_error(
+                                f"Error al comprobar fechas: {error}"
+                            )
+                            ventana.botones[1].config(bg=self.rojo)
+                    else:
+                        self.mostrar_mensaje_advertencia(f"Indices INCORRECTOS.")
+                        ventana.botones[1].config(bg=self.amarillo)
+                except Exception as error:
+                    self.mostrar_mensaje_error(f"Error al comprobar índices: {error}")
+                    ventana.botones[1].config(bg=self.rojo)
 
-        # COMPROBAR MES
+            # COMPROBAR MES
+            else:
+                # COMPROBAR INDICES DE MES
+                try:
+                    if self.comprobar_indices(path):
+                        self.imprimir_con_color("CHEQUEO: Indices correctos.", "verde")
+                        # COMPROBAR COHERENCIA DE MES
+                        try:
+                            res = self.comprobar_fechas(path, fecha=False)
+                            if res[0]:
+                                self.imprimir_con_color(f"CHEQUEO: {res[1]}", "verde")
+                                # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
+                                try:
+                                    archivo_final = self._cargar_final(path)
+                                    res2 = self.comprobar_nulos(
+                                        archivo_final, advertencias=False
+                                    )
+                                    if res2 == "":
+                                        self.imprimir_con_color(
+                                            f"CHEQUEO: Comprobados campos no nulos",
+                                            "verde",
+                                        )
+                                        self.mostrar_mensaje_info(
+                                            "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                        )
+                                        ventana.botones[1].config(bg=self.verde)
+                                        ventana.a_subir = archivo_final
+                                    else:
+                                        self.mostrar_mensaje_advertencia(f"{res2}")
+                                        ventana.botones[1].config(bg=self.amarillo)
+                                except Exception as error:
+                                    self.mostrar_mensaje_error(
+                                        f"Error al comprobar nulos: {error}"
+                                    )
+                                    ventana.botones[1].config(bg=self.rojo)
+                            else:
+                                self.mostrar_mensaje_advertencia(f"{res[1]}")
+                                ventana.botones[1].config(bg=self.amarillo)
+                        except Exception as error:
+                            self.mostrar_mensaje_error(
+                                f"Error al comprobar fechas: {error}"
+                            )
+                            ventana.botones[1].config(bg=self.rojo)
+                    else:
+                        self.mostrar_mensaje_advertencia("Indices INCORRECTOS.")
+                        ventana.botones[1].config(bg=self.amarillo)
+                except Exception as error:
+                    self.mostrar_mensaje_error(f"Error al comprobar índices: {error}")
+                    ventana.botones[1].config(bg=self.rojo)
         else:
-            # COMPROBAR INDICES DE MES
-            try:
-                if self.comprobar_indices(path):
-                    imprimir_con_color("Indices correctos.", "verde")
-                    # COMPROBAR COHERENCIA DE MES
-                    try:
-                        res = self.comprobar_fechas(path, fecha=False)
-                        if res[0]:
-                            imprimir_con_color(f"{res[1]}", "verde")
-                            # COMPROBAR INTEGRIDAD DE TABLAS Y CAMPOS NO NULOS
-                            try:
-                                archivo_final = Administrador._cargar_final(path)
-                                res2 = self.comprobar_nulos(
-                                    archivo_final, advertencias=False
-                                )
-                                if res2 == "":
-                                    imprimir_con_color(
-                                        f"Comprobados campos no nulos", "verde"
-                                    )
-                                    tk.messagebox.showinfo(
-                                        "Archivo comprobado",
-                                        f"Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
-                                    )
-                                    ventana.botones[1].config(bg=self.verde)
-                                    ventana.a_subir = archivo_final
-                                else:
-                                    tk.messagebox.showwarning("Advertencia", f"{res2}")
-                                    ventana.botones[1].config(bg=self.amarillo)
-                            except Exception as error:
-                                tk.messagebox.showerror(
-                                    "Error", f"Error al comprobar nulos: {error}"
-                                )
-                                ventana.botones[1].config(bg=self.rojo)
-                        else:
-                            tk.messagebox.showwarning("Advertencia", f"{res[1]}")
-                            ventana.botones[1].config(bg=self.amarillo)
-                    except Exception as error:
-                        tk.messagebox.showerror(
-                            "Error", f"Error al comprobar fechas: {error}"
-                        )
-                        ventana.botones[1].config(bg=self.rojo)
-                else:
-                    tk.messagebox.showwarning("Advertencia", f"Indices no correctos.")
-                    ventana.botones[1].config(bg=self.amarillo)
-            except Exception as error:
-                tk.messagebox.showerror("Error", f"Error al comprobar índices: {error}")
-                ventana.botones[1].config(bg=self.rojo)
+            self.mostrar_mensaje_advertencia("Ningún archivo seleccionado")
 
     def subir_a_base(self, ventana):
         def obtener_indices_archivo(lista_compuesta):
@@ -859,36 +755,37 @@ class Ventana_Principal(Ventana_Base):
             data2 = list(map(lambda x: filtrar(x, recorte), data))
             try:
                 consulta = rf"INSERT INTO {nombre_tabla} ({', '.join(campos)}) VALUES ({', '.join('%s' for _ in data2[0])})"
-                imprimir_con_color(
+                self.imprimir_con_color(
                     f"Preparando '{nombre_tabla}' para inserción...", "lila"
                 )
                 cursor.executemany(consulta, data2)
-                imprimir_con_color(
-                    f"Archivo '{nombre_tabla}' a la espera de commit...", "blanco"
-                )
-                imprimir_con_color("\n")
             except Exception as error:
-                tk.messagebox.showerror(
+                self.mostrar_mensaje_error(
                     f"Error durante la inserción en {nombre_tabla}", f"{error}"
                 )
                 raise error
 
-        imprimir_con_color("\n\n")
+        print("\n\n")
 
         conexion = mysql.connector.connect(
             host=ventana.conexion[0],
             user=ventana.conexion[1],
             password=ventana.conexion[2],
             database=ventana.conexion[3],
+            charset="utf8",
         )
 
         cursor = conexion.cursor()
 
-        imprimir_con_color("Chequeando continuidad de indexados...", "lila")
+        self.imprimir_con_color("Preparando inserción en base...", "verde")
         indices_archivo = obtener_indices_archivo(ventana.a_subir)
+        self.imprimir_con_color("Chequeando continuidad de indexados...", "lila")
         if chequear_continuidad(ventana.indices, indices_archivo):
-            imprimir_con_color("Índices correctos.", "verde")
-            imprimir_con_color("\n")
+            self.imprimir_con_color(
+                "CHEQUEO: continuidad de íncides correcta.", "verde"
+            )
+            print("\n")
+            self.imprimir_con_color("Iniciando inserción de datos en base...", "lila")
             try:
                 if indices_archivo[0]:
                     insertar(
@@ -899,8 +796,8 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["datos_hecho"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
                     )
 
                 if indices_archivo[1]:
@@ -912,8 +809,8 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["armas"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"No se ha insertado la tabla 'armas' ya que no contenía registros."
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'armas' ya que no contenía registros."
                     )
 
                 if indices_archivo[2]:
@@ -925,8 +822,8 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["automotores"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"No se ha insertado la tabla 'automotores' ya que no contenía registros."
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'automotores' ya que no contenía registros."
                     )
 
                 if indices_archivo[3]:
@@ -938,8 +835,8 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["elementos"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"No se ha insertado la tabla 'objetos' ya que no contenía registros."
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'objetos' ya que no contenía registros."
                     )
 
                 if indices_archivo[4]:
@@ -951,8 +848,8 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["elementos"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"No se ha insertado la tabla 'secuestros' ya que no contenía registros."
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'secuestros' ya que no contenía registros."
                     )
 
                 if indices_archivo[5]:
@@ -964,25 +861,26 @@ class Ventana_Principal(Ventana_Base):
                         ck.base_de_datos["involucrados"],
                     )
                 else:
-                    tk.messagebox.showwarning(
-                        f"Advertencia",
-                        f"No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
                     )
                 conexion.commit()
-                tk.messagebox.showinfo(
-                    f"Éxito",
-                    f"Archivo insertado correctamente.",
+                self.mostrar_mensaje_info(
+                    "Archivo insertado correctamente.",
                 )
+                self.imprimir_con_color("Archivo insertado correctamente.", "verde")
                 ventana.destroy()
             except Exception as error:
-                tk.messagebox.showwarning(
-                    f"Advertencia",
+                self.mostrar_mensaje_advertencia(
                     f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
                 )
         else:
-            tk.messagebox.showwarning(
-                f"Advertencia",
-                f"Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+            self.mostrar_mensaje_advertencia(
+                "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+            )
+            self.imprimir_con_color(
+                "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+                "amarillo",
             )
         conexion.close()
 
@@ -1124,7 +1022,7 @@ class Ventana_addendum(tk.Toplevel, Ventana_Base):
         # Leer el archivo Excel
         df = dict(
             pd.read_excel(
-                rf"{DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
+                rf"{self.DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
                 header=None,
             ).values.tolist()
         )
@@ -1140,13 +1038,12 @@ class Ventana_addendum(tk.Toplevel, Ventana_Base):
 
         # Guardar los cambios en el archivo Excel
         df.to_excel(
-            rf"{DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
+            rf"{self.DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
             index=False,
             header=False,
         )
-        tk.messagebox.showinfo(
-            "Alta",
-            f"Se ha agregado la nueva carátula a la base de datos de calificaciones.",
+        self.mostrar_mensaje_info(
+            "Se ha agregado la nueva carátula a la base de datos de calificaciones.",
         )
 
 
@@ -1214,10 +1111,10 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
 
     def corregir_original(self):
         try:
-            original = Administrador._cargar(
+            original = self._cargar(
                 self.path_original,
             )
-            enmendado = Administrador._cargar(
+            enmendado = self._cargar(
                 self.path_enmendado, no_tiene_encabezados=False, es_original=False
             )
 
@@ -1227,43 +1124,33 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
             ult = pd.DataFrame(original)
             ult.to_excel(
-                rf"{DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
+                rf"{self.DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
                 index=False,
                 header=False,
             )
             self.boton_corregir.config(bg="#27EA00")
-            tk.messagebox.showinfo(
-                "Corregido", f"¡El archivo fue corredido correctamente!"
-            )
-            return rf"{DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
+            self.mostrar_mensaje_info("¡El archivo fue corredido correctamente!")
+            return rf"{self.DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
         except Exception as error:
-            tk.messagebox.showinfo(
-                "Advertencia", f"Ha ocurrido el siguiente error:\n {error}"
+            self.mostrar_mensaje_advertencia(
+                f"Ha ocurrido el siguiente error:\n {error}"
             )
 
     def cargar_original(self):
-        path = filedialog.askopenfilename(
-            initialdir=self.directorio_base + "/Exportaciones/Crudos/"
-        )
+        path = self.seleccionar_archivo("/Exportaciones/Crudos/")
         if path:
             self.path_original = path
             self.boton_original.config(bg=self.verde)
         else:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ningún archivo."
-            )
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
     def cargar_enmendado(self):
-        path = filedialog.askopenfilename(
-            initialdir=self.directorio_base + "/Exportaciones/Corregidos/"
-        )
+        path = self.seleccionar_archivo("/Exportaciones/Corregidos/")
         if path:
             self.path_enmendado = path
             self.boton_enmendado.config(bg="#27EA00")
         else:
-            tk.messagebox.showinfo(
-                "Advertencia", f"No se ha seleccionado ningún archivo."
-            )
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
 
 class Ventana_indices(tk.Toplevel, Ventana_Base):
@@ -1338,9 +1225,7 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
     def actualizar_indices(self, indices, entries):
         for i, ind in enumerate(indices):
             ind.set(entries[i].get())
-        tk.messagebox.showinfo(
-            "Indices configurados", f"Los índices fueron configurados correctamente"
-        )
+        self.mostrar_mensaje_info("Los índices fueron configurados correctamente")
         self.destroy()
 
     def conectar_con_base(self):
@@ -1401,12 +1286,10 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
                 self.etiquetas_entries[i].insert(0, ind + 1)
 
         except Exception as error:
-            tk.messagebox.showinfo("!!", error)
+            self.mostrar_mensaje_error(error)
 
     def conectar_con_archivo(self):
-        ruta_archivo = filedialog.askopenfilename(
-            initialdir=self.directorio_base + "/Exportaciones/Segmentados/"
-        )
+        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Segmentados/")
         try:
             # Cargar el archivo Excel
             df = pd.read_excel(ruta_archivo, sheet_name=None)
@@ -1425,7 +1308,7 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
                 self.etiquetas_entries[i].insert(0, ind + 1)
 
         except FileNotFoundError:
-            tk.messagebox.showinfo("!!", f"No se ha seleccionado ningún archivo")
+            self.mostrar_mensaje_info("No se ha seleccionado ningún archivo")
 
 
 class Ventana_conectar(tk.Toplevel, Ventana_Base):
@@ -1509,7 +1392,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         output = tk.Text(self, background=self.color_botones)
         output.config(borderwidth=2, relief="sunken")
         output.place(x=58, y=135, width=250, height=165)
-
+        print("\n\n")
         try:
             indices = []
 
@@ -1540,8 +1423,8 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'datos_hecho'"
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'datos_hecho'"
                 )
 
             try:
@@ -1554,9 +1437,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'armas'"
-                )
+                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'armas'")
 
             try:
                 consulta = "SELECT max(id) FROM automotores"
@@ -1568,8 +1449,8 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'automotores'"
+                self.mostrar_mensaje_advertencia(
+                    f"No se ha encontrado tabla 'automotores'"
                 )
 
             try:
@@ -1582,9 +1463,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'objetos'"
-                )
+                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'objetos'")
 
             try:
                 consulta = "SELECT max(id) FROM secuestros"
@@ -1596,8 +1475,8 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'secuestros'"
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'secuestros'"
                 )
 
             try:
@@ -1610,8 +1489,8 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                     else:
                         indices.append(0)
             except Exception:
-                tk.messagebox.showwarning(
-                    "Advertencia", f"No se ha encontrado tabla 'involucrados'"
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'involucrados'"
                 )
 
             try:
@@ -1620,9 +1499,8 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 ultima_fecha = cursor.fetchone()
                 ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
             except Exception as error:
-                tk.messagebox.showwarning(
-                    "Advertencia",
-                    f"No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                self.mostrar_mensaje_advertencia(
+                    "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
                 )
 
             # Cerrar el cursor y la conexión
@@ -1631,10 +1509,14 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
 
             self.btn_base.config(bg=self.verde)
 
-            tk.messagebox.showinfo(
-                "Conexión satisfactoria",
+            self.mostrar_mensaje_info(
                 "Se ha logrado establecer conexión con la base de datos",
             )
+            self.imprimir_con_color("Establecida conexión con base.", "verde")
+            self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
+            self.imprimir_con_color(f"User: {datos_conexion[1]}", "blanco")
+            self.imprimir_con_color(f"Nombre de la base: {datos_conexion[3]}", "blanco")
+            self.imprimir_con_color(f"Ultima fecha en base: {ultima_fecha}", "blanco")
 
             ventana.botones[0].config(bg=self.verde)
 
@@ -1656,179 +1538,191 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             ventana.indices = indices
 
         except Exception as error:
-            tk.messagebox.showinfo("-.-", error)
+            self.mostrar_mensaje_error(error)
             texto = "No se ha podido establecer conexión..."
             output.insert(tk.END, texto)
 
     def crear_base(self, host, user, passw):
-        conn = mysql.connector.connect(host=host, user=user, password=passw)
-        conn.cursor().execute("CREATE DATABASE IF NOT EXISTS Delitos")
-        conn.database = "Delitos"
-        cursor = conn.cursor()
+        NOMBRE_DE_LA_BASE = "delitos"
 
-        cursor.execute(
+        self.imprimir_con_color("Creando base de datos...", "blanco")
+        self.imprimir_con_color(f"Host: {host}", "blanco")
+        self.imprimir_con_color(f"User: {user}", "blanco")
+        self.imprimir_con_color("Nombre de la base: delitos", "blanco")
+        try:
+            conn = mysql.connector.connect(host=host, user=user, password=passw)
+            conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}")
+            conn.database = {NOMBRE_DE_LA_BASE}
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS datos_hecho (
+                    id_hecho INT PRIMARY KEY,
+                    nro_registro VARCHAR(30) NOT NULL,
+                    fecha_carga DATE NOT NULL NOT NULL,
+                    hora_carga TIME NOT NULL,
+                    dependencia VARCHAR(100) NOT NULL,
+                    fecha_inicio_hecho DATE,
+                    hora_inicio_hecho TIME,
+                    partido_hecho VARCHAR(50) NOT NULL,
+                    localidad_hecho VARCHAR(50),
+                    latitud VARCHAR(50),
+                    calle VARCHAR(50),
+                    longitud VARCHAR(50),
+                    altura VARCHAR(10),
+                    entre VARCHAR(50),
+                    calificaciones VARCHAR(5000) NOT NULL,
+                    relato VARCHAR(32767) NOT NULL
+                )
             """
-            CREATE TABLE IF NOT EXISTS datos_hecho (
-                id_hecho INT PRIMARY KEY,
-                nro_registro VARCHAR(30) NOT NULL,
-                fecha_carga DATE NOT NULL NOT NULL,
-                hora_carga TIME NOT NULL,
-                dependencia VARCHAR(100) NOT NULL,
-                fecha_inicio_hecho DATE,
-                hora_inicio_hecho TIME,
-                partido_hecho VARCHAR(50) NOT NULL,
-                localidad_hecho VARCHAR(50),
-                latitud VARCHAR(50),
-                calle VARCHAR(50),
-                longitud VARCHAR(50),
-                altura VARCHAR(10),
-                entre VARCHAR(50),
-                calificaciones VARCHAR(5000) NOT NULL,
-                relato VARCHAR(32767) NOT NULL
             )
-        """
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
-        )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
+            )
 
-        cursor.execute(
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS automotores (
+                    id INT PRIMARY KEY,
+                    id_hecho INT NOT NULL,
+                    marca VARCHAR(50) NOT NULL,
+                    modelo VARCHAR(50),
+                    color VARCHAR(50),
+                    dominio VARCHAR(50),
+                    nro_motor VARCHAR(50),
+                    nro_chasis VARCHAR(50),
+                    vinculo VARCHAR(50) NOT NULL,
+                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                )
             """
-            CREATE TABLE IF NOT EXISTS automotores (
-                id INT PRIMARY KEY,
-                id_hecho INT NOT NULL,
-                marca VARCHAR(50) NOT NULL,
-                modelo VARCHAR(50),
-                color VARCHAR(50),
-                dominio VARCHAR(50),
-                nro_motor VARCHAR(50),
-                nro_chasis VARCHAR(50),
-                vinculo VARCHAR(50) NOT NULL,
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
-        """
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
-        )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
+            )
 
-        cursor.execute(
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS armas (
+                    id INT PRIMARY KEY,
+                    id_hecho INT NOT NULL,
+                    tipo_arma VARCHAR(100) NOT NULL,
+                    marca VARCHAR(50) NOT NULL,
+                    modelo VARCHAR(50),
+                    nro_serie VARCHAR(50),
+                    calibre VARCHAR(50),
+                    observaciones VARCHAR(1000),
+                    implicacion VARCHAR(50) NOT NULL,
+                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                )
             """
-            CREATE TABLE IF NOT EXISTS armas (
-                id INT PRIMARY KEY,
-                id_hecho INT NOT NULL,
-                tipo_arma VARCHAR(100) NOT NULL,
-                marca VARCHAR(50) NOT NULL,
-                modelo VARCHAR(50),
-                nro_serie VARCHAR(50),
-                calibre VARCHAR(50),
-                observaciones VARCHAR(1000),
-                implicacion VARCHAR(50) NOT NULL,
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
-        """
-        )
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)")
 
-        cursor.execute(
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS secuestros (
+                    id INT PRIMARY KEY,
+                    id_hecho INT NOT NULL,
+                    tipo VARCHAR(50) NOT NULL,
+                    marca VARCHAR(50),
+                    modelo VARCHAR(50),
+                    cantidad VARCHAR(50),
+                    valor VARCHAR(50),
+                    descripcion VARCHAR(1000),
+                    implicacion VARCHAR(50) NOT NULL,
+                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                )
             """
-            CREATE TABLE IF NOT EXISTS secuestros (
-                id INT PRIMARY KEY,
-                id_hecho INT NOT NULL,
-                tipo VARCHAR(50) NOT NULL,
-                marca VARCHAR(50),
-                modelo VARCHAR(50),
-                cantidad VARCHAR(50),
-                valor VARCHAR(50),
-                descripcion VARCHAR(1000),
-                implicacion VARCHAR(50) NOT NULL,
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
-        """
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
-        )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
+            )
 
-        cursor.execute(
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS objetos (
+                    id INT PRIMARY KEY,
+                    id_hecho INT NOT NULL,
+                    tipo VARCHAR(50) NOT NULL,
+                    marca VARCHAR(50),
+                    modelo VARCHAR(50),
+                    cantidad VARCHAR(50),
+                    valor VARCHAR(50),
+                    descripcion VARCHAR(1000),
+                    implicacion VARCHAR(50) NOT NULL,
+                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                )
             """
-            CREATE TABLE IF NOT EXISTS objetos (
-                id INT PRIMARY KEY,
-                id_hecho INT NOT NULL,
-                tipo VARCHAR(50) NOT NULL,
-                marca VARCHAR(50),
-                modelo VARCHAR(50),
-                cantidad VARCHAR(50),
-                valor VARCHAR(50),
-                descripcion VARCHAR(1000),
-                implicacion VARCHAR(50) NOT NULL,
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
-        """
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
-        )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
+            )
 
-        cursor.execute(
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS involucrados (
+                    id INT PRIMARY KEY,
+                    id_hecho INT,
+                    involucrado VARCHAR(30),
+                    pais_origen VARCHAR(50),
+                    tipo_dni VARCHAR(10),
+                    nro_dni VARCHAR(20),
+                    genero VARCHAR(20),
+                    apellido VARCHAR(50),
+                    nombre VARCHAR(50),
+                    provincia_nacimiento VARCHAR(50),
+                    ciudad_nacimiento VARCHAR(50),
+                    fecha_nacimiento DATE,
+                    observaciones VARCHAR(1000),
+                    provincia_domicilio VARCHAR(50),
+                    partido_domicilio VARCHAR(50),
+                    localidad_domicilio VARCHAR(50),
+                    calle_domicilio VARCHAR(50),
+                    nro_domicilio VARCHAR(20),
+                    entre VARCHAR(50),
+                    piso VARCHAR(20),
+                    departamento VARCHAR(20),
+                    caracteristicas_fisicas VARCHAR(500),
+                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                )
             """
-            CREATE TABLE IF NOT EXISTS involucrados (
-                id INT PRIMARY KEY,
-                id_hecho INT,
-                involucrado VARCHAR(30),
-                pais_origen VARCHAR(50),
-                tipo_dni VARCHAR(10),
-                nro_dni VARCHAR(20),
-                genero VARCHAR(20),
-                apellido VARCHAR(50),
-                nombre VARCHAR(50),
-                provincia_nacimiento VARCHAR(50),
-                ciudad_nacimiento VARCHAR(50),
-                fecha_nacimiento DATE,
-                observaciones VARCHAR(1000),
-                provincia_domicilio VARCHAR(50),
-                partido_domicilio VARCHAR(50),
-                localidad_domicilio VARCHAR(50),
-                calle_domicilio VARCHAR(50),
-                nro_domicilio VARCHAR(20),
-                entre VARCHAR(50),
-                piso VARCHAR(20),
-                departamento VARCHAR(20),
-                caracteristicas_fisicas VARCHAR(500),
-                FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
             )
-        """
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
-        )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
+            )
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
+            self.mostrar_mensaje_error("Base de datos creada.")
+            self.imprimir_con_color(f"Base de datos creada", "verde")
+        except Exception as error:
+            self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
+            self.imprimir_con_color(f"No se ha podido crear la base: {error}", "rojo")

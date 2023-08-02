@@ -5,10 +5,11 @@ import re
 import pandas as pd
 import checkpoints as ck
 from datetime import datetime
-from .herramientas_adicionales import imprimir_con_color
+from .logueador import Logueador
+from .cuadros_de_mensajes import Mensajes
 
 
-class CoreMotor:
+class CoreMotor(Mensajes, Logueador):
     def _posiciones_datos(self, texto, cortes, quitar=True):
         contador = 0
         item = []
@@ -131,7 +132,7 @@ class CoreMotor:
                     fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
                     _registro[11] = fecha_formateada
             except Exception as error:
-                imprimir_con_color(error, "rojo")
+                self.imprimir_con_color(error, "rojo")
             return _registro
         else:
             try:
@@ -140,7 +141,7 @@ class CoreMotor:
                     fecha_formateada = fecha_objeto.strftime("%Y-%m-%d")
                     _registro[15] = fecha_formateada
             except Exception as error:
-                imprimir_con_color(error, "rojo")
+                self.imprimir_con_color(error, "rojo")
             return _registro
 
 

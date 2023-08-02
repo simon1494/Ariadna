@@ -5,18 +5,17 @@ import pandas as pd
 import tkinter as tk
 import checkpoints as ck
 import os
-from .herramientas_adicionales import imprimir_con_color
+from modelos.logueador import Logueador
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-class Administrador:
-    @staticmethod
-    def crear_directorio_de_exportaciones():
+class Administrador(Logueador):
+    def crear_directorio_de_exportaciones(self):
         RUTA_A_CHEQUEAR = f"{DIRECTORIO_PADRE}/Exportaciones"
         if not os.path.exists(RUTA_A_CHEQUEAR):
-            imprimir_con_color(
+            self.imprimir_con_color(
                 "Directorio de 'Exportaciones' no encontrado. Creando directorio 'Exportaciones'...",
                 "amarillo",
             )
@@ -28,13 +27,15 @@ class Administrador:
                 os.mkdir(f"{RUTA_A_CHEQUEAR}/Logs")
                 os.mkdir(f"{RUTA_A_CHEQUEAR}/No Segmentados")
                 os.mkdir(f"{RUTA_A_CHEQUEAR}/Segmentados")
-                imprimir_con_color("Directorio de 'Exportaciones' creado.", "verde")
+                self.imprimir_con_color(
+                    "Directorio de 'Exportaciones' creado.", "verde"
+                )
             except Exception as error:
-                imprimir_con_color(
+                self.imprimir_con_color(
                     f"Error al crear los directorios base:\n{error}", "rojo"
                 )
         else:
-            imprimir_con_color("Directorios de exportaciones correctos.", "verde")
+            self.imprimir_con_color("Directorios de exportaciones correctos.", "normal")
             try:
                 if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Corregidos"):
                     os.mkdir(f"{RUTA_A_CHEQUEAR}/Corregidos")
@@ -49,7 +50,7 @@ class Administrador:
                 if not os.path.exists(f"{RUTA_A_CHEQUEAR}/Segmentados"):
                     os.mkdir(f"{RUTA_A_CHEQUEAR}/Segmentados")
             except Exception as error:
-                imprimir_con_color(
+                self.imprimir_con_color(
                     f"Error al crear directorios de exportaciones faltantes:\n{error}",
                     "rojo",
                 )
@@ -69,8 +70,7 @@ class Administrador:
             ]
         return a
 
-    @staticmethod
-    def _convertir_inicial(archivo, encabezados, nombre=None, error=False):
+    def _convertir_inicial(self, archivo, encabezados, nombre=None, error=False):
         if not error:
             if nombre == None:
                 nombre_archivo = tk.simpledialog.askstring(
@@ -90,6 +90,9 @@ class Administrador:
             ult.to_excel(
                 rf"{DIRECTORIO_PADRE}\Exportaciones\{nombre} {nombre_archivo}.xlsx",
                 index=False,
+            )
+            self.imprimir_con_color(
+                f"Creado log de errores para {nombre_archivo}", "amarillo"
             )
             return rf"{DIRECTORIO_PADRE}\Exportaciones\{nombre} {nombre_archivo}.xlsx"
 
@@ -183,6 +186,7 @@ class Administrador:
                 nuevos_indices.append(antiguos[i] - 1)
         return nuevos_indices
 
+    @staticmethod
     def _cargar_final(path):
         df = pd.read_excel(path, sheet_name=None)
         lista_anidada = []

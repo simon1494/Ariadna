@@ -1,4 +1,4 @@
-VER = "4.1.0-beta [2023-07-31]"
+VER = "4.2.0-beta [2023-02-08]"
 
 if __name__ == "__main__":
     from modelos.registro_de_usuario import VentanaLogueo

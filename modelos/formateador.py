@@ -1,10 +1,10 @@
 import re
 import pandas as pd
 from . import motores
-from .herramientas_adicionales import imprimir_con_color
+from .logueador import Logueador
 
 
-class Formateador(motores.CoreMotor):
+class Formateador(motores.CoreMotor, Logueador):
     def _formatear(self, lista, identi):
         quitados = 0
         final = []
@@ -32,7 +32,7 @@ class Formateador(motores.CoreMotor):
                 quitados += 1
         if quitados > 0:
             mensaje = f"Se filtraron {quitados} registros no asignados a fiscalía."
-            imprimir_con_color(mensaje, "amarillo")
+            self.imprimir_con_color(mensaje, "amarillo")
         return final, identificadores
 
     def _clean_regexs(self, text):

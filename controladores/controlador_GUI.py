@@ -6,8 +6,9 @@ import tkinter as tk
 
 
 class Aplicacion:
-    def __init__(self, version):
+    def __init__(self, version, usuario):
+        self.usuario = usuario
         self.version = version
         master = tk.Tk()
-        app = view.Ventana_Principal(master, self.version)
+        app = view.Ventana_Principal(master, self.version, self.usuario)
         app.iniciar()

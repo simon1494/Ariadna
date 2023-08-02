@@ -3,9 +3,12 @@ import sys
 sys.path.append("../ariadna")
 import tkinter as tk
 from vista.view import Ventana_Base
+import checkpoints as ck
 
 
 class VentanaLogueo(tk.Tk, Ventana_Base):
+    USUARIOS = ck.USUARIOS
+
     def __init__(self, version):
         super().__init__()
         self.version = version
@@ -46,11 +49,13 @@ class VentanaLogueo(tk.Tk, Ventana_Base):
         contrasena = self.entry_contrasena.get()
 
         # Verificar si el usuario y la contraseña son válidos (ejemplo sencillo)
-        if usuario == "admin" and contrasena == "":
+        if usuario in self.USUARIOS and contrasena == self.USUARIOS[usuario]:
             self.destroy()  # Destruir la ventana de logueo
-            self.abrir_ventana_principal()  # Abrir GUI principa
+            self.abrir_ventana_principal(usuario)  # Abrir GUI principa
+        else:
+            self.mostrar_mensaje_advertencia("Usuario o contraseña inválidos")
 
-    def abrir_ventana_principal(self):
+    def abrir_ventana_principal(self, usuario):
         from controladores.controlador_GUI import Aplicacion
 
-        app = Aplicacion(self.version)
+        app = Aplicacion(self.version, usuario)

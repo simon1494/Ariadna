@@ -6,9 +6,7 @@ import re
 import os
 import checkpoints as ck
 import pandas as pd
-import tkinter as tk
 from .procesadores_secundarios import Addendum
-from .herramientas_adicionales import imprimir_con_color
 from .motores import Core_Inicial
 from .motores import Core_Final
 
@@ -110,7 +108,7 @@ class Inicial(Core_Inicial):
                 try:
                     item[" Descripción:"] = hechos[i][" Descripcion:"]
                 except Exception as error:
-                    imprimir_con_color(
+                    self.imprimir_con_color(
                         f"Error en la 'Descripcion' del index {i}: {error}", "amarillo"
                     )
             for key in involucrados[i].keys():
@@ -167,8 +165,8 @@ class Inicial(Core_Inicial):
                             contador2 += 1
                             break
             if len(duplicados) > 0:
-                imprimir_con_color("\n")
-                imprimir_con_color(
+                print("\n")
+                self.imprimir_con_color(
                     f"Se han eliminado {contador2} duplicados.", "blanco"
                 )
         return lista
@@ -272,8 +270,8 @@ class Segmentado(Core_Final, Addendum):
 
             # limpieza de campos "Sin especificar".
             if not carpeta:
-                if tk.messagebox.askyesno(
-                    "Consulta", "¿Desea limpiar los 'Sin especificar?"
+                if self.mostrar_mensaje_pregunta(
+                    "¿Desea limpiar los 'Sin especificar?"
                 ):
                     self.datos = list(
                         map(lambda x: self._limpiar_registro(x), self.datos)
@@ -321,8 +319,8 @@ class Segmentado(Core_Final, Addendum):
                 self._involucrados,
             ]
         else:
-            tk.messagebox.showinfo(
-                "Advertencia", f"Se detectaron calificaciones no existentes en base."
+            self.mostrar_mensaje_info(
+                "Se detectaron calificaciones no existentes en base."
             )
 
     def _indexador(self, archivo, index):
