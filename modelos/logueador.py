@@ -1,6 +1,7 @@
 import logging
 import colorama
 import os
+import datetime
 
 
 class Logueador:
@@ -8,7 +9,7 @@ class Logueador:
     CARPETA_DEL_ARCHIVO_LOGS = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../")
     )
-    ARCHIVO_LOGS = f"{CARPETA_DEL_ARCHIVO_LOGS}/registro_de_actividad.log"
+    ARCHIVO_LOGS = f"{CARPETA_DEL_ARCHIVO_LOGS}/Exportaciones/Logs/{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
 
     logging.basicConfig(
         filename=ARCHIVO_LOGS,

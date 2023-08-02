@@ -6,6 +6,7 @@ import tkinter as tk
 import checkpoints as ck
 import os
 from modelos.logueador import Logueador
+from copy import deepcopy
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -55,20 +56,26 @@ class Administrador(Logueador):
                     "rojo",
                 )
 
-    @staticmethod
-    def _cargar(path, no_tiene_encabezados=True, es_original=True):
+    def _cargar(self, path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
             data = pd.read_excel(path, header=None)
         else:
             data = pd.read_excel(path)
         a = data.values.tolist()
         if es_original:
-            a = [
+            a2 = deepcopy(a)
+            b = [
                 sublista
-                for sublista in a
+                for sublista in a2
                 if sublista[0].lower() not in ["anulado", "anulada"]
             ]
-        return a
+        anulados = len(a) - len(b)
+        if anulados != 0:
+            print("")
+            self.imprimir_con_color(
+                f"Han sido filtrados {anulados} registro/s anulados", "blanco"
+            )
+        return b
 
     def _convertir_inicial(self, archivo, encabezados, nombre=None, error=False):
         if not error:

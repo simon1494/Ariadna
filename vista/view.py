@@ -48,8 +48,9 @@ class Ventana_Principal(Ventana_Base):
     def __init__(self, master, version, usuario):
         self.crear_directorio_de_exportaciones()
         self.usuario = usuario
+        self.version = version
         self.ventana = master
-        self.ventana.title(f"ARIADNA -- {version}")
+        self.ventana.title(f"ARIADNA -- {self.version}")
         self.ventana.ancho = 900
         self.ventana.alto = 250
         self.ventana.geometry(
@@ -126,6 +127,7 @@ class Ventana_Principal(Ventana_Base):
         self.loguear_info(
             "------------------------ NUEVO INICIO DE SISTEMA ------------------------"
         )
+        self.loguear_info(f"Versión de la app: {self.version}")
         self.loguear_info(f"Usuario logueado: {self.usuario}")
         self.setear_indices()
         self.crear_botones()

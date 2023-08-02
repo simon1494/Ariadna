@@ -34,7 +34,6 @@ class Mensajes:
 
     @classmethod
     def seleccionar_carpeta(cls, carpeta_abierta_por_default):
-        print("buenas")
         ruta_de_la_carpeta = filedialog.askdirectory(
             initialdir=cls.DIRECTORIO_PADRE + carpeta_abierta_por_default
         )
