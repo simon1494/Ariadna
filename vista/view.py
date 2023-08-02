@@ -422,6 +422,58 @@ class Ventana_Principal(Ventana_Base):
             "Procesado completo.",
         )
 
+    def compilar_archivos(self):
+        carpeta = self.seleccionar_carpeta("/Exportaciones/Segmentados/")
+        print("\n")
+        archivos = os.listdir(carpeta)
+
+        # Nombre del archivo final
+        archivo_final = f"{carpeta}/consolidado.xlsx"
+
+        # Leer la primera hoja de un archivo para obtener los nombres de las hojas
+        primer_archivo = f"{carpeta}/{archivos[0]}"
+        with pd.ExcelFile(primer_archivo) as xls:
+            hojas = xls.sheet_names
+
+        # Almacenar los datos en un diccionario por hoja
+        datos = {}
+        for hoja in hojas:
+            datos[hoja] = pd.DataFrame()
+
+        # Leer los archivos de Excel y almacenar los datos en el diccionario
+        for archivo in archivos:
+            with pd.ExcelFile(f"{carpeta}/{archivo}") as xls:
+                for hoja in hojas:
+                    df = pd.read_excel(xls, sheet_name=hoja)
+                    if hoja == "datos_hecho":
+                        df["Latitud:"] = df["Latitud:"].astype(str)
+                        df["Longitud:"] = df["Longitud:"].astype(str)
+                    datos[hoja] = pd.concat([datos[hoja], df])
+            self.imprimir_con_color(f"Listo {archivo}", "verde")
+
+        # Escribir los datos consolidados en un archivo de Excel
+        with pd.ExcelWriter(archivo_final) as writer:
+            self.imprimir_con_color("\n")
+            self.imprimir_con_color("Comenzando proceso de compilación...", "lila")
+            for hoja, df in datos.items():
+                df.to_excel(writer, sheet_name=hoja, index=False)
+
+        self.imprimir_con_color("Analizando coherencia de indexados...", "lila")
+        try:
+            if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
+                self.imprimir_con_color(
+                    "Chequeada coherencia de indexados sin errores", "verde"
+                )
+            else:
+                self.imprimir_con_color(
+                    "Se detectaron errores de coherencia en los indexados", "rojo"
+                )
+        except Exception as error:
+            self.imprimir_con_color(error, "rojo")
+        self.imprimir_con_color(
+            f"Se ha creado el archivo consolidado en: {archivo_final}", "blanco"
+        )
+
     def _archivos(self):
         carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
         print("\n")
