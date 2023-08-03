@@ -405,6 +405,14 @@ class Ventana_Principal(Ventana_Base):
                                     f"({archivo}) Error en conversión final a formato Excel: {error}",
                                     "rojo",
                                 )
+                        except AttributeError:
+                            self.imprimir_con_color(
+                                f"SE DETECTARON CALIFICACIONES NO EXISTENTES EN BASE",
+                                "rojo",
+                            )
+                            ventana_errores = Ventana_addendum(
+                                self.ventana, archivo=segmentado.errores
+                            )
                         except Exception as error:
                             self.imprimir_con_color(
                                 f"({archivo}) Error en la comprobación de datos salientes: {error}",
@@ -590,7 +598,7 @@ class Ventana_Principal(Ventana_Base):
                         f"(MES) Error en coherencia. Demasiados meses en archivo: {mes_final}",
                     )
             elif 27 < len(fechas) < 30:
-                if mes_final[0] == "febrero":
+                if mes_final[0] == "FEBRERO":
                     if len(mes_final) == 1:
                         return (
                             True,
@@ -643,25 +651,43 @@ class Ventana_Principal(Ventana_Base):
                     no_tiene_encabezados=False,
                 )
                 segmentado = Segmentado(archivo1, indices)
-            else:
-                archivo1 = self._cargar(path, no_tiene_encabezados=False)
-                segmentado = Segmentado(archivo1, indices)
-            try:
                 try:
+                    self._convertir_segmentado(segmentado.final)
                     mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
                         self.mostrar_mensaje_advertencia(mensaje)
+                        self.mostrar_mensaje_info(
+                            "El proceso se completo correctamente."
+                        )
+                except AttributeError:
+                    self.mostrar_mensaje_advertencia(
+                        "El proceso de segmentado se ha abortado."
+                    )
+                    ventana_errores = Ventana_addendum(
+                        self.ventana, archivo=segmentado.errores
+                    )
                 except Exception as error:
-                    self.imprimir_con_color(error, "rojo")
-                self._convertir_segmentado(segmentado.final)
-                self.mostrar_mensaje_info("El proceso se completo correctamente.")
-            except AttributeError:
-                self.mostrar_mensaje_advertencia(
-                    "El proceso de segmentado se ha abortado."
-                )
-                ventana_errores = Ventana_addendum(
-                    self.ventana, archivo=segmentado.errores
-                )
+                    self.imprimir_con_color(f"{error}", "rojo")
+            else:
+                archivo1 = self._cargar(path, no_tiene_encabezados=False)
+                segmentado = Segmentado(archivo1, indices)
+                try:
+                    self._convertir_segmentado(segmentado.final)
+                    mensaje = Formateador.comprobar_salida(segmentado.final)
+                    if mensaje != "":
+                        self.mostrar_mensaje_advertencia(mensaje)
+                        self.mostrar_mensaje_info(
+                            "El proceso se completo correctamente."
+                        )
+                except AttributeError:
+                    self.mostrar_mensaje_advertencia(
+                        "El proceso de segmentado se ha abortado."
+                    )
+                    ventana_errores = Ventana_addendum(
+                        self.ventana, archivo=segmentado.errores
+                    )
+                except Exception as error:
+                    self.imprimir_con_color(f"{error}", "rojo")
         except FileNotFoundError:
             self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
@@ -701,29 +727,52 @@ class Ventana_Principal(Ventana_Base):
                                         self.mostrar_mensaje_info(
                                             "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
                                         )
+                                        self.imprimir_con_color(
+                                            "CHEQUEO: Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                            "verde",
+                                        )
                                         ventana.botones[1].config(bg=self.verde)
                                         ventana.a_subir = archivo_final
                                     else:
                                         self.mostrar_mensaje_advertencia(f"{res2}")
+                                        self.imprimir_con_color(
+                                            f"CHEQUEO: {res2}", "amarillo"
+                                        )
                                         ventana.botones[1].config(bg=self.amarillo)
                                 except Exception as error:
                                     self.mostrar_mensaje_error(
                                         f"Error al comprobar nulos: {error}"
                                     )
+                                    self.imprimir_con_color(
+                                        f"CHEQUEO: Error al comprobar nulos: {error}",
+                                        "rojo",
+                                    )
                                     ventana.botones[1].config(bg=self.rojo)
                             else:
                                 self.mostrar_mensaje_advertencia(f"{res[1]}")
+                                self.imprimir_con_color(
+                                    f"CHEQUEO: {res[1]}", "amarillo"
+                                )
                                 ventana.botones[1].config(bg=self.amarillo)
                         except Exception as error:
                             self.mostrar_mensaje_error(
                                 f"Error al comprobar fechas: {error}"
                             )
+                            self.imprimir_con_color(
+                                f"CHEQUEO: Error al comprobar fechas: {error}", "rojo"
+                            )
                             ventana.botones[1].config(bg=self.rojo)
                     else:
                         self.mostrar_mensaje_advertencia(f"Indices INCORRECTOS.")
+                        self.imprimir_con_color(
+                            f"CHEQUEO: Indices INCORRECTOS.", "amarillo"
+                        )
                         ventana.botones[1].config(bg=self.amarillo)
                 except Exception as error:
                     self.mostrar_mensaje_error(f"Error al comprobar índices: {error}")
+                    self.imprimir_con_color(
+                        f"CHEQUEO: Error al comprobar índices: {error}", "rojo"
+                    )
                     ventana.botones[1].config(bg=self.rojo)
 
             # COMPROBAR MES
@@ -751,29 +800,52 @@ class Ventana_Principal(Ventana_Base):
                                         self.mostrar_mensaje_info(
                                             "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
                                         )
+                                        self.imprimir_con_color(
+                                            f"CHEQUEO: Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                            "verde",
+                                        )
                                         ventana.botones[1].config(bg=self.verde)
                                         ventana.a_subir = archivo_final
                                     else:
                                         self.mostrar_mensaje_advertencia(f"{res2}")
+                                        self.imprimir_con_color(
+                                            f"CHEQUEO: {res2}", "amarillo"
+                                        )
                                         ventana.botones[1].config(bg=self.amarillo)
                                 except Exception as error:
                                     self.mostrar_mensaje_error(
                                         f"Error al comprobar nulos: {error}"
                                     )
+                                    self.imprimir_con_color(
+                                        f"CHEQUEO: Error al comprobar nulos: {error}",
+                                        "rojo",
+                                    )
                                     ventana.botones[1].config(bg=self.rojo)
                             else:
                                 self.mostrar_mensaje_advertencia(f"{res[1]}")
+                                self.imprimir_con_color(
+                                    f"CHEQUEO: {res[1]}", "amarillo"
+                                )
                                 ventana.botones[1].config(bg=self.amarillo)
                         except Exception as error:
                             self.mostrar_mensaje_error(
                                 f"Error al comprobar fechas: {error}"
                             )
+                            self.imprimir_con_color(
+                                f"CHEQUEO: Error al comprobar fechas: {error}", "rojo"
+                            )
                             ventana.botones[1].config(bg=self.rojo)
                     else:
                         self.mostrar_mensaje_advertencia("Indices INCORRECTOS.")
+                        self.imprimir_con_color(
+                            "CHEQUEO: Indices INCORRECTOS.", "amarillo"
+                        )
                         ventana.botones[1].config(bg=self.amarillo)
                 except Exception as error:
                     self.mostrar_mensaje_error(f"Error al comprobar índices: {error}")
+                    self.imprimir_con_color(
+                        f"CHEQUEO: Error al comprobar índices: {error}", "rojo"
+                    )
                     ventana.botones[1].config(bg=self.rojo)
         else:
             self.mostrar_mensaje_advertencia("Ningún archivo seleccionado")
@@ -1606,7 +1678,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         try:
             conn = mysql.connector.connect(host=host, user=user, password=passw)
             conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}")
-            conn.database = {NOMBRE_DE_LA_BASE}
+            conn.database = NOMBRE_DE_LA_BASE
             cursor = conn.cursor()
 
             cursor.execute(
@@ -1775,7 +1847,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
 
             conn.commit()
             conn.close()
-            self.mostrar_mensaje_error("Base de datos creada.")
+            self.mostrar_mensaje_info("Base de datos creada.")
             self.imprimir_con_color(f"Base de datos creada", "verde")
         except Exception as error:
             self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")

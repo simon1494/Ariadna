@@ -69,13 +69,14 @@ class Administrador(Logueador):
                 for sublista in a2
                 if sublista[0].lower() not in ["anulado", "anulada"]
             ]
-        anulados = len(a) - len(b)
-        if anulados != 0:
-            print("")
-            self.imprimir_con_color(
-                f"Han sido filtrados {anulados} registro/s anulados", "blanco"
-            )
-        return b
+            anulados = len(a) - len(b)
+            if anulados != 0:
+                print("")
+                self.imprimir_con_color(
+                    f"Han sido filtrados {anulados} registro/s anulados", "blanco"
+                )
+            return b
+        return a
 
     def _convertir_inicial(self, archivo, encabezados, nombre=None, error=False):
         if not error:
