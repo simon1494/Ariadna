@@ -1718,180 +1718,193 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.imprimir_con_color(f"Host: {host}", "blanco")
         self.imprimir_con_color(f"User: {user}", "blanco")
         self.imprimir_con_color("Nombre de la base: delitos", "blanco")
-        try:
-            conn = mysql.connector.connect(host=host, user=user, password=passw)
-            conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}")
-            conn.database = NOMBRE_DE_LA_BASE
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS datos_hecho (
-                    id_hecho INT PRIMARY KEY,
-                    nro_registro VARCHAR(30) NOT NULL,
-                    fecha_carga DATE NOT NULL NOT NULL,
-                    hora_carga TIME NOT NULL,
-                    dependencia VARCHAR(100) NOT NULL,
-                    fecha_inicio_hecho DATE,
-                    hora_inicio_hecho TIME,
-                    partido_hecho VARCHAR(50) NOT NULL,
-                    localidad_hecho VARCHAR(50),
-                    latitud VARCHAR(50),
-                    calle VARCHAR(50),
-                    longitud VARCHAR(50),
-                    altura VARCHAR(10),
-                    entre VARCHAR(50),
-                    calificaciones VARCHAR(5000) NOT NULL,
-                    relato VARCHAR(32767) NOT NULL
+        conn = mysql.connector.connect(host=host, user=user, password=passw)
+        cursor = conn.cursor()
+        cursor.execute(f"SHOW DATABASES")
+        databases = cursor.fetchall()
+        if ("delitos",) in databases:
+            self.mostrar_mensaje_advertencia("La base de datos ya existe.")
+        else:
+            try:
+                conn = mysql.connector.connect(host=host, user=user, password=passw)
+                conn.cursor().execute(
+                    f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}"
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
-            )
+                conn.database = NOMBRE_DE_LA_BASE
+                cursor = conn.cursor()
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS datos_hecho (
+                        id_hecho INT PRIMARY KEY,
+                        nro_registro VARCHAR(30) NOT NULL,
+                        fecha_carga DATE NOT NULL NOT NULL,
+                        hora_carga TIME NOT NULL,
+                        dependencia VARCHAR(100) NOT NULL,
+                        fecha_inicio_hecho DATE,
+                        hora_inicio_hecho TIME,
+                        partido_hecho VARCHAR(50) NOT NULL,
+                        localidad_hecho VARCHAR(50),
+                        latitud VARCHAR(50),
+                        calle VARCHAR(50),
+                        longitud VARCHAR(50),
+                        altura VARCHAR(10),
+                        entre VARCHAR(50),
+                        calificaciones VARCHAR(5000) NOT NULL,
+                        relato VARCHAR(32767) NOT NULL
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS automotores (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    marca VARCHAR(50) NOT NULL,
-                    modelo VARCHAR(50),
-                    color VARCHAR(50),
-                    dominio VARCHAR(50),
-                    nro_motor VARCHAR(50),
-                    nro_chasis VARCHAR(50),
-                    vinculo VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS automotores (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        marca VARCHAR(50) NOT NULL,
+                        modelo VARCHAR(50),
+                        color VARCHAR(50),
+                        dominio VARCHAR(50),
+                        nro_motor VARCHAR(50),
+                        nro_chasis VARCHAR(50),
+                        vinculo VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS armas (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo_arma VARCHAR(100) NOT NULL,
-                    marca VARCHAR(50) NOT NULL,
-                    modelo VARCHAR(50),
-                    nro_serie VARCHAR(50),
-                    calibre VARCHAR(50),
-                    observaciones VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS armas (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo_arma VARCHAR(100) NOT NULL,
+                        marca VARCHAR(50) NOT NULL,
+                        modelo VARCHAR(50),
+                        nro_serie VARCHAR(50),
+                        calibre VARCHAR(50),
+                        observaciones VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS secuestros (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo VARCHAR(50) NOT NULL,
-                    marca VARCHAR(50),
-                    modelo VARCHAR(50),
-                    cantidad VARCHAR(50),
-                    valor VARCHAR(50),
-                    descripcion VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS secuestros (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo VARCHAR(50) NOT NULL,
+                        marca VARCHAR(50),
+                        modelo VARCHAR(50),
+                        cantidad VARCHAR(50),
+                        valor VARCHAR(50),
+                        descripcion VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS objetos (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo VARCHAR(50) NOT NULL,
-                    marca VARCHAR(50),
-                    modelo VARCHAR(50),
-                    cantidad VARCHAR(50),
-                    valor VARCHAR(50),
-                    descripcion VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS objetos (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo VARCHAR(50) NOT NULL,
+                        marca VARCHAR(50),
+                        modelo VARCHAR(50),
+                        cantidad VARCHAR(50),
+                        valor VARCHAR(50),
+                        descripcion VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS involucrados (
-                    id INT PRIMARY KEY,
-                    id_hecho INT,
-                    involucrado VARCHAR(30),
-                    pais_origen VARCHAR(50),
-                    tipo_dni VARCHAR(10),
-                    nro_dni VARCHAR(20),
-                    genero VARCHAR(20),
-                    apellido VARCHAR(50),
-                    nombre VARCHAR(50),
-                    provincia_nacimiento VARCHAR(50),
-                    ciudad_nacimiento VARCHAR(50),
-                    fecha_nacimiento DATE,
-                    observaciones VARCHAR(1000),
-                    provincia_domicilio VARCHAR(50),
-                    partido_domicilio VARCHAR(50),
-                    localidad_domicilio VARCHAR(50),
-                    calle_domicilio VARCHAR(50),
-                    nro_domicilio VARCHAR(20),
-                    entre VARCHAR(50),
-                    piso VARCHAR(20),
-                    departamento VARCHAR(20),
-                    caracteristicas_fisicas VARCHAR(500),
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
+                )
 
-            conn.commit()
-            conn.close()
-            self.mostrar_mensaje_info("Base de datos creada.")
-            self.imprimir_con_color(f"Base de datos creada", "verde")
-        except Exception as error:
-            self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
-            self.imprimir_con_color(f"No se ha podido crear la base: {error}", "rojo")
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS involucrados (
+                        id INT PRIMARY KEY,
+                        id_hecho INT,
+                        involucrado VARCHAR(30),
+                        pais_origen VARCHAR(50),
+                        tipo_dni VARCHAR(10),
+                        nro_dni VARCHAR(20),
+                        genero VARCHAR(20),
+                        apellido VARCHAR(50),
+                        nombre VARCHAR(50),
+                        provincia_nacimiento VARCHAR(50),
+                        ciudad_nacimiento VARCHAR(50),
+                        fecha_nacimiento DATE,
+                        observaciones VARCHAR(1000),
+                        provincia_domicilio VARCHAR(50),
+                        partido_domicilio VARCHAR(50),
+                        localidad_domicilio VARCHAR(50),
+                        calle_domicilio VARCHAR(50),
+                        nro_domicilio VARCHAR(20),
+                        entre VARCHAR(50),
+                        piso VARCHAR(20),
+                        departamento VARCHAR(20),
+                        caracteristicas_fisicas VARCHAR(500),
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
+                """
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
+                )
+
+                conn.commit()
+                conn.close()
+                self.mostrar_mensaje_info("Base de datos creada.")
+                self.imprimir_con_color(f"Base de datos creada", "verde")
+            except Exception as error:
+                self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
+                self.imprimir_con_color(
+                    f"No se ha podido crear la base: {error}", "rojo"
+                )
