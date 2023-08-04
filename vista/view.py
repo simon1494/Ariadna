@@ -289,6 +289,7 @@ class Ventana_Principal(Ventana_Base):
                 self.ventana_top, Ventana_indices, self.indices
             )
             indices = list(map(lambda var: var.get(), self.indices))
+            self.ventana_top.withdraw()
             self._cargar_no_segmentado(path, indices)
 
     def _cargar_no_segmentado(self, path, indices):
@@ -327,10 +328,14 @@ class Ventana_Principal(Ventana_Base):
                 except Exception as error:
                     self.imprimir_con_color(f"{error}", "rojo")
             else:
+                nombre_archivo = os.path.splitext(os.path.basename(path))[0]
                 archivo1 = self._cargar(path, no_tiene_encabezados=False)
                 segmentado = Segmentado(archivo1, indices)
                 try:
-                    self._convertir_segmentado(segmentado.final)
+                    self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
+                    self._convertir_segmentado(
+                        segmentado.final, nombre=nombre_archivo.replace(" (ns)", "")
+                    )
                     self.imprimir_con_color(
                         f"El proceso se completo correctamente",
                         "verde",
@@ -1325,7 +1330,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
 class Ventana_indices(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana, indices):
         super().__init__(ventana)
-        self.title("Etiquetas y Cuadros de Texto")
+        self.title("Setear índices")
         self.ancho = 360
         self.alto = 300
         self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
