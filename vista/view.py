@@ -732,7 +732,10 @@ class Ventana_Principal(Ventana_Base):
     def cambiar_de_ventana(self, main, top):
         main.withdraw()
         main.wait_window(top)
-        main.deiconify()
+        try:
+            main.deiconify()
+        except Exception:
+            ...
 
     @ocultar_y_mostrar
     def chequear_integridad(self, ventana):
