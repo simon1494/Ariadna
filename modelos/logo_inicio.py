@@ -15,11 +15,13 @@ class LogoInicio(Ventana_Base):
         self,
         display_time=5000,
     ):
-        self.image_path = "C:/Users/simon/Documents/Ariadna1.jpg"
+        self.image_path = "Ariadna1.jpg"
         self.width = 504
         self.height = 316
         self.display_time = display_time
         self.root = tk.Tk()
+        self.root.title("")
+        self.root.protocol("WM_DELETE_WINDOW", self.hacer_nada)
         self.root.geometry(self.centrar_ventana(self.root, self.width, self.height))
 
     def show_image(self):
@@ -31,17 +33,8 @@ class LogoInicio(Ventana_Base):
         # Crea un widget Label y configúralo para mostrar la imagen
         label = tk.Label(self.root, image=photo)
         label.pack()
-
-        # Cierra la ventana después de un tiempo definido (en milisegundos)
-        threading.Timer(5, self.create_b).start()
-
+        self.root.after(6000, self.root.destroy)
         self.root.mainloop()
 
-    def create_b(self):
-        self.destroy()
-        obj_a = VentanaLogueo(VER)
-
-
-if __name__ == "__main__":
-    image_viewer = LogoInicio()
-    image_viewer.show_image()
+    def hacer_nada(self):
+        ...

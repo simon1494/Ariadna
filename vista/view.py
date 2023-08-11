@@ -24,16 +24,26 @@ from modelos.cuadros_de_mensajes import Mensajes
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 
+def ocultar_y_mostrar(func):
+    def wrapper(self, *args, **kwargs):
+        self.ventana_top.withdraw()  # Oculta la ventana
+        result = func(self, *args, **kwargs)  # Ejecuta el método
+        self.ventana_top.deiconify()  # Muestra la ventana nuevamente
+        return result
+
+    return wrapper
+
+
 class Ventana_Base(Mensajes, Administrador):
     usuario = None
-    color_botones = "#8CA2EA"
-    botones_iniciales = "#AFEB54"
-    botones_segmentado = "#EBA605"
-    botones_subir = "#C34DEB"
+    color_botones = "#D0F2EF"
+    botones_iniciales = "#F2F2F2"
+    botones_segmentado = "#F2F2F2"
+    botones_subir = "#F2F2F2"
     amarillo = "#EBDD04"
     rojo = "#EA3830"
     verde = "#27EA00"
-    color_back = "#1D2B61"
+    color_back = "#2493BF"
 
     @staticmethod
     def centrar_ventana(win, window_width, window_height):
@@ -129,6 +139,8 @@ class Ventana_Principal(Ventana_Base):
         )
         self.loguear_info(f"Versión de la app: {self.version}")
         self.loguear_info(f"Usuario logueado: {self.usuario}")
+        self.imprimir_con_color(f"Bienvenido/a, {usuario}", "azul", loguear=False)
+        print("\n")
         self.setear_indices()
         self.crear_botones()
 
@@ -220,8 +232,10 @@ class Ventana_Principal(Ventana_Base):
             self.id_involucrados,
         )
 
+    @ocultar_y_mostrar
     def procesar_inicial(self):
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
+        self.ventana_top.withdraw()
         try:
             path = self.seleccionar_archivo("/Exportaciones/Crudos/")
 
@@ -237,29 +251,35 @@ class Ventana_Principal(Ventana_Base):
                     nombre=nombre_archivo,
                     error=True,
                 )
+                self.imprimir_con_color(
+                    "Hubo errores en los listados.Se ha generado un registro errores.",
+                    "amarillo",
+                )
                 self.mostrar_mensaje_advertencia(
                     "Hubo errores en los listados.\nSe ha generado un registro errores.",
                 )
                 os.startfile(log_errores)
             else:
+                self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
                 archivo, identificadores = formateador._formatear(archivo, ck.cp_iden)
                 inicial = Inicial(archivo, identificadores)
                 path = self._convertir_inicial(
                     inicial.sin_duplicados, ck.general, nombre=nombre_archivo
                 )
+                self.imprimir_con_color(f"{nombre_archivo} listo.", "verde")
+                self.mostrar_mensaje_info(
+                    "El archivo fue procesado correctamente.",
+                )
                 if self.mostrar_mensaje_pregunta(
                     "¿Desea proceder a segmentar el archivo?"
                 ):
                     self.procesar_final(path)
-                else:
-                    self.mostrar_mensaje_info(
-                        "El archivo fue procesado correctamente.",
-                    )
         except FileNotFoundError:
             self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
         #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+    @ocultar_y_mostrar
     def procesar_final(self, path=False):
         if not self.todos_unos(self.indices):
             self._cargar_no_segmentado(path, self.indices)
@@ -269,8 +289,75 @@ class Ventana_Principal(Ventana_Base):
                 self.ventana_top, Ventana_indices, self.indices
             )
             indices = list(map(lambda var: var.get(), self.indices))
+            self.ventana_top.withdraw()
             self._cargar_no_segmentado(path, indices)
 
+    def _cargar_no_segmentado(self, path, indices):
+        try:
+            if path is False:
+                path_archivo = self.seleccionar_archivo(
+                    "/Exportaciones/No segmentados/"
+                )
+                archivo1 = self._cargar(
+                    path_archivo,
+                    no_tiene_encabezados=False,
+                )
+                nombre_archivo = os.path.splitext(os.path.basename(path_archivo))[0]
+                segmentado = Segmentado(archivo1, indices)
+                try:
+                    self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
+                    self._convertir_segmentado(
+                        segmentado.final, nombre=nombre_archivo.replace(" (ns)", "")
+                    )
+                    self.imprimir_con_color(
+                        f"El proceso se completo correctamente",
+                        "verde",
+                    )
+                    mensaje = Formateador.comprobar_salida(segmentado.final)
+                    if mensaje != "":
+                        self.mostrar_mensaje_advertencia(mensaje)
+                        self.imprimir_con_color(f"{mensaje}", "amarillo")
+                    self.mostrar_mensaje_info("El proceso se completo correctamente.")
+                except AttributeError:
+                    self.mostrar_mensaje_advertencia(
+                        "El proceso de segmentado se ha abortado."
+                    )
+                    ventana_errores = Ventana_addendum(
+                        self.ventana, archivo=segmentado.errores
+                    )
+                except Exception as error:
+                    self.imprimir_con_color(f"{error}", "rojo")
+            else:
+                nombre_archivo = os.path.splitext(os.path.basename(path))[0]
+                archivo1 = self._cargar(path, no_tiene_encabezados=False)
+                segmentado = Segmentado(archivo1, indices)
+                try:
+                    self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
+                    self._convertir_segmentado(
+                        segmentado.final, nombre=nombre_archivo.replace(" (ns)", "")
+                    )
+                    self.imprimir_con_color(
+                        f"El proceso se completo correctamente",
+                        "verde",
+                    )
+                    mensaje = Formateador.comprobar_salida(segmentado.final)
+                    if mensaje != "":
+                        self.mostrar_mensaje_advertencia(mensaje)
+                        self.imprimir_con_color(f"{mensaje}", "amarillo")
+                    self.mostrar_mensaje_info("El proceso se completo correctamente.")
+                except AttributeError:
+                    self.mostrar_mensaje_advertencia(
+                        "El proceso de segmentado se ha abortado."
+                    )
+                    ventana_errores = Ventana_addendum(
+                        self.ventana, archivo=segmentado.errores
+                    )
+                except Exception as error:
+                    self.imprimir_con_color(f"{error}", "rojo")
+        except FileNotFoundError:
+            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
+
+    @ocultar_y_mostrar
     def procesar_crudos(self, path=False):
         try:
             carpeta = self.seleccionar_carpeta("/Exportaciones/Crudos/")
@@ -355,6 +442,7 @@ class Ventana_Principal(Ventana_Base):
                     "No se ha seleccionado ninguna carpeta."
                 )
 
+    @ocultar_y_mostrar
     def procesar_varios(self, carpeta, archivos, indices):
         for archivo in archivos:
             path = os.path.join(
@@ -432,57 +520,63 @@ class Ventana_Principal(Ventana_Base):
             "Procesado completo.",
         )
 
+    @ocultar_y_mostrar
     def compilar_archivos(self):
         carpeta = self.seleccionar_carpeta("/Exportaciones/Segmentados/")
         print("\n")
-        archivos = os.listdir(carpeta)
-
-        # Nombre del archivo final
-        archivo_final = f"{carpeta}/consolidado.xlsx"
-
-        # Leer la primera hoja de un archivo para obtener los nombres de las hojas
-        primer_archivo = f"{carpeta}/{archivos[0]}"
-        with pd.ExcelFile(primer_archivo) as xls:
-            hojas = xls.sheet_names
-
-        # Almacenar los datos en un diccionario por hoja
-        datos = {}
-        for hoja in hojas:
-            datos[hoja] = pd.DataFrame()
-
-        # Leer los archivos de Excel y almacenar los datos en el diccionario
-        for archivo in archivos:
-            with pd.ExcelFile(f"{carpeta}/{archivo}") as xls:
-                for hoja in hojas:
-                    df = pd.read_excel(xls, sheet_name=hoja)
-                    if hoja == "datos_hecho":
-                        df["Latitud:"] = df["Latitud:"].astype(str)
-                        df["Longitud:"] = df["Longitud:"].astype(str)
-                    datos[hoja] = pd.concat([datos[hoja], df])
-            self.imprimir_con_color(f"Listo {archivo}", "verde")
-
-        # Escribir los datos consolidados en un archivo de Excel
-        with pd.ExcelWriter(archivo_final) as writer:
-            self.imprimir_con_color("\n")
-            self.imprimir_con_color("Comenzando proceso de compilación...", "lila")
-            for hoja, df in datos.items():
-                df.to_excel(writer, sheet_name=hoja, index=False)
-
-        self.imprimir_con_color("Analizando coherencia de indexados...", "lila")
         try:
-            if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
-                self.imprimir_con_color(
-                    "Chequeada coherencia de indexados sin errores", "verde"
-                )
-            else:
-                self.imprimir_con_color(
-                    "Se detectaron errores de coherencia en los indexados", "rojo"
-                )
+            archivos = os.listdir(carpeta)
+
+            # Nombre del archivo final
+            archivo_final = f"{carpeta}/consolidado.xlsx"
+
+            # Leer la primera hoja de un archivo para obtener los nombres de las hojas
+            primer_archivo = f"{carpeta}/{archivos[0]}"
+            with pd.ExcelFile(primer_archivo) as xls:
+                hojas = xls.sheet_names
+
+            # Almacenar los datos en un diccionario por hoja
+            datos = {}
+            for hoja in hojas:
+                datos[hoja] = pd.DataFrame()
+
+            # Leer los archivos de Excel y almacenar los datos en el diccionario
+            for archivo in archivos:
+                with pd.ExcelFile(f"{carpeta}/{archivo}") as xls:
+                    for hoja in hojas:
+                        df = pd.read_excel(xls, sheet_name=hoja)
+                        if hoja == "datos_hecho":
+                            df["Latitud:"] = df["Latitud:"].astype(str)
+                            df["Longitud:"] = df["Longitud:"].astype(str)
+                        datos[hoja] = pd.concat([datos[hoja], df])
+                self.imprimir_con_color(f"Listo {archivo}", "verde")
+
+            # Escribir los datos consolidados en un archivo de Excel
+            with pd.ExcelWriter(archivo_final) as writer:
+                self.imprimir_con_color("\n")
+                self.imprimir_con_color("Comenzando proceso de compilación...", "lila")
+                for hoja, df in datos.items():
+                    df.to_excel(writer, sheet_name=hoja, index=False)
+
+            self.imprimir_con_color("Analizando coherencia de indexados...", "lila")
+            try:
+                if self.comprobar_indices(f"{carpeta}/consolidado.xlsx"):
+                    self.imprimir_con_color(
+                        "Chequeada coherencia de indexados sin errores", "verde"
+                    )
+                else:
+                    self.imprimir_con_color(
+                        "Se detectaron errores de coherencia en los indexados", "rojo"
+                    )
+            except Exception as error:
+                self.imprimir_con_color(error, "rojo")
+            self.imprimir_con_color(
+                f"Se ha creado el archivo consolidado en: {archivo_final}", "blanco"
+            )
+        except FileNotFoundError:
+            self.mostrar_mensaje_advertencia("Ninguna carpeta seleccionada")
         except Exception as error:
-            self.imprimir_con_color(error, "rojo")
-        self.imprimir_con_color(
-            f"Se ha creado el archivo consolidado en: {archivo_final}", "blanco"
-        )
+            self.mostrar_mensaje_error(f"{error}")
 
     def _archivos(self):
         carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
@@ -638,59 +732,12 @@ class Ventana_Principal(Ventana_Base):
     def cambiar_de_ventana(self, main, top):
         main.withdraw()
         main.wait_window(top)
-        main.deiconify()
-
-    def iniciar(self):
-        self.ventana.mainloop()
-
-    def _cargar_no_segmentado(self, path, indices):
         try:
-            if path is False:
-                archivo1 = self._cargar(
-                    self.seleccionar_archivo("/Exportaciones/No segmentados/"),
-                    no_tiene_encabezados=False,
-                )
-                segmentado = Segmentado(archivo1, indices)
-                try:
-                    self._convertir_segmentado(segmentado.final)
-                    mensaje = Formateador.comprobar_salida(segmentado.final)
-                    if mensaje != "":
-                        self.mostrar_mensaje_advertencia(mensaje)
-                        self.mostrar_mensaje_info(
-                            "El proceso se completo correctamente."
-                        )
-                except AttributeError:
-                    self.mostrar_mensaje_advertencia(
-                        "El proceso de segmentado se ha abortado."
-                    )
-                    ventana_errores = Ventana_addendum(
-                        self.ventana, archivo=segmentado.errores
-                    )
-                except Exception as error:
-                    self.imprimir_con_color(f"{error}", "rojo")
-            else:
-                archivo1 = self._cargar(path, no_tiene_encabezados=False)
-                segmentado = Segmentado(archivo1, indices)
-                try:
-                    self._convertir_segmentado(segmentado.final)
-                    mensaje = Formateador.comprobar_salida(segmentado.final)
-                    if mensaje != "":
-                        self.mostrar_mensaje_advertencia(mensaje)
-                        self.mostrar_mensaje_info(
-                            "El proceso se completo correctamente."
-                        )
-                except AttributeError:
-                    self.mostrar_mensaje_advertencia(
-                        "El proceso de segmentado se ha abortado."
-                    )
-                    ventana_errores = Ventana_addendum(
-                        self.ventana, archivo=segmentado.errores
-                    )
-                except Exception as error:
-                    self.imprimir_con_color(f"{error}", "rojo")
-        except FileNotFoundError:
-            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
+            main.deiconify()
+        except Exception:
+            ...
 
+    @ocultar_y_mostrar
     def chequear_integridad(self, ventana):
         print("\n\n")
         path = self.seleccionar_archivo("/Exportaciones/Segmentados")
@@ -850,6 +897,7 @@ class Ventana_Principal(Ventana_Base):
         else:
             self.mostrar_mensaje_advertencia("Ningún archivo seleccionado")
 
+    @ocultar_y_mostrar
     def subir_a_base(self, ventana):
         def obtener_indices_archivo(lista_compuesta):
             primeros_elementos = []
@@ -1016,6 +1064,9 @@ class Ventana_Principal(Ventana_Base):
             if elemento.get() != 1:
                 return False
         return True
+
+    def iniciar(self):
+        self.ventana.mainloop()
 
 
 class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
@@ -1282,7 +1333,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
 class Ventana_indices(tk.Toplevel, Ventana_Base):
     def __init__(self, ventana, indices):
         super().__init__(ventana)
-        self.title("Etiquetas y Cuadros de Texto")
+        self.title("Setear índices")
         self.ancho = 360
         self.alto = 300
         self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
@@ -1675,180 +1726,193 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.imprimir_con_color(f"Host: {host}", "blanco")
         self.imprimir_con_color(f"User: {user}", "blanco")
         self.imprimir_con_color("Nombre de la base: delitos", "blanco")
-        try:
-            conn = mysql.connector.connect(host=host, user=user, password=passw)
-            conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}")
-            conn.database = NOMBRE_DE_LA_BASE
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS datos_hecho (
-                    id_hecho INT PRIMARY KEY,
-                    nro_registro VARCHAR(30) NOT NULL,
-                    fecha_carga DATE NOT NULL NOT NULL,
-                    hora_carga TIME NOT NULL,
-                    dependencia VARCHAR(100) NOT NULL,
-                    fecha_inicio_hecho DATE,
-                    hora_inicio_hecho TIME,
-                    partido_hecho VARCHAR(50) NOT NULL,
-                    localidad_hecho VARCHAR(50),
-                    latitud VARCHAR(50),
-                    calle VARCHAR(50),
-                    longitud VARCHAR(50),
-                    altura VARCHAR(10),
-                    entre VARCHAR(50),
-                    calificaciones VARCHAR(5000) NOT NULL,
-                    relato VARCHAR(32767) NOT NULL
+        conn = mysql.connector.connect(host=host, user=user, password=passw)
+        cursor = conn.cursor()
+        cursor.execute(f"SHOW DATABASES")
+        databases = cursor.fetchall()
+        if ("delitos",) in databases:
+            self.mostrar_mensaje_advertencia("La base de datos ya existe.")
+        else:
+            try:
+                conn = mysql.connector.connect(host=host, user=user, password=passw)
+                conn.cursor().execute(
+                    f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}"
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
-            )
+                conn.database = NOMBRE_DE_LA_BASE
+                cursor = conn.cursor()
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS datos_hecho (
+                        id_hecho INT PRIMARY KEY,
+                        nro_registro VARCHAR(30) NOT NULL,
+                        fecha_carga DATE NOT NULL NOT NULL,
+                        hora_carga TIME NOT NULL,
+                        dependencia VARCHAR(100) NOT NULL,
+                        fecha_inicio_hecho DATE,
+                        hora_inicio_hecho TIME,
+                        partido_hecho VARCHAR(50) NOT NULL,
+                        localidad_hecho VARCHAR(50),
+                        latitud VARCHAR(50),
+                        calle VARCHAR(50),
+                        longitud VARCHAR(50),
+                        altura VARCHAR(10),
+                        entre VARCHAR(50),
+                        calificaciones VARCHAR(5000) NOT NULL,
+                        relato VARCHAR(32767) NOT NULL
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS automotores (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    marca VARCHAR(50) NOT NULL,
-                    modelo VARCHAR(50),
-                    color VARCHAR(50),
-                    dominio VARCHAR(50),
-                    nro_motor VARCHAR(50),
-                    nro_chasis VARCHAR(50),
-                    vinculo VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS automotores (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        marca VARCHAR(50) NOT NULL,
+                        modelo VARCHAR(50),
+                        color VARCHAR(50),
+                        dominio VARCHAR(50),
+                        nro_motor VARCHAR(50),
+                        nro_chasis VARCHAR(50),
+                        vinculo VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS armas (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo_arma VARCHAR(100) NOT NULL,
-                    marca VARCHAR(50) NOT NULL,
-                    modelo VARCHAR(50),
-                    nro_serie VARCHAR(50),
-                    calibre VARCHAR(50),
-                    observaciones VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS armas (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo_arma VARCHAR(100) NOT NULL,
+                        marca VARCHAR(50) NOT NULL,
+                        modelo VARCHAR(50),
+                        nro_serie VARCHAR(50),
+                        calibre VARCHAR(50),
+                        observaciones VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS secuestros (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo VARCHAR(50) NOT NULL,
-                    marca VARCHAR(50),
-                    modelo VARCHAR(50),
-                    cantidad VARCHAR(50),
-                    valor VARCHAR(50),
-                    descripcion VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS secuestros (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo VARCHAR(50) NOT NULL,
+                        marca VARCHAR(50),
+                        modelo VARCHAR(50),
+                        cantidad VARCHAR(50),
+                        valor VARCHAR(50),
+                        descripcion VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS objetos (
-                    id INT PRIMARY KEY,
-                    id_hecho INT NOT NULL,
-                    tipo VARCHAR(50) NOT NULL,
-                    marca VARCHAR(50),
-                    modelo VARCHAR(50),
-                    cantidad VARCHAR(50),
-                    valor VARCHAR(50),
-                    descripcion VARCHAR(1000),
-                    implicacion VARCHAR(50) NOT NULL,
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
+                )
 
-            cursor.execute(
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS objetos (
+                        id INT PRIMARY KEY,
+                        id_hecho INT NOT NULL,
+                        tipo VARCHAR(50) NOT NULL,
+                        marca VARCHAR(50),
+                        modelo VARCHAR(50),
+                        cantidad VARCHAR(50),
+                        valor VARCHAR(50),
+                        descripcion VARCHAR(1000),
+                        implicacion VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS involucrados (
-                    id INT PRIMARY KEY,
-                    id_hecho INT,
-                    involucrado VARCHAR(30),
-                    pais_origen VARCHAR(50),
-                    tipo_dni VARCHAR(10),
-                    nro_dni VARCHAR(20),
-                    genero VARCHAR(20),
-                    apellido VARCHAR(50),
-                    nombre VARCHAR(50),
-                    provincia_nacimiento VARCHAR(50),
-                    ciudad_nacimiento VARCHAR(50),
-                    fecha_nacimiento DATE,
-                    observaciones VARCHAR(1000),
-                    provincia_domicilio VARCHAR(50),
-                    partido_domicilio VARCHAR(50),
-                    localidad_domicilio VARCHAR(50),
-                    calle_domicilio VARCHAR(50),
-                    nro_domicilio VARCHAR(20),
-                    entre VARCHAR(50),
-                    piso VARCHAR(20),
-                    departamento VARCHAR(20),
-                    caracteristicas_fisicas VARCHAR(500),
-                    FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
                 )
-            """
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
-            )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
+                )
 
-            conn.commit()
-            conn.close()
-            self.mostrar_mensaje_info("Base de datos creada.")
-            self.imprimir_con_color(f"Base de datos creada", "verde")
-        except Exception as error:
-            self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
-            self.imprimir_con_color(f"No se ha podido crear la base: {error}", "rojo")
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS involucrados (
+                        id INT PRIMARY KEY,
+                        id_hecho INT,
+                        involucrado VARCHAR(30),
+                        pais_origen VARCHAR(50),
+                        tipo_dni VARCHAR(10),
+                        nro_dni VARCHAR(20),
+                        genero VARCHAR(20),
+                        apellido VARCHAR(50),
+                        nombre VARCHAR(50),
+                        provincia_nacimiento VARCHAR(50),
+                        ciudad_nacimiento VARCHAR(50),
+                        fecha_nacimiento DATE,
+                        observaciones VARCHAR(1000),
+                        provincia_domicilio VARCHAR(50),
+                        partido_domicilio VARCHAR(50),
+                        localidad_domicilio VARCHAR(50),
+                        calle_domicilio VARCHAR(50),
+                        nro_domicilio VARCHAR(20),
+                        entre VARCHAR(50),
+                        piso VARCHAR(20),
+                        departamento VARCHAR(20),
+                        caracteristicas_fisicas VARCHAR(500),
+                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
+                    )
+                """
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
+                )
+
+                conn.commit()
+                conn.close()
+                self.mostrar_mensaje_info("Base de datos creada.")
+                self.imprimir_con_color(f"Base de datos creada", "verde")
+            except Exception as error:
+                self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
+                self.imprimir_con_color(
+                    f"No se ha podido crear la base: {error}", "rojo"
+                )

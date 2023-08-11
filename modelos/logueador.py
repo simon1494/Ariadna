@@ -34,7 +34,7 @@ class Logueador:
     def loguear_critical(cls, critico_a_agregar):
         logging.warning(critico_a_agregar)
 
-    def imprimir_con_color(self, mensaje, color="normal"):
+    def imprimir_con_color(self, mensaje, color="normal", loguear=True):
         if color == "normal":
             print(
                 colorama.Back.WHITE
@@ -44,7 +44,8 @@ class Logueador:
             )
         elif color == "azul":
             print(colorama.Back.BLUE + mensaje + colorama.Style.RESET_ALL)
-            self.loguear_info(mensaje)
+            if loguear:
+                self.loguear_info(mensaje)
         elif color == "blanco":
             print(
                 colorama.Back.WHITE
@@ -52,16 +53,21 @@ class Logueador:
                 + mensaje
                 + colorama.Style.RESET_ALL
             )
-            self.loguear_info(mensaje)
+            if loguear:
+                self.loguear_info(mensaje)
         elif color == "lila":
             print(colorama.Back.MAGENTA + mensaje + colorama.Style.RESET_ALL)
-            self.loguear_info(mensaje)
+            if loguear:
+                self.loguear_info(mensaje)
         elif color == "verde":
             print(colorama.Back.GREEN + mensaje + colorama.Style.RESET_ALL)
-            self.loguear_info(mensaje)
+            if loguear:
+                self.loguear_info(mensaje)
         elif color == "amarillo":
             print(colorama.Back.YELLOW + mensaje + colorama.Style.RESET_ALL)
-            self.loguear_warning(mensaje)
+            if loguear:
+                self.loguear_warning(mensaje)
         elif color == "rojo":
             print(colorama.Back.RED + mensaje + colorama.Style.RESET_ALL)
-            self.loguear_critical(mensaje)
+            if loguear:
+                self.loguear_critical(mensaje)

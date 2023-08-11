@@ -1,6 +1,17 @@
-VER = "4.2.2-beta [2023-03-08]"
+import threading
+
+VER = "5.0.2-beta [2023-08-04]"
 
 if __name__ == "__main__":
-    from modelos.prueba import LogoInicio
+    from modelos.logo_inicio import LogoInicio
+    from modelos.registro_de_usuario import VentanaLogueo
 
-    logueo = LogoInicio()
+    def lanzar_logo_inicio():
+        logueo = LogoInicio()
+        logueo.show_image()
+
+    hilo = hilo = threading.Thread(target=lanzar_logo_inicio)
+
+    hilo.start()
+    hilo.join()
+    ventana_login = VentanaLogueo(VER)

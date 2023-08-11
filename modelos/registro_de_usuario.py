@@ -26,7 +26,7 @@ class VentanaLogueo(tk.Tk, Ventana_Base):
         )
         self.etiqueta_usuario.pack()
         self.user = tk.StringVar()
-        self.user.set("admin")
+        self.user.set("")
         self.entry_usuario = tk.Entry(self, textvariable=self.user)
         self.entry_usuario.pack()
 
@@ -42,6 +42,8 @@ class VentanaLogueo(tk.Tk, Ventana_Base):
             self, text="Ingresar", command=lambda: self.verificar()
         )
         self.boton_login.pack()
+        self.entry_usuario.bind("<Return>", lambda event: self.verificar())
+        self.entry_contrasena.bind("<Return>", lambda event: self.verificar())
         self.mainloop()
 
     def verificar(self):

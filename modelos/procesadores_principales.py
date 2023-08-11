@@ -270,28 +270,6 @@ class Segmentado(Core_Final, Addendum):
 
             # limpieza de campos "Sin especificar".
             if not carpeta:
-                if self.mostrar_mensaje_pregunta(
-                    "¿Desea limpiar los 'Sin especificar?"
-                ):
-                    self.datos = list(
-                        map(lambda x: self._limpiar_registro(x), self.datos)
-                    )
-                    self._automotores = list(
-                        map(lambda x: self._limpiar_registro(x), self._automotores)
-                    )
-                    self._armas = list(
-                        map(lambda x: self._limpiar_registro(x), self._armas)
-                    )
-                    self._objetos = list(
-                        map(lambda x: self._limpiar_registro(x), self._objetos)
-                    )
-                    self._secuestros = list(
-                        map(lambda x: self._limpiar_registro(x), self._secuestros)
-                    )
-                    self._involucrados = list(
-                        map(lambda x: self._limpiar_registro(x), self._involucrados)
-                    )
-            else:
                 self.datos = list(map(lambda x: self._limpiar_registro(x), self.datos))
                 self._automotores = list(
                     map(lambda x: self._limpiar_registro(x), self._automotores)
@@ -308,6 +286,7 @@ class Segmentado(Core_Final, Addendum):
                 self._involucrados = list(
                     map(lambda x: self._limpiar_registro(x), self._involucrados)
                 )
+
             # archivo final segmentado
             self.final = [
                 self.datos,
