@@ -28,7 +28,10 @@ def ocultar_y_mostrar(func):
     def wrapper(self, *args, **kwargs):
         self.ventana_top.withdraw()  # Oculta la ventana
         result = func(self, *args, **kwargs)  # Ejecuta el método
-        self.ventana_top.deiconify()  # Muestra la ventana nuevamente
+        try:
+            self.ventana_top.deiconify()  # Muestra la ventana nuevamente
+        except Exception:
+            pass
         return result
 
     return wrapper
@@ -732,10 +735,7 @@ class Ventana_Principal(Ventana_Base):
     def cambiar_de_ventana(self, main, top):
         main.withdraw()
         main.wait_window(top)
-        try:
-            main.deiconify()
-        except Exception:
-            ...
+        main.deiconify()
 
     @ocultar_y_mostrar
     def chequear_integridad(self, ventana):
