@@ -49,7 +49,8 @@ class Formateador(motores.CoreMotor, Logueador):
         texto5 = texto4.replace(
             " INVOLUCRADO - TESTIGO DEL HECHO DATOS ", " INVOLUCRADO - TESTIGO DATOS "
         )  # se agrega a causa de una actualización del Sisep con fecha 2023-06-09
-        return texto5
+        texto6 = texto5.replace("CALIFICACIÓN LEGAL DEL HECHO Delito: ", "CALIFICACIÓN LEGAL DEL HECHO Tipificación: ")
+        return texto6
 
     @staticmethod
     def comprobar_salida(archivo, advertencias=True):

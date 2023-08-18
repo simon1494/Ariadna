@@ -31,7 +31,7 @@ def ocultar_y_mostrar(func):
         try:
             self.ventana_top.deiconify()  # Muestra la ventana nuevamente
         except Exception:
-            pass
+            ...
         return result
 
     return wrapper
@@ -1572,6 +1572,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 self.etiquetas_entries[1].get(),
                 self.etiquetas_entries[2].get(),
                 self.etiquetas_entries[3].get(),
+                self.etiquetas_entries[4].get(),
             ),
         )
         self.crear_base_.place(x=200, y=310)
@@ -1732,27 +1733,25 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             texto = "No se ha podido establecer conexión..."
             output.insert(tk.END, texto)
 
-    def crear_base(self, host, port, user, passw):
-        NOMBRE_DE_LA_BASE = "delitos"
-
+    def crear_base(self, host, port, user, passw,base):
         self.imprimir_con_color("Creando base de datos...", "blanco")
         self.imprimir_con_color(f"Host: {host}", "blanco")
         self.imprimir_con_color(f"Puerto: {port}", "blanco")
         self.imprimir_con_color(f"User: {user}", "blanco")
-        self.imprimir_con_color("Nombre de la base: delitos", "blanco")
+        self.imprimir_con_color(f"Nombre de la base: {base}", "blanco")
         conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
         cursor = conn.cursor()
         cursor.execute(f"SHOW DATABASES")
         databases = cursor.fetchall()
-        if ("delitos",) in databases:
+        if (base,) in databases:
             self.mostrar_mensaje_advertencia("La base de datos ya existe.")
         else:
             try:
                 conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
                 conn.cursor().execute(
-                    f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}"
+                    f"CREATE DATABASE IF NOT EXISTS {base}"
                 )
-                conn.database = NOMBRE_DE_LA_BASE
+                conn.database = base
                 cursor = conn.cursor()
 
                 cursor.execute(
