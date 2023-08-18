@@ -944,9 +944,10 @@ class Ventana_Principal(Ventana_Base):
 
         conexion = mysql.connector.connect(
             host=ventana.conexion[0],
-            user=ventana.conexion[1],
-            password=ventana.conexion[2],
-            database=ventana.conexion[3],
+            port = ventana.conexion[1],
+            user=ventana.conexion[2],
+            password=ventana.conexion[3],
+            database=ventana.conexion[4],
             charset="utf8",
         )
 
@@ -1570,6 +1571,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 self.etiquetas_entries[0].get(),
                 self.etiquetas_entries[1].get(),
                 self.etiquetas_entries[2].get(),
+                self.etiquetas_entries[3].get(),
             ),
         )
         self.crear_base_.place(x=200, y=310)
@@ -1730,14 +1732,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             texto = "No se ha podido establecer conexión..."
             output.insert(tk.END, texto)
 
-    def crear_base(self, host, user, passw):
+    def crear_base(self, host, port, user, passw):
         NOMBRE_DE_LA_BASE = "delitos"
 
         self.imprimir_con_color("Creando base de datos...", "blanco")
         self.imprimir_con_color(f"Host: {host}", "blanco")
+        self.imprimir_con_color(f"Puerto: {port}", "blanco")
         self.imprimir_con_color(f"User: {user}", "blanco")
         self.imprimir_con_color("Nombre de la base: delitos", "blanco")
-        conn = mysql.connector.connect(host=host, user=user, password=passw)
+        conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
         cursor = conn.cursor()
         cursor.execute(f"SHOW DATABASES")
         databases = cursor.fetchall()
@@ -1745,7 +1748,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             self.mostrar_mensaje_advertencia("La base de datos ya existe.")
         else:
             try:
-                conn = mysql.connector.connect(host=host, user=user, password=passw)
+                conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
                 conn.cursor().execute(
                     f"CREATE DATABASE IF NOT EXISTS {NOMBRE_DE_LA_BASE}"
                 )
