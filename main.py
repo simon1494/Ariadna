@@ -1,6 +1,6 @@
 import threading
 
-VER = "5.0.2-beta [2023-08-04]"
+VER = "5.0.3-beta [2023-08-18]"
 
 if __name__ == "__main__":
     from modelos.logo_inicio import LogoInicio

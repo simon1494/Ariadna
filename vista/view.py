@@ -285,7 +285,8 @@ class Ventana_Principal(Ventana_Base):
     @ocultar_y_mostrar
     def procesar_final(self, path=False):
         if not self.todos_unos(self.indices):
-            self._cargar_no_segmentado(path, self.indices)
+            indices = list(map(lambda var: var.get(), self.indices))
+            self._cargar_no_segmentado(path, indices)
         else:
             self.mostrar_mensaje_info("Antes de segmentar, primero setee los indices.")
             self.abrir_ventana_top_intermedia(
@@ -1409,9 +1410,14 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
         try:
             indices = []
 
-            conexion = mysql.connector.connect(
-                host="localhost", user="root", password="", database="delitos"
-            )
+            try:
+                conexion = mysql.connector.connect(
+                    host="localhost", user="root", password="", database="delitos"
+                )
+            except Exception:
+                conexion = mysql.connector.connect(
+                    host="localhost", port=3307, user="root", password="", database="delitos"
+                )
 
             # Crear un cursor para ejecutar consultas
             cursor = conexion.cursor()
@@ -1498,16 +1504,18 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.configure(bg=self.color_back)
 
         self.host = tk.StringVar()
+        self.port = tk.StringVar()
         self.user = tk.StringVar()
         self.passw = tk.StringVar()
         self.base = tk.StringVar()
 
         self.host.set("localhost")
+        self.port.set("3306")
         self.user.set("root")
         self.passw.set("")
         self.base.set("delitos")
 
-        self.set_vars = [self.host, self.user, self.passw, self.base]
+        self.set_vars = [self.host, self.port, self.user, self.passw, self.base]
 
         self.indices = []
 
@@ -1516,9 +1524,10 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
     def crear_widgets(self, ventana):
         etiquetas = [
             "HOST: ",
+            "PORT: ",
             "USER: ",
             "PASS: ",
-            "DATABASE: ",
+            "DATABASE: "
         ]
 
         sep_x = 30
@@ -1568,7 +1577,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
     def conectar_con_base(self, ventana):
         output = tk.Text(self, background=self.color_botones)
         output.config(borderwidth=2, relief="sunken")
-        output.place(x=58, y=135, width=250, height=165)
+        output.place(x=58, y=160, width=250, height=140)
         print("\n\n")
         try:
             indices = []
@@ -1578,13 +1587,15 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
                 self.etiquetas_entries[1].get(),
                 self.etiquetas_entries[2].get(),
                 self.etiquetas_entries[3].get(),
+                self.etiquetas_entries[4].get(),
             ]
 
             conexion = mysql.connector.connect(
                 host=datos_conexion[0],
-                user=datos_conexion[1],
-                password=datos_conexion[2],
-                database=datos_conexion[3],
+                port=datos_conexion[1],
+                user=datos_conexion[2],
+                password=datos_conexion[3],
+                database=datos_conexion[4],
             )
 
             # Crear un cursor para ejecutar consultas
