@@ -1324,7 +1324,7 @@ class Ventana_errores(tk.Toplevel, Ventana_Base):
             self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
 
     def cargar_enmendado(self):
-        path = self.seleccionar_archivo("/Exportaciones/Corregidos/")
+        path = self.seleccionar_archivo("/Exportaciones/Errores/")
         if path:
             self.path_enmendado = path
             self.boton_enmendado.config(bg="#27EA00")
