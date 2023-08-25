@@ -13,6 +13,7 @@ import tkinter as tk
 import checkpoints as ck
 from tkinter import ttk
 from tkinter.font import Font
+from modelos.separador import Separador
 from modelos.formateador import Formateador
 from modelos.administrador import Administrador
 from modelos.testeador import Tester
@@ -88,6 +89,11 @@ class Ventana_Principal(Ventana_Base):
                 "callback": lambda: self.abrir_ventana_top_intermedia(
                     self.ventana_top, Ventana_errores
                 ),
+            },
+            {
+                "nombre": "separar",
+                "texto": "Mapear archivos",
+                "callback": lambda: self.mapear_archivos(),
             },
         ]
         self.menu_segmentado = [
@@ -582,6 +588,11 @@ class Ventana_Principal(Ventana_Base):
         except Exception as error:
             self.mostrar_mensaje_error(f"{error}")
 
+    @ocultar_y_mostrar
+    def mapear_archivos(self):
+        separador = Separador()
+        separador.procesar_archivos()
+
     def _archivos(self):
         carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
         print("\n")
@@ -944,7 +955,7 @@ class Ventana_Principal(Ventana_Base):
 
         conexion = mysql.connector.connect(
             host=ventana.conexion[0],
-            port = ventana.conexion[1],
+            port=ventana.conexion[1],
             user=ventana.conexion[2],
             password=ventana.conexion[3],
             database=ventana.conexion[4],
@@ -1417,7 +1428,11 @@ class Ventana_indices(tk.Toplevel, Ventana_Base):
                 )
             except Exception:
                 conexion = mysql.connector.connect(
-                    host="localhost", port=3307, user="root", password="", database="delitos"
+                    host="localhost",
+                    port=3307,
+                    user="root",
+                    password="",
+                    database="delitos",
                 )
 
             # Crear un cursor para ejecutar consultas
@@ -1523,13 +1538,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
         self.crear_widgets(ventana)
 
     def crear_widgets(self, ventana):
-        etiquetas = [
-            "HOST: ",
-            "PORT: ",
-            "USER: ",
-            "PASS: ",
-            "DATABASE: "
-        ]
+        etiquetas = ["HOST: ", "PORT: ", "USER: ", "PASS: ", "DATABASE: "]
 
         sep_x = 30
         sep_y = 0.5
@@ -1733,7 +1742,7 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             texto = "No se ha podido establecer conexión..."
             output.insert(tk.END, texto)
 
-    def crear_base(self, host, port, user, passw,base):
+    def crear_base(self, host, port, user, passw, base):
         self.imprimir_con_color("Creando base de datos...", "blanco")
         self.imprimir_con_color(f"Host: {host}", "blanco")
         self.imprimir_con_color(f"Puerto: {port}", "blanco")
@@ -1747,10 +1756,10 @@ class Ventana_conectar(tk.Toplevel, Ventana_Base):
             self.mostrar_mensaje_advertencia("La base de datos ya existe.")
         else:
             try:
-                conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
-                conn.cursor().execute(
-                    f"CREATE DATABASE IF NOT EXISTS {base}"
+                conn = mysql.connector.connect(
+                    host=host, port=port, user=user, password=passw
                 )
+                conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {base}")
                 conn.database = base
                 cursor = conn.cursor()
 
