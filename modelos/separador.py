@@ -7,18 +7,16 @@ import re
 from tkinter import filedialog
 from datetime import datetime
 from modelos.logueador import Logueador
+from modelos.cuadros_de_mensajes import Mensajes
 import locale
 
 locale.setlocale(locale.LC_TIME, "es_ES.utf8")
 
 
-class Separador(Logueador):
+class Separador(Logueador, Mensajes):
     def __init__(self) -> None:
-        ...
-
-    def seleccionar_archivo(self) -> str:
-        ruta_del_archivo = filedialog.askopenfilename()
-        return ruta_del_archivo
+        self.imprimir_con_color("--- MÓDULO MAPEADOR INICIALIZADO ---", "azul")
+        print("")
 
     def find_paso_columns(self, df):
         paso_columns = []
@@ -74,9 +72,37 @@ class Separador(Logueador):
                 f"Listo {fecha}. {len(filtered_df)} registros.", color="verde"
             )
 
+    def procesar_uno(self):
+        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Crudos/")
+        destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
+        nombre_archivo = ruta_archivo
+        if os.path.isfile(nombre_archivo):
+            try:
+                df = pd.read_excel(nombre_archivo, header=None)
+                paso_columns = self.find_paso_columns(df)
+                paso_data = self.get_paso_data(df, paso_columns)
+                paso_dates = self.get_paso_dates(df, paso_columns)
+                paso_dates = set(paso_dates)
+                print("")
+                self.imprimir_con_color(
+                    f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}: {paso_dates}",
+                    color="blanco",
+                )
+                for fecha in paso_dates:
+                    self.filtrar_y_guardar_campo(paso_data, fecha, destino)
+            except Exception as error:
+                self.imprimir_con_color(
+                    f"Error con el archivo {nombre_archivo}: {error}",
+                    color="amarillo",
+                )
+        else:
+            self.imprimir_con_color("Nada seleccionado.", "blanco")
+            self.mostrar_mensaje_advertencia("Nada seleccionado.")
+
+
     def procesar_archivos(self):
-        directorio = filedialog.askdirectory()
-        destino = filedialog.askdirectory()
+        directorio = self.seleccionar_carpeta("/Exportaciones/Crudos/")
+        destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
 
         # Obtén la lista de nombres de archivos en el directorio
         nombres_archivos = os.listdir(directorio)

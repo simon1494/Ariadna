@@ -590,8 +590,20 @@ class Ventana_Principal(Ventana_Base):
 
     @ocultar_y_mostrar
     def mapear_archivos(self):
-        separador = Separador()
-        separador.procesar_archivos()
+        respuesta = self.mostrar_mensaje_pregunta("Desea procesar un archivo o una carpeta? Para archivo, presione SI. De lo controario, NO.")
+        try:
+            separador = Separador()
+            if respuesta:
+                separador.procesar_uno()
+            else:
+                separador.procesar_archivos()
+                self.mostrar_mensaje_info("La carpeta ha sido mapeada y sus archivos separados con éxito.")
+        except WindowsError:
+            self.imprimir_con_color("Nada seleccionado.", "blanco")
+            self.mostrar_mensaje_advertencia("Nada seleccionado.")
+        except Exception as error:
+            self.imprimir_con_color(f"Error inesperado: {error}", "rojo")
+            self.mostrar_mensaje_error(f"Error inesperado: {error}")
 
     def _archivos(self):
         carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
