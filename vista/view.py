@@ -310,7 +310,7 @@ class Ventana_Principal(Ventana_Base):
                 )
                 archivo1 = self._cargar(
                     path_archivo,
-                    no_tiene_encabezados=False,
+                    no_tiene_encabezados=False, es_original=False
                 )
                 nombre_archivo = os.path.splitext(os.path.basename(path_archivo))[0]
                 segmentado = Segmentado(archivo1, indices)
