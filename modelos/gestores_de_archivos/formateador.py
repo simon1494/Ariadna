@@ -51,7 +51,10 @@ class Formateador(MotorBase):
         texto5 = texto4.replace(
             " INVOLUCRADO - TESTIGO DEL HECHO DATOS ", " INVOLUCRADO - TESTIGO DATOS "
         )  # se agrega a causa de una actualización del Sisep con fecha 2023-06-09
-        texto6 = texto5.replace("CALIFICACIÓN LEGAL DEL HECHO Delito: ", "CALIFICACIÓN LEGAL DEL HECHO Tipificación: ")
+        texto6 = texto5.replace(
+            "CALIFICACIÓN LEGAL DEL HECHO Delito: ",
+            "CALIFICACIÓN LEGAL DEL HECHO Tipificación: ",
+        )
         return texto6
 
     @staticmethod

@@ -3,12 +3,13 @@ import sys
 sys.path.append("../ariadna")
 import copy
 import os
-import checkpoints as ck
+import settings as ck
 import pandas as pd
 from modelos.motores.motor_segmentado import MotorSegmentado
 from modelos.motores.motor_calificaciones import MotorCalificaciones
 
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
 
 class Segmentado(MotorSegmentado, MotorCalificaciones):
     def __init__(self, archivo, indices, carpeta=False):

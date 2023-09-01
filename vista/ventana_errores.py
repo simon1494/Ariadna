@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../ariadna")
 import os
 import pandas as pd
@@ -110,4 +111,3 @@ class VentanaErrores(tk.Toplevel, VentanaBase):
             self.boton_enmendado.config(bg="#27EA00")
         else:
             self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
-

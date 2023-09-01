@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../ariadna")
 import mysql.connector
 import tkinter as tk

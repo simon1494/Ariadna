@@ -4,6 +4,7 @@ sys.path.append("../ariadna")
 from modelos.gestores_de_informacion.mensajeador import Mensajeador
 from modelos.gestores_de_archivos.administrador import Administrador
 
+
 class VentanaBase(Mensajeador, Administrador):
     usuario = None
     color_botones = "#D0F2EF"
@@ -22,4 +23,3 @@ class VentanaBase(Mensajeador, Administrador):
         center_x = int(screen_width / 2 - window_width / 2)
         center_y = int(screen_height / 2 - window_height / 2)
         return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
-

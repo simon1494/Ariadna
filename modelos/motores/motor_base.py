@@ -5,6 +5,7 @@ from datetime import datetime
 from modelos.gestores_de_informacion.logueador import Logueador
 from modelos.gestores_de_informacion.mensajeador import Mensajeador
 
+
 class MotorBase(Mensajeador, Logueador):
     def _posiciones_datos(self, texto, cortes, quitar=True):
         contador = 0
@@ -139,4 +140,3 @@ class MotorBase(Mensajeador, Logueador):
             except Exception as error:
                 self.imprimir_con_color(error, "rojo")
             return _registro
-

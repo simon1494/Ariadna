@@ -3,7 +3,7 @@ import sys
 sys.path.append("../ariadna")
 import tkinter as tk
 from vista.ventana_base import VentanaBase
-import checkpoints as ck
+import settings as ck
 
 
 class VentanaLogin(tk.Tk, VentanaBase):

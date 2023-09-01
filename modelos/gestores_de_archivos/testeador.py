@@ -2,7 +2,7 @@ import sys
 
 sys.path.append("../ariadna")
 import copy
-import checkpoints as ck
+import settings as ck
 from .formateador import Formateador
 
 

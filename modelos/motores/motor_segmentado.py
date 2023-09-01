@@ -2,8 +2,9 @@ import sys
 
 sys.path.append("../ariadna")
 import pandas as pd
-import checkpoints as ck
+import settings as ck
 from .motor_base import MotorBase
+
 
 class MotorSegmentado(MotorBase):
     def _armar_paquete(self, archivo, columna):

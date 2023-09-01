@@ -13,7 +13,7 @@ class VentanaInicio(VentanaBase):
         self,
         display_time=5000,
     ):
-        self.image_path = "Ariadna1.jpg"
+        self.image_path = "media/Ariadna1.jpg"
         self.width = 504
         self.height = 316
         self.display_time = display_time

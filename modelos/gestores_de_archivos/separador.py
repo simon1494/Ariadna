@@ -98,7 +98,6 @@ class Separador(Logueador, Mensajeador):
             self.imprimir_con_color("Nada seleccionado.", "blanco")
             self.mostrar_mensaje_advertencia("Nada seleccionado.")
 
-
     def procesar_archivos(self):
         directorio = self.seleccionar_carpeta("/Exportaciones/Crudos/")
         destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")

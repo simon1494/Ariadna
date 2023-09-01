@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../ariadna")
 import locale
 import mysql.connector
@@ -7,7 +8,7 @@ import datetime
 import os
 import pandas as pd
 import tkinter as tk
-import checkpoints as ck
+import settings as ck
 from .ventana_base import VentanaBase
 from .ventana_calificaciones import VentanaCalificaciones
 from .ventana_conexion import VentanaConexion
@@ -21,6 +22,7 @@ from modelos.procesadores.procesador_inicial import Inicial
 from modelos.procesadores.procesador_segmentado import Segmentado
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
+
 
 def ocultar_y_mostrar(func):
     def wrapper(self, *args, **kwargs):
@@ -287,8 +289,7 @@ class VentanaPrincipal(VentanaBase):
                     "/Exportaciones/No segmentados/"
                 )
                 archivo1 = self._cargar(
-                    path_archivo,
-                    no_tiene_encabezados=False, es_original=False
+                    path_archivo, no_tiene_encabezados=False, es_original=False
                 )
                 nombre_archivo = os.path.splitext(os.path.basename(path_archivo))[0]
                 segmentado = Segmentado(archivo1, indices)
@@ -571,14 +572,18 @@ class VentanaPrincipal(VentanaBase):
 
     @ocultar_y_mostrar
     def mapear_archivos(self):
-        respuesta = self.mostrar_mensaje_pregunta("Desea procesar un archivo o una carpeta? Para archivo, presione SI. De lo controario, NO.")
+        respuesta = self.mostrar_mensaje_pregunta(
+            "Desea procesar un archivo o una carpeta? Para archivo, presione SI. De lo controario, NO."
+        )
         try:
             separador = Separador()
             if respuesta:
                 separador.procesar_uno()
             else:
                 separador.procesar_archivos()
-                self.mostrar_mensaje_info("La carpeta ha sido mapeada y sus archivos separados con éxito.")
+                self.mostrar_mensaje_info(
+                    "La carpeta ha sido mapeada y sus archivos separados con éxito."
+                )
         except WindowsError:
             self.imprimir_con_color("Nada seleccionado.", "blanco")
             self.mostrar_mensaje_advertencia("Nada seleccionado.")

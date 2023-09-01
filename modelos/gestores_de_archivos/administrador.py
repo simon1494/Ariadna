@@ -3,7 +3,7 @@ import sys
 sys.path.append("../ariadna")
 import pandas as pd
 import tkinter as tk
-import checkpoints as ck
+import settings as ck
 import os
 from modelos.gestores_de_informacion.logueador import Logueador
 from copy import deepcopy

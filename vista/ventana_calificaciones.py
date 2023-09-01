@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../ariadna")
 import pandas as pd
 import tkinter as tk

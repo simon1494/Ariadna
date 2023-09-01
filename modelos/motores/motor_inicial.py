@@ -83,4 +83,3 @@ class MotorInicial(MotorBase):
                 if j.find(i) != -1:
                     canonico[i] = (f"{canonico[i]} {j}").strip()
         return canonico
-

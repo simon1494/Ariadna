@@ -3,7 +3,7 @@ import sys
 sys.path.append("../ariadna")
 import copy
 import re
-import checkpoints as ck
+import settings as ck
 from modelos.motores.motor_inicial import MotorInicial
 
 

@@ -1,5 +1,5 @@
-
 import sys
+
 sys.path.append("../ariadna")
 import copy
 import tkinter as tk
@@ -63,4 +63,3 @@ class VentanaIntermedia(tk.Toplevel, VentanaBase):
     def volver_a_principal(self):
         self.winfo_toplevel().deiconify()
         self.destroy()
-
