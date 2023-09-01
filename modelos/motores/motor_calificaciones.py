@@ -1,4 +1,4 @@
-class Addendum:
+class MotorCalificaciones:
     def rearmar_calificacion(self, registro, base, son_registros=True):
         if son_registros:
             calificacion = registro[26]

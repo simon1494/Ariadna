@@ -3,14 +3,12 @@ import sys
 sys.path.append("../ariadna")
 import tkinter as tk
 from PIL import Image, ImageTk
-from vista.view import Ventana_Base
-from modelos.registro_de_usuario import VentanaLogueo
-import threading
+from vista.ventana_base import VentanaBase
 
 VER = "4.2.2-beta [2023-03-08]"
 
 
-class LogoInicio(Ventana_Base):
+class VentanaInicio(VentanaBase):
     def __init__(
         self,
         display_time=5000,

@@ -1,29 +1,26 @@
 import sys
-
 sys.path.append("../ariadna")
-sys.path.append("../ariadna/modelos")
-
+import locale
 import mysql.connector
 import locale
 import datetime
 import os
-import copy
 import pandas as pd
 import tkinter as tk
 import checkpoints as ck
-from tkinter import ttk
-from tkinter.font import Font
-from modelos.separador import Separador
-from modelos.formateador import Formateador
-from modelos.administrador import Administrador
-from modelos.testeador import Tester
-from modelos.procesadores_principales import Inicial
-from modelos.procesadores_principales import Segmentado
-from modelos.procesadores_secundarios import Addendum
-from modelos.cuadros_de_mensajes import Mensajes
+from .ventana_base import VentanaBase
+from .ventana_calificaciones import VentanaCalificaciones
+from .ventana_conexion import VentanaConexion
+from .ventana_errores import VentanaErrores
+from .ventana_indices import VentanaIndices
+from .ventana_intermedia import VentanaIntermedia
+from modelos.gestores_de_archivos.separador import Separador
+from modelos.gestores_de_archivos.formateador import Formateador
+from modelos.gestores_de_archivos.testeador import Tester
+from modelos.procesadores.procesador_inicial import Inicial
+from modelos.procesadores.procesador_segmentado import Segmentado
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
-
 
 def ocultar_y_mostrar(func):
     def wrapper(self, *args, **kwargs):
@@ -38,27 +35,7 @@ def ocultar_y_mostrar(func):
     return wrapper
 
 
-class Ventana_Base(Mensajes, Administrador):
-    usuario = None
-    color_botones = "#D0F2EF"
-    botones_iniciales = "#F2F2F2"
-    botones_segmentado = "#F2F2F2"
-    botones_subir = "#F2F2F2"
-    amarillo = "#EBDD04"
-    rojo = "#EA3830"
-    verde = "#27EA00"
-    color_back = "#2493BF"
-
-    @staticmethod
-    def centrar_ventana(win, window_width, window_height):
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-        center_x = int(screen_width / 2 - window_width / 2)
-        center_y = int(screen_height / 2 - window_height / 2)
-        return f"{window_width}x{window_height}+{center_x}+{center_y-100}"
-
-
-class Ventana_Principal(Ventana_Base):
+class VentanaPrincipal(VentanaBase):
     def __init__(self, master, version, usuario):
         self.crear_directorio_de_exportaciones()
         self.usuario = usuario
@@ -87,7 +64,7 @@ class Ventana_Principal(Ventana_Base):
                 "nombre": "errores",
                 "texto": "Corregir Crudos",
                 "callback": lambda: self.abrir_ventana_top_intermedia(
-                    self.ventana_top, Ventana_errores
+                    self.ventana_top, VentanaErrores
                 ),
             },
             {
@@ -111,7 +88,7 @@ class Ventana_Principal(Ventana_Base):
                 "nombre": "indices",
                 "texto": "Setear Índices",
                 "callback": lambda: self.abrir_ventana_top_intermedia(
-                    self.ventana_top, Ventana_indices, indices=self.indices
+                    self.ventana_top, VentanaIndices, indices=self.indices
                 ),
             },
             {
@@ -125,7 +102,7 @@ class Ventana_Principal(Ventana_Base):
                 "nombre": "conectar",
                 "texto": "Conectar con base",
                 "callback": lambda: self.abrir_ventana_top_intermedia(
-                    self.ventana_top, Ventana_conectar
+                    self.ventana_top, VentanaConexion
                 ),
             },
             {
@@ -282,6 +259,7 @@ class Ventana_Principal(Ventana_Base):
                 if self.mostrar_mensaje_pregunta(
                     "¿Desea proceder a segmentar el archivo?"
                 ):
+                    print(path)
                     self.procesar_final(path)
         except FileNotFoundError:
             self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
@@ -296,7 +274,7 @@ class Ventana_Principal(Ventana_Base):
         else:
             self.mostrar_mensaje_info("Antes de segmentar, primero setee los indices.")
             self.abrir_ventana_top_intermedia(
-                self.ventana_top, Ventana_indices, self.indices
+                self.ventana_top, VentanaIndices, self.indices
             )
             indices = list(map(lambda var: var.get(), self.indices))
             self.ventana_top.withdraw()
@@ -332,15 +310,18 @@ class Ventana_Principal(Ventana_Base):
                     self.mostrar_mensaje_advertencia(
                         "El proceso de segmentado se ha abortado."
                     )
-                    ventana_errores = Ventana_addendum(
+                    ventanaErrores = VentanaCalificaciones(
                         self.ventana, archivo=segmentado.errores
                     )
                 except Exception as error:
                     self.imprimir_con_color(f"{error}", "rojo")
             else:
+                print("aca")
                 nombre_archivo = os.path.splitext(os.path.basename(path))[0]
+                print(path)
                 archivo1 = self._cargar(path, no_tiene_encabezados=False)
                 segmentado = Segmentado(archivo1, indices)
+                print("hola")
                 try:
                     self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
                     self._convertir_segmentado(
@@ -359,7 +340,7 @@ class Ventana_Principal(Ventana_Base):
                     self.mostrar_mensaje_advertencia(
                         "El proceso de segmentado se ha abortado."
                     )
-                    ventana_errores = Ventana_addendum(
+                    ventanaErrores = VentanaCalificaciones(
                         self.ventana, archivo=segmentado.errores
                     )
                 except Exception as error:
@@ -441,7 +422,7 @@ class Ventana_Principal(Ventana_Base):
                     "Antes de segmentar, primero setee los indices."
                 )
                 self.abrir_ventana_top_intermedia(
-                    self.ventana_top, Ventana_indices, self.indices
+                    self.ventana_top, VentanaIndices, self.indices
                 )
                 indices = list(map(lambda var: var.get(), self.indices))
                 carpeta = self.seleccionar_carpeta("/Exportaciones/No segmentados/")
@@ -508,7 +489,7 @@ class Ventana_Principal(Ventana_Base):
                                 f"SE DETECTARON CALIFICACIONES NO EXISTENTES EN BASE",
                                 "rojo",
                             )
-                            ventana_errores = Ventana_addendum(
+                            ventanaErrores = VentanaCalificaciones(
                                 self.ventana, archivo=segmentado.errores
                             )
                         except Exception as error:
@@ -743,7 +724,7 @@ class Ventana_Principal(Ventana_Base):
         return res2
 
     def abrir_ventana_intermedia(self, widgets, titulo, colores_botones):
-        self.ventana_top = Ventana_Intermedia(
+        self.ventana_top = VentanaIntermedia(
             self.ventana, widgets, titulo, colores_botones
         )
         self.cambiar_de_ventana(self.ventana, self.ventana_top)
@@ -1092,861 +1073,3 @@ class Ventana_Principal(Ventana_Base):
 
     def iniciar(self):
         self.ventana.mainloop()
-
-
-class Ventana_Intermedia(tk.Toplevel, Ventana_Base):
-    def __init__(self, ventana_principal, widgets, titulo, color_botones):
-        super().__init__(ventana_principal)
-        self.widgets = widgets
-        self.title(titulo)
-        self.ancho = 400
-        self.alto = 450
-        self.geometry(self.centrar_ventana(ventana_principal, self.ancho, self.alto))
-        self.configure(bg=self.color_back)
-        self.crear_widgets(widgets, color_botones)
-
-    def crear_widgets(self, wid, colores):
-        widgets = copy.deepcopy(wid)
-        color_botones = colores
-        widgets.append(
-            {
-                "nombre": "volver",
-                "texto": "Volver al menú",
-                "callback": lambda: self.volver_a_principal(),
-            }
-        )
-
-        estilo_fuente = ("Palatino Linotype", 16)
-        b_alto = 50
-        b_ancho = 250
-
-        separacion = b_alto * 1.8
-        x_pos = int(self.ancho / 2) - int(b_ancho / 2)
-        y_pos = (self.alto / 2) - (
-            ((b_alto * len(widgets)) + (separacion * (len(widgets) - 1))) / 1.5
-        ) / 2
-
-        self.botones = []
-
-        for widget in widgets:
-            widget["nombre"] = tk.Button(
-                self,
-                text=widget["texto"],
-                bg=color_botones,
-                fg="black",
-                font=estilo_fuente,
-                command=widget["callback"],
-            )
-            widget["nombre"].place(
-                x=x_pos,
-                y=y_pos,
-                width=b_ancho,
-                height=b_alto,
-            )
-
-            self.botones.append(widget["nombre"])
-
-            y_pos += separacion
-
-    def volver_a_principal(self):
-        self.winfo_toplevel().deiconify()
-        self.destroy()
-
-
-class Ventana_addendum(tk.Toplevel, Ventana_Base):
-    def __init__(
-        self,
-        ventana,
-        archivo=[],
-    ):
-        super().__init__(ventana)
-        self.title("Módulo Addendum")
-        self.ancho = 400
-        self.alto = 300
-        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.registros = archivo
-        self.original = ""
-        self.crear_widgets()
-
-    def crear_widgets(self):
-        # Crear treeview con 3 columnas
-        self.control_entry = tk.StringVar()
-        self.control_entry.set("")
-
-        self.treeview = ttk.Treeview(self, columns=("id", "id_hecho", "calificacion"))
-
-        # Configurar headers de las columnas
-        self.treeview.heading("id", text="ID")
-        self.treeview.heading("id_hecho", text="ID Hecho")
-        self.treeview.heading("calificacion", text="Calificación")
-        self.treeview.column("#0", minwidth=0, width=0, anchor="center")
-        self.treeview.column("id", minwidth=0, width=30, anchor="center")
-        self.treeview.column("id_hecho", minwidth=0, width=70, anchor="center")
-        self.treeview.column("calificacion", minwidth=0, width=290, anchor="center")
-
-        # Agregar datos al treeview (ejemplo)
-        if len(self.registros) > 0:
-            for registro in self.registros:
-                self.treeview.insert(
-                    "", "end", values=(registro[0], registro[1], registro[2])
-                )
-
-        self.treeview.bind(
-            "<ButtonRelease-1>",
-            lambda evento: self.seleccionar_item(self.treeview, self.control_entry),
-        )
-        self.treeview.pack()
-
-        # Crear entry con label "seleccionado" al lado izquierdo
-        self.entry_frame = ttk.Frame(self)
-        self.entry_frame = ttk.Entry(self, textvariable=self.control_entry)
-        self.entry_frame.pack()
-
-        # Crear botón "Agregar a base"
-        self.agregar_boton = ttk.Button(
-            self,
-            text="Agregar a base",
-            command=lambda: self.agregar_a_base(self.entry_frame, self.original),
-        )
-        self.agregar_boton.pack(pady=10)
-
-    def seleccionar_item(self, tree, entry):
-        try:
-            item_ = tree.focus()
-            datos_registro = tree.item(item_)["values"][2]
-            entry.set(datos_registro)
-            self.original = datos_registro
-        except Exception:
-            ...
-
-    def agregar_a_base(self, entry, original):
-        # Lógica para agregar los datos a la base de datos
-        # Leer el archivo Excel
-        df = dict(
-            pd.read_excel(
-                rf"{self.DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
-                header=None,
-            ).values.tolist()
-        )
-        addendum = Addendum()
-        simplificado = addendum.simplificada(original)
-
-        # Agregar un nuevo registro
-        df[simplificado] = entry.get()
-
-        # convierto el dic en df
-        df = list(df.items())
-        df = pd.DataFrame(df)
-
-        # Guardar los cambios en el archivo Excel
-        df.to_excel(
-            rf"{self.DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
-            index=False,
-            header=False,
-        )
-        self.mostrar_mensaje_info(
-            "Se ha agregado la nueva carátula a la base de datos de calificaciones.",
-        )
-
-
-class Ventana_errores(tk.Toplevel, Ventana_Base):
-    def __init__(self, ventana):
-        super().__init__(ventana)
-        self.title("Módulo errores")
-        self.ancho = 720
-        self.alto = 200
-        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.corregido = None
-        self.config(bg=self.color_back)
-        self.crear_botones()
-
-    def crear_botones(self):
-        estilo_fuente = ("Palatino Linotype", 14)
-        alto = 50
-        ancho = 150
-        separacion = 85
-        y_pos = (self.alto / 2) - (alto / 2)
-        x_pos = 50
-        self.boton_original = tk.Button(
-            self,
-            text="Original",
-            bg=self.rojo,
-            width=10,
-            font=estilo_fuente,
-            command=lambda: self.cargar_original(),
-        )
-        self.boton_original.place(
-            x=x_pos,
-            y=y_pos,
-            width=ancho,
-            height=alto,
-        )
-
-        self.boton_enmendado = tk.Button(
-            self,
-            text="Enmendado",
-            bg="#EA3830",
-            width=10,
-            font=estilo_fuente,
-            command=lambda: self.cargar_enmendado(),
-        )
-        self.boton_enmendado.place(
-            x=x_pos + (separacion + ancho) * 2,
-            y=y_pos,
-            width=ancho,
-            height=alto,
-        )
-
-        self.boton_corregir = tk.Button(
-            self,
-            text="Corregir Original",
-            font=estilo_fuente,
-            bg=self.amarillo,
-            command=lambda: self.corregir_original(),
-        )
-        self.boton_corregir.place(
-            x=x_pos + (separacion + ancho),
-            y=y_pos,
-            width=ancho,
-            height=alto,
-        )
-
-    def corregir_original(self):
-        try:
-            original = self._cargar(
-                self.path_original,
-            )
-            enmendado = self._cargar(
-                self.path_enmendado, no_tiene_encabezados=False, es_original=False
-            )
-
-            for error in enmendado:
-                original[int(error[0])][0] = error[2]
-
-            nombre_archivo = os.path.splitext(os.path.basename(self.path_original))[0]
-            ult = pd.DataFrame(original)
-            ult.to_excel(
-                rf"{self.DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx",
-                index=False,
-                header=False,
-            )
-            self.boton_corregir.config(bg="#27EA00")
-            self.mostrar_mensaje_info("¡El archivo fue corredido correctamente!")
-            return rf"{self.DIRECTORIO_PADRE}\Exportaciones\Corregidos\{nombre_archivo} (corregido).xlsx"
-        except Exception as error:
-            self.mostrar_mensaje_advertencia(
-                f"Ha ocurrido el siguiente error:\n {error}"
-            )
-
-    def cargar_original(self):
-        path = self.seleccionar_archivo("/Exportaciones/Crudos/")
-        if path:
-            self.path_original = path
-            self.boton_original.config(bg=self.verde)
-        else:
-            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
-
-    def cargar_enmendado(self):
-        path = self.seleccionar_archivo("/Exportaciones/Errores/")
-        if path:
-            self.path_enmendado = path
-            self.boton_enmendado.config(bg="#27EA00")
-        else:
-            self.mostrar_mensaje_advertencia("No se ha seleccionado ningún archivo.")
-
-
-class Ventana_indices(tk.Toplevel, Ventana_Base):
-    def __init__(self, ventana, indices):
-        super().__init__(ventana)
-        self.title("Setear índices")
-        self.ancho = 360
-        self.alto = 300
-        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.configure(bg=self.color_back)
-        self.crear_widgets(indices)
-
-    def crear_widgets(self, indices):
-        etiquetas = [
-            "Hechos",
-            "Calificaciones",
-            "Armas",
-            "Automotores",
-            "Objetos",
-            "Secuestros",
-            "Involucrados",
-        ]
-
-        sep_x = 30
-        sep_y = 0.5
-        font_label = Font(weight="bold", size=9)
-        self.etiquetas_labels = []
-        self.etiquetas_entries = []
-
-        for i, etiqueta_texto in enumerate(etiquetas):
-            etiqueta = tk.Label(
-                self,
-                text=etiqueta_texto,
-                font=font_label,
-                fg="white",
-                bg=self.color_back,
-            )
-            etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
-            self.etiquetas_labels.append(etiqueta)
-
-            cuadro_texto = tk.Entry(
-                self,
-                textvariable=indices[i],
-            )
-            cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
-            self.etiquetas_entries.append(cuadro_texto)
-
-        btn_base = tk.Button(
-            self,
-            text="Desde la Base",
-            bg="orange",
-            command=lambda: self.conectar_con_base(),
-        )
-        btn_base.place(x=155, y=250)
-
-        btn_archivo = tk.Button(
-            self,
-            text="Desde archivo",
-            bg="sky blue",
-            command=lambda: self.conectar_con_archivo(),
-        )
-        btn_archivo.place(x=40, y=250)
-
-        btn_setear_ids = tk.Button(
-            self,
-            text="Setear IDs",
-            bg="light green",
-            command=lambda: self.actualizar_indices(indices, self.etiquetas_entries),
-        )
-        btn_setear_ids.place(x=270, y=250)
-
-    def actualizar_indices(self, indices, entries):
-        for i, ind in enumerate(indices):
-            ind.set(entries[i].get())
-        self.mostrar_mensaje_info("Los índices fueron configurados correctamente")
-        self.destroy()
-
-    def conectar_con_base(self):
-        try:
-            indices = []
-
-            try:
-                conexion = mysql.connector.connect(
-                    host="localhost", user="root", password="", database="delitos"
-                )
-            except Exception:
-                conexion = mysql.connector.connect(
-                    host="localhost",
-                    port=3307,
-                    user="root",
-                    password="",
-                    database="delitos",
-                )
-
-            # Crear un cursor para ejecutar consultas
-            cursor = conexion.cursor()
-
-            consulta = "SELECT max(id_hecho) FROM datos_hecho"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            indices.append(0)
-
-            consulta = "SELECT max(id) FROM armas"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            consulta = "SELECT max(id) FROM automotores"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            consulta = "SELECT max(id) FROM objetos"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            consulta = "SELECT max(id) FROM secuestros"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            consulta = "SELECT max(id) FROM involucrados"
-            cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            for fila in resultados:
-                indices.append(fila[0])
-
-            # Cerrar el cursor y la conexión
-            cursor.close()
-            conexion.close()
-
-            for i, ind in enumerate(indices):
-                self.etiquetas_entries[i].delete(0, "end")
-                self.etiquetas_entries[i].insert(0, ind + 1)
-
-        except Exception as error:
-            self.mostrar_mensaje_error(error)
-
-    def conectar_con_archivo(self):
-        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Segmentados/")
-        try:
-            # Cargar el archivo Excel
-            df = pd.read_excel(ruta_archivo, sheet_name=None)
-
-            # Lista para almacenar los últimos registros
-            ultimos_registros = []
-
-            # Iterar sobre cada hoja del archivo
-            for hoja, datos in df.items():
-                # Obtener el último valor de la primera columna
-                ultimo_registro = datos.iloc[-1, 0]
-                ultimos_registros.append(ultimo_registro)
-
-            for i, ind in enumerate(ultimos_registros):
-                self.etiquetas_entries[i].delete(0, "end")
-                self.etiquetas_entries[i].insert(0, ind + 1)
-
-        except FileNotFoundError:
-            self.mostrar_mensaje_info("No se ha seleccionado ningún archivo")
-
-
-class Ventana_conectar(tk.Toplevel, Ventana_Base):
-    def __init__(self, ventana):
-        super().__init__(ventana)
-        self.title("Conectar con base")
-        self.ancho = 360
-        self.alto = 360
-        self.geometry(self.centrar_ventana(ventana, self.ancho, self.alto))
-        self.configure(bg=self.color_back)
-
-        self.host = tk.StringVar()
-        self.port = tk.StringVar()
-        self.user = tk.StringVar()
-        self.passw = tk.StringVar()
-        self.base = tk.StringVar()
-
-        self.host.set("localhost")
-        self.port.set("3306")
-        self.user.set("root")
-        self.passw.set("")
-        self.base.set("delitos")
-
-        self.set_vars = [self.host, self.port, self.user, self.passw, self.base]
-
-        self.indices = []
-
-        self.crear_widgets(ventana)
-
-    def crear_widgets(self, ventana):
-        etiquetas = ["HOST: ", "PORT: ", "USER: ", "PASS: ", "DATABASE: "]
-
-        sep_x = 30
-        sep_y = 0.5
-        font_label = Font(weight="bold", size=9)
-        self.etiquetas_labels = []
-        self.etiquetas_entries = []
-
-        for i, etiqueta_texto in enumerate(etiquetas):
-            etiqueta = tk.Label(
-                self,
-                text=etiqueta_texto,
-                font=font_label,
-                fg="white",
-                bg=self.color_back,
-            )
-            etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
-            self.etiquetas_labels.append(etiqueta)
-
-            cuadro_texto = tk.Entry(
-                self,
-                textvariable=self.set_vars[i],
-            )
-            cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
-            self.etiquetas_entries.append(cuadro_texto)
-
-        self.btn_base = tk.Button(
-            self,
-            text="Conectar a base",
-            bg=self.amarillo,
-            command=lambda: self.conectar_con_base(ventana),
-        )
-        self.btn_base.place(x=58, y=310)
-
-        self.crear_base_ = tk.Button(
-            self,
-            text="Crear base",
-            bg=self.amarillo,
-            command=lambda: self.crear_base(
-                self.etiquetas_entries[0].get(),
-                self.etiquetas_entries[1].get(),
-                self.etiquetas_entries[2].get(),
-                self.etiquetas_entries[3].get(),
-                self.etiquetas_entries[4].get(),
-            ),
-        )
-        self.crear_base_.place(x=200, y=310)
-
-    def conectar_con_base(self, ventana):
-        output = tk.Text(self, background=self.color_botones)
-        output.config(borderwidth=2, relief="sunken")
-        output.place(x=58, y=160, width=250, height=140)
-        print("\n\n")
-        try:
-            indices = []
-
-            datos_conexion = [
-                self.etiquetas_entries[0].get(),
-                self.etiquetas_entries[1].get(),
-                self.etiquetas_entries[2].get(),
-                self.etiquetas_entries[3].get(),
-                self.etiquetas_entries[4].get(),
-            ]
-
-            conexion = mysql.connector.connect(
-                host=datos_conexion[0],
-                port=datos_conexion[1],
-                user=datos_conexion[2],
-                password=datos_conexion[3],
-                database=datos_conexion[4],
-            )
-
-            # Crear un cursor para ejecutar consultas
-            cursor = conexion.cursor()
-
-            try:
-                consulta = "SELECT max(id_hecho) FROM datos_hecho"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'datos_hecho'"
-                )
-
-            try:
-                consulta = "SELECT max(id) FROM armas"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'armas'")
-
-            try:
-                consulta = "SELECT max(id) FROM automotores"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    f"No se ha encontrado tabla 'automotores'"
-                )
-
-            try:
-                consulta = "SELECT max(id) FROM objetos"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'objetos'")
-
-            try:
-                consulta = "SELECT max(id) FROM secuestros"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'secuestros'"
-                )
-
-            try:
-                consulta = "SELECT max(id) FROM involucrados"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'involucrados'"
-                )
-
-            try:
-                consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
-                cursor.execute(consulta)
-                ultima_fecha = cursor.fetchone()
-                ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
-            except Exception as error:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
-                )
-
-            # Cerrar el cursor y la conexión
-            cursor.close()
-            conexion.close()
-
-            self.btn_base.config(bg=self.verde)
-
-            self.mostrar_mensaje_info(
-                "Se ha logrado establecer conexión con la base de datos",
-            )
-            self.imprimir_con_color("Establecida conexión con base.", "verde")
-            self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
-            self.imprimir_con_color(f"User: {datos_conexion[1]}", "blanco")
-            self.imprimir_con_color(f"Nombre de la base: {datos_conexion[3]}", "blanco")
-            self.imprimir_con_color(f"Ultima fecha en base: {ultima_fecha}", "blanco")
-
-            ventana.botones[0].config(bg=self.verde)
-
-            ventana.conexion = datos_conexion.copy()
-
-            texto = f"Conexión satisfactoria!\n\nÚltima fecha: {ultima_fecha}\n\n"
-            tags = (
-                "Hechos: ",
-                "Armas: ",
-                "Automotores: ",
-                "Objetos: ",
-                "Secuestros: ",
-                "Involucrados: ",
-            )
-            for i in range(0, len(indices)):
-                texto += tags[i] + str(indices[i]) + "\n"
-
-            output.insert(tk.END, texto)
-            ventana.indices = indices
-
-        except Exception as error:
-            self.mostrar_mensaje_error(error)
-            texto = "No se ha podido establecer conexión..."
-            output.insert(tk.END, texto)
-
-    def crear_base(self, host, port, user, passw, base):
-        self.imprimir_con_color("Creando base de datos...", "blanco")
-        self.imprimir_con_color(f"Host: {host}", "blanco")
-        self.imprimir_con_color(f"Puerto: {port}", "blanco")
-        self.imprimir_con_color(f"User: {user}", "blanco")
-        self.imprimir_con_color(f"Nombre de la base: {base}", "blanco")
-        conn = mysql.connector.connect(host=host, port=port, user=user, password=passw)
-        cursor = conn.cursor()
-        cursor.execute(f"SHOW DATABASES")
-        databases = cursor.fetchall()
-        if (base,) in databases:
-            self.mostrar_mensaje_advertencia("La base de datos ya existe.")
-        else:
-            try:
-                conn = mysql.connector.connect(
-                    host=host, port=port, user=user, password=passw
-                )
-                conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {base}")
-                conn.database = base
-                cursor = conn.cursor()
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS datos_hecho (
-                        id_hecho INT PRIMARY KEY,
-                        nro_registro VARCHAR(30) NOT NULL,
-                        fecha_carga DATE NOT NULL NOT NULL,
-                        hora_carga TIME NOT NULL,
-                        dependencia VARCHAR(100) NOT NULL,
-                        fecha_inicio_hecho DATE,
-                        hora_inicio_hecho TIME,
-                        partido_hecho VARCHAR(50) NOT NULL,
-                        localidad_hecho VARCHAR(50),
-                        latitud VARCHAR(50),
-                        calle VARCHAR(50),
-                        longitud VARCHAR(50),
-                        altura VARCHAR(10),
-                        entre VARCHAR(50),
-                        calificaciones VARCHAR(5000) NOT NULL,
-                        relato VARCHAR(32767) NOT NULL
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
-                )
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS automotores (
-                        id INT PRIMARY KEY,
-                        id_hecho INT NOT NULL,
-                        marca VARCHAR(50) NOT NULL,
-                        modelo VARCHAR(50),
-                        color VARCHAR(50),
-                        dominio VARCHAR(50),
-                        nro_motor VARCHAR(50),
-                        nro_chasis VARCHAR(50),
-                        vinculo VARCHAR(50) NOT NULL,
-                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_automotores_marca ON automotores(marca)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_automotores_modelo ON automotores(modelo)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_automotores_dominio ON automotores(dominio)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_automotores_vinculo ON automotores(vinculo)"
-                )
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS armas (
-                        id INT PRIMARY KEY,
-                        id_hecho INT NOT NULL,
-                        tipo_arma VARCHAR(100) NOT NULL,
-                        marca VARCHAR(50) NOT NULL,
-                        modelo VARCHAR(50),
-                        nro_serie VARCHAR(50),
-                        calibre VARCHAR(50),
-                        observaciones VARCHAR(1000),
-                        implicacion VARCHAR(50) NOT NULL,
-                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_armas_marca ON armas(marca)"
-                )
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS secuestros (
-                        id INT PRIMARY KEY,
-                        id_hecho INT NOT NULL,
-                        tipo VARCHAR(50) NOT NULL,
-                        marca VARCHAR(50),
-                        modelo VARCHAR(50),
-                        cantidad VARCHAR(50),
-                        valor VARCHAR(50),
-                        descripcion VARCHAR(1000),
-                        implicacion VARCHAR(50) NOT NULL,
-                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_secuestros_implicacion ON secuestros(implicacion)"
-                )
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS objetos (
-                        id INT PRIMARY KEY,
-                        id_hecho INT NOT NULL,
-                        tipo VARCHAR(50) NOT NULL,
-                        marca VARCHAR(50),
-                        modelo VARCHAR(50),
-                        cantidad VARCHAR(50),
-                        valor VARCHAR(50),
-                        descripcion VARCHAR(1000),
-                        implicacion VARCHAR(50) NOT NULL,
-                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_objetos_implicacion ON objetos(implicacion)"
-                )
-
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS involucrados (
-                        id INT PRIMARY KEY,
-                        id_hecho INT,
-                        involucrado VARCHAR(30),
-                        pais_origen VARCHAR(50),
-                        tipo_dni VARCHAR(10),
-                        nro_dni VARCHAR(20),
-                        genero VARCHAR(20),
-                        apellido VARCHAR(50),
-                        nombre VARCHAR(50),
-                        provincia_nacimiento VARCHAR(50),
-                        ciudad_nacimiento VARCHAR(50),
-                        fecha_nacimiento DATE,
-                        observaciones VARCHAR(1000),
-                        provincia_domicilio VARCHAR(50),
-                        partido_domicilio VARCHAR(50),
-                        localidad_domicilio VARCHAR(50),
-                        calle_domicilio VARCHAR(50),
-                        nro_domicilio VARCHAR(20),
-                        entre VARCHAR(50),
-                        piso VARCHAR(20),
-                        departamento VARCHAR(20),
-                        caracteristicas_fisicas VARCHAR(500),
-                        FOREIGN KEY (id_hecho) REFERENCES datos_hecho(id_hecho) ON DELETE CASCADE
-                    )
-                """
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_involucrados_involucrado ON involucrados(involucrado)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_involucrados_nombre ON involucrados(nombre)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_involucrados_apellido ON involucrados(apellido)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_involucrados_pais_origen ON involucrados(pais_origen)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
-                )
-
-                conn.commit()
-                conn.close()
-                self.mostrar_mensaje_info("Base de datos creada.")
-                self.imprimir_con_color(f"Base de datos creada", "verde")
-            except Exception as error:
-                self.mostrar_mensaje_error(f"No se ha podido crear la base: {error}")
-                self.imprimir_con_color(
-                    f"No se ha podido crear la base: {error}", "rojo"
-                )

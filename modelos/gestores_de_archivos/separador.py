@@ -4,16 +4,15 @@ sys.path.append("../ariadna")
 import os
 import pandas as pd
 import re
-from tkinter import filedialog
 from datetime import datetime
-from modelos.logueador import Logueador
-from modelos.cuadros_de_mensajes import Mensajes
+from modelos.gestores_de_informacion.logueador import Logueador
+from modelos.gestores_de_informacion.mensajeador import Mensajeador
 import locale
 
 locale.setlocale(locale.LC_TIME, "es_ES.utf8")
 
 
-class Separador(Logueador, Mensajes):
+class Separador(Logueador, Mensajeador):
     def __init__(self) -> None:
         self.imprimir_con_color("--- MÓDULO MAPEADOR INICIALIZADO ---", "azul")
         print("")

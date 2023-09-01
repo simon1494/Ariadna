@@ -1,4 +1,4 @@
-import sys
+"""import sys
 
 sys.path.append("../ariadna")
 import re
@@ -6,10 +6,10 @@ import pandas as pd
 import checkpoints as ck
 from datetime import datetime
 from .logueador import Logueador
-from .cuadros_de_mensajes import Mensajes
+from .mensajeador import Mensajeador
 
 
-class CoreMotor(Mensajes, Logueador):
+class CoreMotor(Mensajeador, Logueador):
     def _posiciones_datos(self, texto, cortes, quitar=True):
         contador = 0
         item = []
@@ -372,3 +372,4 @@ class Core_Final(CoreMotor):
             item.insert(0, str(index))
 
         return nuevo
+"""

@@ -1,4 +1,4 @@
-import sys
+"""import sys
 
 sys.path.append("../ariadna")
 import copy
@@ -7,7 +7,7 @@ import os
 import checkpoints as ck
 import pandas as pd
 from .procesadores_secundarios import Addendum
-from .motores import Core_Inicial
+from modelos.motores.motor_inicial import Core_Inicial
 from .motores import Core_Final
 
 
@@ -319,3 +319,4 @@ class Segmentado(Core_Final, Addendum):
             for j in a_eliminar:
                 del sub[j]
         return lista
+"""

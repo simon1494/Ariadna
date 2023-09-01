@@ -2,11 +2,11 @@ import sys
 
 sys.path.append("../ariadna")
 import tkinter as tk
-from vista.view import Ventana_Base
+from vista.ventana_base import VentanaBase
 import checkpoints as ck
 
 
-class VentanaLogueo(tk.Tk, Ventana_Base):
+class VentanaLogin(tk.Tk, VentanaBase):
     USUARIOS = ck.USUARIOS
 
     def __init__(self, version):

@@ -5,11 +5,11 @@ import pandas as pd
 import tkinter as tk
 import checkpoints as ck
 import os
-from modelos.logueador import Logueador
+from modelos.gestores_de_informacion.logueador import Logueador
 from copy import deepcopy
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
-DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
 
 class Administrador(Logueador):

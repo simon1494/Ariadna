@@ -1,10 +1,12 @@
+import sys
+
+sys.path.append("../ariadna")
 import re
 import pandas as pd
-from . import motores
-from .logueador import Logueador
+from modelos.motores.motor_base import MotorBase
 
 
-class Formateador(motores.CoreMotor, Logueador):
+class Formateador(MotorBase):
     def _formatear(self, lista, identi):
         quitados = 0
         final = []

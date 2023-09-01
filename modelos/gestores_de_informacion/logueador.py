@@ -7,7 +7,7 @@ import datetime
 class Logueador:
     colorama.init(convert=True)
     CARPETA_DEL_ARCHIVO_LOGS = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../")
+        os.path.join(os.path.dirname(__file__), "../../")
     )
     ARCHIVO_LOGS = f"{CARPETA_DEL_ARCHIVO_LOGS}/Exportaciones/Logs/{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
 

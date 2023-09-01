@@ -3,9 +3,9 @@ from tkinter import messagebox
 from tkinter import filedialog
 
 
-class Mensajes:
+class Mensajeador:
     DIRECTORIO_PADRE = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir)
+        os.path.join(os.path.dirname(__file__), "../..")
     )
 
     @staticmethod
