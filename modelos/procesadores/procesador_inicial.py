@@ -8,7 +8,11 @@ from modelos.motores.motor_inicial import MotorInicial
 
 
 class Inicial(MotorInicial):
-    def __init__(self, archivo, identificadores):
+    def __init__(
+        self,
+        archivo,
+        identificadores,
+    ):
         # checkpoints
         self._checkpoints = ck.cp_iniciales
         self._ident = ck.cp_iden
@@ -162,4 +166,3 @@ class Inicial(MotorInicial):
                     f"Se han eliminado {contador2} duplicados.", "blanco"
                 )
         return lista
-
