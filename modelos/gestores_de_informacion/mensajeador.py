@@ -4,9 +4,7 @@ from tkinter import filedialog
 
 
 class Mensajeador:
-    DIRECTORIO_PADRE = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../..")
-    )
+    DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
     @staticmethod
     def mostrar_mensaje_info(mensaje):

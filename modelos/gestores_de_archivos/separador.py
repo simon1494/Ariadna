@@ -61,6 +61,9 @@ class Separador(Logueador, Mensajeador):
         formato_deseado = f"{numero_mes}-{dia_mes}"
         return formato_deseado
 
+    def medir_largo_estructura(self, estructura) -> int:
+        return len(estructura)
+
     def filtrar_y_guardar_campo(self, df, fecha, destino):
         search_string = f"Fecha: {fecha} Hora: "
         filtered_df = df[df[df.columns[0]].str.contains(search_string, case=True)]
@@ -70,6 +73,7 @@ class Separador(Logueador, Mensajeador):
             self.imprimir_con_color(
                 f"Listo {fecha}. {len(filtered_df)} registros.", color="verde"
             )
+        return self.medir_largo_estructura(filtered_df)
 
     def procesar_uno(self):
         ruta_archivo = self.seleccionar_archivo("/Exportaciones/Crudos/")
@@ -78,17 +82,38 @@ class Separador(Logueador, Mensajeador):
         if os.path.isfile(nombre_archivo):
             try:
                 df = pd.read_excel(nombre_archivo, header=None)
+                largo_df = self.medir_largo_estructura(df)
                 paso_columns = self.find_paso_columns(df)
                 paso_data = self.get_paso_data(df, paso_columns)
                 paso_dates = self.get_paso_dates(df, paso_columns)
                 paso_dates = set(paso_dates)
                 print("")
                 self.imprimir_con_color(
-                    f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}: {paso_dates}",
+                    f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}:",
                     color="blanco",
                 )
+                self.imprimir_con_color(f"{paso_dates}", color="blanco")
+                self.imprimir_con_color(f"Total registros: {largo_df}", color="blanco")
+                suma_subs = 0
                 for fecha in paso_dates:
-                    self.filtrar_y_guardar_campo(paso_data, fecha, destino)
+                    largo_sub = self.filtrar_y_guardar_campo(paso_data, fecha, destino)
+                    suma_subs += largo_sub
+                if suma_subs == largo_df:
+                    self.imprimir_con_color(
+                        f"La suma de sub-listados [{suma_subs}] coincide con el total [{largo_df}]",
+                        "verde",
+                    )
+                else:
+                    if (largo_df - suma_subs) <= 4:
+                        self.imprimir_con_color(
+                            f"La suma de sub-listados [{suma_subs}] NO coincide con el total [{largo_df}] en {(largo_df - suma_subs)} registros.",
+                            "amarillo",
+                        )
+                    elif (largo_df - suma_subs) > 4:
+                        self.imprimir_con_color(
+                            f"La suma de sub-listados [{suma_subs}] NO coincide con el total [{largo_df}] en {(largo_df - suma_subs)} registros.",
+                            "rojo",
+                        )
             except Exception as error:
                 self.imprimir_con_color(
                     f"Error con el archivo {nombre_archivo}: {error}",
@@ -112,17 +137,42 @@ class Separador(Logueador, Mensajeador):
             if os.path.isfile(ruta_archivo):
                 try:
                     df = pd.read_excel(ruta_archivo, header=None)
+                    largo_df = self.medir_largo_estructura(df)
                     paso_columns = self.find_paso_columns(df)
                     paso_data = self.get_paso_data(df, paso_columns)
                     paso_dates = self.get_paso_dates(df, paso_columns)
                     paso_dates = set(paso_dates)
                     print("")
                     self.imprimir_con_color(
-                        f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}: {paso_dates}",
+                        f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}:",
                         color="blanco",
                     )
+                    self.imprimir_con_color(f"{paso_dates}", color="blanco")
+                    self.imprimir_con_color(
+                        f"Total registros: {largo_df}", color="blanco"
+                    )
+                    suma_subs = 0
                     for fecha in paso_dates:
-                        self.filtrar_y_guardar_campo(paso_data, fecha, destino)
+                        largo_sub = self.filtrar_y_guardar_campo(
+                            paso_data, fecha, destino
+                        )
+                        suma_subs += largo_sub
+                    if suma_subs == largo_df:
+                        self.imprimir_con_color(
+                            f"La suma de sub-listados [{suma_subs}] coincide con el total [{largo_df}]",
+                            "verde",
+                        )
+                    else:
+                        if (largo_df - suma_subs) <= 4:
+                            self.imprimir_con_color(
+                                f"La suma de sub-listados [{suma_subs}] NO coincide con el total [{largo_df}] en {(largo_df - suma_subs)} registros.",
+                                "amarillo",
+                            )
+                        elif (largo_df - suma_subs) > 4:
+                            self.imprimir_con_color(
+                                f"La suma de sub-listados [{suma_subs}] NO coincide con el total [{largo_df}] en {(largo_df - suma_subs)} registros.",
+                                "rojo",
+                            )
                 except Exception as error:
                     self.imprimir_con_color(
                         f"Error con el archivo {nombre_archivo}: {error}",
