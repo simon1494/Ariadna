@@ -440,7 +440,7 @@ class VentanaPrincipal(VentanaBase):
                 try:
                     archivo1 = self._cargar(path, no_tiene_encabezados=False)
                     try:
-                        segmentado = Segmentado(archivo1, indices, carpeta=True)
+                        segmentado = Segmentado(archivo1, indices)
                         try:
                             mensaje = Formateador.comprobar_salida(segmentado.final)
                             if mensaje != "":

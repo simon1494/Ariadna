@@ -12,7 +12,7 @@ DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 
 
 class Segmentado(MotorSegmentado, MotorCalificaciones):
-    def __init__(self, archivo, indices, carpeta=False):
+    def __init__(self, archivo, indices):
         # enlaza con la base de calificaciones actual y lo almanece en forma de diccionario
         self.base_calificaciones = dict(
             pd.read_excel(
@@ -108,23 +108,20 @@ class Segmentado(MotorSegmentado, MotorCalificaciones):
             )
 
             # limpieza de campos "Sin especificar".
-            if not carpeta:
-                self.datos = list(map(lambda x: self._limpiar_registro(x), self.datos))
-                self._automotores = list(
-                    map(lambda x: self._limpiar_registro(x), self._automotores)
-                )
-                self._armas = list(
-                    map(lambda x: self._limpiar_registro(x), self._armas)
-                )
-                self._objetos = list(
-                    map(lambda x: self._limpiar_registro(x), self._objetos)
-                )
-                self._secuestros = list(
-                    map(lambda x: self._limpiar_registro(x), self._secuestros)
-                )
-                self._involucrados = list(
-                    map(lambda x: self._limpiar_registro(x), self._involucrados)
-                )
+            self.datos = list(map(lambda x: self._limpiar_registro(x), self.datos))
+            self._automotores = list(
+                map(lambda x: self._limpiar_registro(x), self._automotores)
+            )
+            self._armas = list(map(lambda x: self._limpiar_registro(x), self._armas))
+            self._objetos = list(
+                map(lambda x: self._limpiar_registro(x), self._objetos)
+            )
+            self._secuestros = list(
+                map(lambda x: self._limpiar_registro(x), self._secuestros)
+            )
+            self._involucrados = list(
+                map(lambda x: self._limpiar_registro(x), self._involucrados)
+            )
 
             # archivo final segmentado
             self.final = [
