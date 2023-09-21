@@ -92,7 +92,8 @@ class Separador(Logueador, Mensajeador):
                     f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}:",
                     color="blanco",
                 )
-                self.imprimir_con_color(f"{paso_dates}", color="blanco")
+                for fecha in paso_dates:
+                    self.imprimir_con_color(f"{fecha}", color="blanco")
                 self.imprimir_con_color(f"Total registros: {largo_df}", color="blanco")
                 suma_subs = 0
                 for fecha in paso_dates:
@@ -147,7 +148,8 @@ class Separador(Logueador, Mensajeador):
                         f"Fechas en el archivo {nombre_archivo.replace('.xlsx','')}:",
                         color="blanco",
                     )
-                    self.imprimir_con_color(f"{paso_dates}", color="blanco")
+                    for fecha in paso_dates:
+                        self.imprimir_con_color(f"{fecha}", color="blanco")
                     self.imprimir_con_color(
                         f"Total registros: {largo_df}", color="blanco"
                     )
