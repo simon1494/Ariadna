@@ -157,8 +157,14 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
             # Iterar sobre cada hoja del archivo
             for hoja, datos in df.items():
                 # Obtener el último valor de la primera columna
-                ultimo_registro = datos.iloc[-1, 0]
-                ultimos_registros.append(ultimo_registro)
+                try:
+                    ultimo_registro = datos.iloc[-1, 0]
+                    ultimos_registros.append(ultimo_registro)
+                except Exception:
+                    raise ValueError(
+                        """Una de las tablas se encuentra vacía y no fue posible
+                         recuperar ningún índice. Por favor, setea los índices a través de la base"""
+                    )
 
             for i, ind in enumerate(ultimos_registros):
                 self.etiquetas_entries[i].delete(0, "end")

@@ -82,6 +82,21 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
             ),
         )
         self.crear_base_.place(x=200, y=310)
+        self.etiquetas_entries[0].bind(
+            "<Return>", lambda event: self.conectar_con_base(ventana)
+        )
+        self.etiquetas_entries[1].bind(
+            "<Return>", lambda event: self.conectar_con_base(ventana)
+        )
+        self.etiquetas_entries[2].bind(
+            "<Return>", lambda event: self.conectar_con_base(ventana)
+        )
+        self.etiquetas_entries[3].bind(
+            "<Return>", lambda event: self.conectar_con_base(ventana)
+        )
+        self.etiquetas_entries[4].bind(
+            "<Return>", lambda event: self.conectar_con_base(ventana)
+        )
 
     def conectar_con_base(self, ventana):
         output = tk.Text(self, background=self.color_botones)
