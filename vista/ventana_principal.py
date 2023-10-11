@@ -659,14 +659,28 @@ class VentanaPrincipal(VentanaBase):
 
             # Verificar si la lista contiene enteros consecutivos en orden ascendente
             for tupla in tuplas_hojas:
-                if not tupla:  # Si la lista está vacía, no se considera consecutiva
-                    break
+                if (
+                    tuplas_hojas.index(tupla) != 1
+                ):  # No analiza los índices de calificaciones ya que es una tabla obsoleta en el nuevo DB Scheme y puede contener errores de indexado.
+                    if not tupla:  # Si la lista está vacía, no se considera consecutiva
+                        break
 
-                n = tupla[0]  # Primer elemento de la lista
-                for num in tupla:
-                    if num != n:  # Si el número no es igual a n, no es consecutivo
-                        return False
-                    n += 1  # Incrementar n para verificar el siguiente número
+                    n = tupla[0]  # Primer elemento de la lista
+                    for num in tupla:
+                        if num != n:  # Si el número no es igual a n, no es consecutivo
+                            self.imprimir_con_color(
+                                f"--- Discontinuidad de índices detectada en Hoja {tuplas_hojas.index(tupla)} ---",
+                                "amarillo",
+                            )
+                            self.imprimir_con_color(
+                                f"Índice de rotura: {num}", "amarillo"
+                            )
+                            self.imprimir_con_color(
+                                f"Inicio de índices: {tupla[0]}", "amarillo"
+                            )
+                            self.imprimir_con_color(f"Índice esperado: {n}", "amarillo")
+                            return False
+                        n += 1  # Incrementar n para verificar el siguiente número
         return True
 
     def comprobar_fechas(self, archivo, fecha=True):
