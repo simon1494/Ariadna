@@ -138,6 +138,7 @@ class Separador(Logueador, Mensajeador):
             if os.path.isfile(ruta_archivo):
                 try:
                     df = pd.read_excel(ruta_archivo, header=None)
+                    df.iloc[:, 0] = df.iloc[:, 0].astype(str)
                     largo_df = self.medir_largo_estructura(df)
                     paso_columns = self.find_paso_columns(df)
                     paso_data = self.get_paso_data(df, paso_columns)

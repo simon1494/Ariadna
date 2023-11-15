@@ -5,15 +5,13 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from vista.ventana_base import VentanaBase
 
-VER = "4.2.2-beta [2023-03-08]"
-
 
 class VentanaInicio(VentanaBase):
     def __init__(
         self,
         display_time=5000,
     ):
-        self.image_path = "media/Ariadna1.jpg"
+        self.image_path = "media\Ariadna1.jpg"
         self.width = 504
         self.height = 316
         self.display_time = display_time

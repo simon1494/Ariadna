@@ -11,7 +11,6 @@ if __name__ == "__main__":
         ventana_inicio.show_image()
 
     hilo = hilo = threading.Thread(target=lanzar_inicio)
-
     hilo.start()
     hilo.join()
     ventana_login = VentanaLogin(VER)

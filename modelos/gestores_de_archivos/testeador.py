@@ -61,10 +61,11 @@ class Tester(Formateador):
         lista_ = copy.deepcopy(lista)
         for i in lista_:
             texto = i[0]
-            que_uso = identi[0] if texto.find("Nº de Denuncia: ") != -1 else identi[1]
+            texto2 = texto.replace("_x000D_", "")
+            que_uso = identi[0] if texto2.find("Nº de Denuncia: ") != -1 else identi[1]
             iden = self._segmentador(
                 texto,
-                self._posiciones_datos(texto, que_uso),
+                self._posiciones_datos(texto2, que_uso),
                 que_uso,
             )
             texto2 = texto.replace("\n", " ")

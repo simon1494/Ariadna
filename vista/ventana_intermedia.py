@@ -4,6 +4,7 @@ sys.path.append("../ariadna")
 import copy
 import tkinter as tk
 from .ventana_base import VentanaBase
+import mysql.connector
 
 
 class VentanaIntermedia(tk.Toplevel, VentanaBase):
@@ -14,6 +15,8 @@ class VentanaIntermedia(tk.Toplevel, VentanaBase):
         self.ancho = 400
         self.alto = 450
         self.geometry(self.centrar_ventana(ventana_principal, self.ancho, self.alto))
+        self.indices = None
+        self.datos_conexion = None
         self.configure(bg=self.color_back)
         self.crear_widgets(widgets, color_botones)
 

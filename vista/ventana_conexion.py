@@ -215,15 +215,14 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                     "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
                 )
 
+            ventana.datos_de_conexion = datos_conexion
+            ventana.indices = indices
             # Cerrar el cursor y la conexión
             cursor.close()
             conexion.close()
 
             self.btn_base.config(bg=self.verde)
 
-            self.mostrar_mensaje_info(
-                "Se ha logrado establecer conexión con la base de datos",
-            )
             self.imprimir_con_color("Establecida conexión con base.", "verde")
             self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
             self.imprimir_con_color(f"User: {datos_conexion[1]}", "blanco")

@@ -27,11 +27,19 @@ locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 def ocultar_y_mostrar(func):
     def wrapper(self, *args, **kwargs):
         self.ventana_top.withdraw()  # Oculta la ventana
-        result = func(self, *args, **kwargs)  # Ejecuta el método
         try:
+            result = func(self, *args, **kwargs)  # Ejecuta el método
             self.ventana_top.deiconify()  # Muestra la ventana nuevamente
-        except Exception:
-            ...
+        except Exception as error:
+            self.imprimir_con_color(
+                f"Error: {error}",
+                "rojo",
+            )
+        finally:
+            try:
+                self.ventana_top.deiconify()
+            except Exception:
+                pass
         return result
 
     return wrapper
@@ -1067,7 +1075,17 @@ class VentanaPrincipal(VentanaBase):
                         "Archivo insertado correctamente.",
                     )
                     self.imprimir_con_color("Archivo insertado correctamente.", "verde")
-                    ventana.destroy()
+                    self.consultar_indices_a_base(
+                        ventana.conexion[0],
+                        ventana.conexion[1],
+                        ventana.conexion[2],
+                        ventana.conexion[3],
+                        ventana.conexion[4],
+                        ventana,
+                    )
+                    ventana.botones[1].config(bg=self.botones_subir)
+                    ventana.botones[2].config(bg=self.botones_subir)
+                    ventana.a_subir = None
                 except Exception as error:
                     self.mostrar_mensaje_advertencia(
                         f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
@@ -1085,6 +1103,118 @@ class VentanaPrincipal(VentanaBase):
             self.mostrar_mensaje_advertencia(
                 "Ningun archivo seleccionado para insertar en base."
             )
+
+    def consultar_indices_a_base(self, host, port, user, password, database, ventana):
+        try:
+            indices = []
+            conexion = mysql.connector.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=database,
+            )
+
+            # Crear un cursor para ejecutar consultas
+            cursor = conexion.cursor()
+
+            try:
+                consulta = "SELECT max(id_hecho) FROM datos_hecho"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'datos_hecho'"
+                )
+
+            try:
+                consulta = "SELECT max(id) FROM armas"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'armas'")
+
+            try:
+                consulta = "SELECT max(id) FROM automotores"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia(
+                    f"No se ha encontrado tabla 'automotores'"
+                )
+
+            try:
+                consulta = "SELECT max(id) FROM objetos"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'objetos'")
+
+            try:
+                consulta = "SELECT max(id) FROM secuestros"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'secuestros'"
+                )
+
+            try:
+                consulta = "SELECT max(id) FROM involucrados"
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                for fila in resultados:
+                    if fila[0]:
+                        indices.append(fila[0])
+                    else:
+                        indices.append(0)
+            except Exception:
+                self.mostrar_mensaje_advertencia(
+                    "No se ha encontrado tabla 'involucrados'"
+                )
+
+            try:
+                consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
+                cursor.execute(consulta)
+                ultima_fecha = cursor.fetchone()
+                ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
+            except Exception as error:
+                self.mostrar_mensaje_advertencia(
+                    "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                )
+
+            # Cerrar el cursor y la conexión
+            cursor.close()
+            conexion.close()
+
+            ventana.indices = indices
+        except Exception as error:
+            self.mostrar_mensaje_error(error)
 
     @staticmethod
     def todos_unos(lista):

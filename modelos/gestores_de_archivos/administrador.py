@@ -59,8 +59,14 @@ class Administrador(Logueador):
     def _cargar(self, path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
             data = pd.read_excel(path, header=None)
+            data[data.columns[0]] = data[data.columns[0]].replace(
+                to_replace="_x000D_", value=" ", regex=True
+            )
         else:
             data = pd.read_excel(path)
+            data[data.columns[0]] = data[data.columns[0]].replace(
+                to_replace="_x000D_", value=" ", regex=True
+            )
         a = data.values.tolist()
         if es_original:
             a2 = deepcopy(a)
@@ -75,7 +81,9 @@ class Administrador(Logueador):
                 self.imprimir_con_color(
                     f"Han sido filtrados {anulados} registro/s anulados", "blanco"
                 )
+            # b = [[x[0].replace("_x000D_", "")] for x in b]
             return b
+        # a = [[x[0].replace("_x000D_", "")] for x in a]
         return a
 
     def _convertir_inicial(self, archivo, encabezados, nombre=None, error=False):

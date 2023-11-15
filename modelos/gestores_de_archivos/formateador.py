@@ -19,7 +19,8 @@ class Formateador(MotorBase):
                 self._posiciones_datos(texto, que_uso),
                 que_uso,
             )
-            texto2 = texto.replace("\n", " ")
+            texto2 = texto.replace("_x000D_", "")
+            texto2 = texto2.replace("\n", " ")
             texto2 = texto2.replace("  ", " ")
             texto2 = self._clean_regexs(texto2)
             texto2 = texto2.replace("  ", " ")
