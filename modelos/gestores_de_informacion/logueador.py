@@ -11,12 +11,15 @@ class Logueador:
     )
     ARCHIVO_LOGS = f"{CARPETA_DEL_ARCHIVO_LOGS}/Exportaciones/Logs/{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
 
-    logging.basicConfig(
-        filename=ARCHIVO_LOGS,
-        level=logging.DEBUG,
-        format="%(asctime)s:   %(message)s",
-        datefmt="%Y/%m/%d %H:%M:%S",
-    )
+    try:
+        logging.basicConfig(
+            filename=ARCHIVO_LOGS,
+            level=logging.DEBUG,
+            format="%(asctime)s:   %(message)s",
+            datefmt="%Y/%m/%d %H:%M:%S",
+        )
+    except FileNotFoundError as error:
+        print(error)
 
     @classmethod
     def loguear_info(cls, info_a_agregar):
