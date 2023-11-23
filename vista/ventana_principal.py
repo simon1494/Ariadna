@@ -125,6 +125,11 @@ class VentanaPrincipal(VentanaBase):
                 "texto": "Subir a Base",
                 "callback": lambda: self.subir_a_base(self.ventana_top),
             },
+            {
+                "nombre": "reconstruir",
+                "texto": "Reconstruir base",
+                "callback": lambda: self.reconstruir(self.ventana_top),
+            },
         ]
 
         self.loguear_info("")
@@ -766,13 +771,19 @@ class VentanaPrincipal(VentanaBase):
         main.deiconify()
 
     @ocultar_y_mostrar
-    def chequear_integridad(self, ventana):
+    def chequear_integridad(self, ventana, reconstruir=False, archivo=None):
         print("\n\n")
-        path = self.seleccionar_archivo("/Exportaciones/Segmentados")
+        if not reconstruir:
+            path = self.seleccionar_archivo("/Exportaciones/Segmentados")
+        else:
+            path = archivo
         if path:
-            respuesta = self.mostrar_mensaje_pregunta(
-                "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
-            )
+            if not archivo:
+                respuesta = self.mostrar_mensaje_pregunta(
+                    "¿El archivo seleccionado corresponde a una fecha individual? En caso de que sea un mes, ELEGIR NO",
+                )
+            else:
+                respuesta = False
             self.imprimir_con_color(
                 "Iniciando chequeo de integridad de archivo...", "lila"
             )
@@ -926,7 +937,7 @@ class VentanaPrincipal(VentanaBase):
             self.mostrar_mensaje_advertencia("Ningún archivo seleccionado")
 
     @ocultar_y_mostrar
-    def subir_a_base(self, ventana):
+    def subir_a_base(self, ventana, reconstruir=False):
         def obtener_indices_archivo(lista_compuesta):
             primeros_elementos = []
             for lista_anidada in lista_compuesta:
@@ -1222,6 +1233,23 @@ class VentanaPrincipal(VentanaBase):
             if elemento.get() != 1:
                 return False
         return True
+
+    def reconstruir(self, ventana):
+        carpeta = self.seleccionar_carpeta("Exportaciones/Segmentados")
+        archivos = os.listdir(carpeta)
+        for archivo in archivos:
+            try:
+                path = os.path.join(
+                    carpeta, archivo
+                )  # Obtener la ruta completa del archivo
+                if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
+                    print(path)
+                    self.chequear_integridad(ventana, reconstruir=True, archivo=path)
+                    self.subir_a_base(ventana)
+            except Exception as error:
+                self.imprimir_con_color(
+                    f"Error en archivo de reconstrucción:\2 {error}"
+                )
 
     def iniciar(self):
         self.ventana.mainloop()
