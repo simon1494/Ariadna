@@ -902,3 +902,5 @@ USUARIOS = {
     "silvina": "silvina",
     "nico": "nico",
 }
+
+VER = "6.2.4-RC [2023-11-24]"

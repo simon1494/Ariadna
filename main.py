@@ -1,6 +1,6 @@
 import threading
+from settings import VER
 
-VER = "6.1.4-RC [2023-10-11]"
 
 if __name__ == "__main__":
     from vista.ventana_inicio import VentanaInicio

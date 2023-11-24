@@ -305,6 +305,9 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_datos_hecho_localidad_hecho ON datos_hecho(localidad_hecho)"
                 )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_nro_registro ON datos_hecho(nro_registro)"
+                )
 
                 cursor.execute(
                     """

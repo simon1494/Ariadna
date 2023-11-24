@@ -883,9 +883,10 @@ class VentanaPrincipal(VentanaBase):
                                             f"CHEQUEO: Comprobados campos no nulos",
                                             "verde",
                                         )
-                                        self.mostrar_mensaje_info(
-                                            "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
-                                        )
+                                        if not reconstruir:
+                                            self.mostrar_mensaje_info(
+                                                "Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
+                                            )
                                         self.imprimir_con_color(
                                             f"CHEQUEO: Comprobados índices, tablas, y campos no nulos. Integridad de archivo CORRECTA",
                                             "verde",
@@ -1082,9 +1083,10 @@ class VentanaPrincipal(VentanaBase):
                             "No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
                         )
                     conexion.commit()
-                    self.mostrar_mensaje_info(
-                        "Archivo insertado correctamente.",
-                    )
+                    if not reconstruir:
+                        self.mostrar_mensaje_info(
+                            "Archivo insertado correctamente.",
+                        )
                     self.imprimir_con_color("Archivo insertado correctamente.", "verde")
                     self.consultar_indices_a_base(
                         ventana.conexion[0],
@@ -1245,11 +1247,15 @@ class VentanaPrincipal(VentanaBase):
                 if os.path.isfile(path):  # Comprobar si es un archivo (no una carpeta)
                     print(path)
                     self.chequear_integridad(ventana, reconstruir=True, archivo=path)
-                    self.subir_a_base(ventana)
+                    self.subir_a_base(ventana, reconstruir=True)
             except Exception as error:
                 self.imprimir_con_color(
                     f"Error en archivo de reconstrucción:\2 {error}"
                 )
+        self.imprimir_con_color(
+            "-----------------------------\nReconstrucción finalizada sin fallos.\n-----------------------------",
+            "verde",
+        )
 
     def iniciar(self):
         self.ventana.mainloop()

@@ -89,7 +89,11 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
 
             try:
                 conexion = mysql.connector.connect(
-                    host="localhost", user="root", password="", database="delitos_2023"
+                    host="192.168.1.135",
+                    port="3307",
+                    user="simon",
+                    password="monitoreo",
+                    database="delitos_2023",
                 )
             except Exception as error:
                 print(error)
