@@ -442,6 +442,9 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_involucrados_partido_domicilio ON involucrados(partido_domicilio)"
                 )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_nro_dni ON involucrados(nro_dni)"
+                )
 
                 conn.commit()
                 conn.close()
