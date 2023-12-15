@@ -5,6 +5,7 @@ import mysql.connector
 import tkinter as tk
 from tkinter.font import Font
 from .ventana_base import VentanaBase
+from datetime import datetime
 
 
 class VentanaConexion(tk.Toplevel, VentanaBase):
@@ -26,7 +27,7 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
         self.port.set("3306")
         self.user.set("root")
         self.passw.set("")
-        self.base.set("delitos")
+        self.base.set(f"delitos_{datetime.now().year}")
 
         self.set_vars = [self.host, self.port, self.user, self.passw, self.base]
 

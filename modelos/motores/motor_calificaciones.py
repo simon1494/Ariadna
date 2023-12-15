@@ -43,7 +43,7 @@ class MotorCalificaciones:
                 resultado = resultado + " Consumado: No"
             return resultado
         else:
-            return "error"
+            return "♥"
 
     def cotejar_todas(self, elementos, data):
         final = list(map(lambda item: self.cotejar_una(item, data), elementos))
@@ -53,7 +53,7 @@ class MotorCalificaciones:
     def identificar_errores(archivo_original, modificado):
         errores = []
         for i in range(0, len(modificado)):
-            if modificado[i][2].find("error") > -1:
+            if modificado[i][2].find("♥") > -1:
                 errores.append(
                     [
                         modificado[i][0],

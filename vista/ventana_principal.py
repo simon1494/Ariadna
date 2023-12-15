@@ -957,6 +957,10 @@ class VentanaPrincipal(VentanaBase):
         def chequear_continuidad(indices_base, indices_archivo):
             for i in range(0, len(indices_base)):
                 if indices_base[i] != indices_archivo[i] - 1:
+                    print("-------------------------------------------")
+                    print(f"Índices en base: {indices_base[i]}")
+                    print(f"Índices en archivo: {indices_archivo[i]}")
+                    print("-------------------------------------------")
                     return False
                 return True
 
