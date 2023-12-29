@@ -15,25 +15,29 @@ class Tester(Formateador):
         archiv = copy.deepcopy(archivo)
         registros, identificadores = self.formatear(archiv, ck.cp_iden)
         resultado = []
-        for item in registros:
+        for index, item in enumerate(registros):
+            cons = []
             if item.find("Paso 1 - Declaración Testimonial ") > -1:
-                con1 = item.find("Paso 1 - Declaración Testimonial ") > -1
-                con2 = item.find("Paso 2 - Declaración Testimonial ") > -1
-                con3 = item.find("Paso 3 - Declaración Testimonial ") > -1
-                con4 = item.find("Paso 4 - Declaración Testimonial ") > -1
-                con5 = item.find("Paso 5 - Declaración Testimonial ") > -1
+                con1 = item.find("Paso 1 - Declaración Testimonial") > -1
+                cons.append(con1)
+                con2 = item.find("Paso 2 - Declaración Testimonial") > -1
+                cons.append(con2)
+                con3 = item.find("Paso 3 - Declaración Testimonial") > -1
+                cons.append(con3)
+                con4 = item.find("Paso 4 - Declaración Testimonial") > -1
+                cons.append(con4)
+                con5 = item.find("Paso 5 - Declaración Testimonial") > -1
+                cons.append(con5)
                 final = con1 and con2 and con3 and con4 and con5
             else:
                 con1 = item.find("Paso 1 - Funcionarios intervinientes") > -1
-
+                cons.append(con1)
                 con3 = item.find("Paso 3 - Relato del procedimiento") > -1
-                con4 = (
-                    item.find(
-                        "Paso 4 - Elementos secuestrados y pruebas Elementos secuestrados y pruebas"
-                    )
-                    > -1
-                )
+                cons.append(con3)
+                con4 = item.find("Paso 4 - Elementos secuestrados y pruebas") > -1
+                cons.append(con4)
                 con5 = item.find("Paso 5 - Firmas") > -1
+                cons.append(con5)
                 final = con1 and con3 and con4 and con5
             if final is False:
                 nuevo = []
@@ -45,6 +49,7 @@ class Tester(Formateador):
                 nuevo.append(identificador)
                 nuevo.append(item)
                 resultado.append(nuevo)
+            # print(index, len(item), cons)
         resultado2 = list(map(list, set(map(tuple, resultado))))
         return resultado2
 

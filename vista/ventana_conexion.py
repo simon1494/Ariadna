@@ -126,129 +126,203 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
             # Crear un cursor para ejecutar consultas
             cursor = conexion.cursor()
 
-            try:
-                consulta = "SELECT max(id_hecho) FROM datos_hecho"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'datos_hecho'"
+            if datos_conexion[4] != "op_sol":
+                try:
+                    consulta = "SELECT max(id_hecho) FROM datos_hecho"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha encontrado tabla 'datos_hecho'"
+                    )
+
+                try:
+                    consulta = "SELECT max(id) FROM armas"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha encontrado tabla 'armas'"
+                    )
+
+                try:
+                    consulta = "SELECT max(id) FROM automotores"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        f"No se ha encontrado tabla 'automotores'"
+                    )
+
+                try:
+                    consulta = "SELECT max(id) FROM objetos"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha encontrado tabla 'objetos'"
+                    )
+
+                try:
+                    consulta = "SELECT max(id) FROM secuestros"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha encontrado tabla 'secuestros'"
+                    )
+
+                try:
+                    consulta = "SELECT max(id) FROM involucrados"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha encontrado tabla 'involucrados'"
+                    )
+
+                try:
+                    consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
+                    cursor.execute(consulta)
+                    ultima_fecha = cursor.fetchone()
+                    ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
+                except Exception as error:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                    )
+
+                ventana.datos_de_conexion = datos_conexion
+                ventana.indices = indices
+                # Cerrar el cursor y la conexión
+                cursor.close()
+                conexion.close()
+
+                self.btn_base.config(bg=self.verde)
+
+                self.imprimir_con_color("Establecida conexión con base.", "verde")
+                self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
+                self.imprimir_con_color(f"User: {datos_conexion[2]}", "blanco")
+                self.imprimir_con_color(
+                    f"Nombre de la base: {datos_conexion[4]}", "blanco"
+                )
+                self.imprimir_con_color(
+                    f"Ultima fecha en base: {ultima_fecha}", "blanco"
                 )
 
-            try:
-                consulta = "SELECT max(id) FROM armas"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'armas'")
+                ventana.botones[0].config(bg=self.verde)
 
-            try:
-                consulta = "SELECT max(id) FROM automotores"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    f"No se ha encontrado tabla 'automotores'"
+                ventana.conexion = datos_conexion.copy()
+
+                texto = f"Conexión satisfactoria!\n\nÚltima fecha: {ultima_fecha}\n\n"
+                tags = (
+                    "Hechos: ",
+                    "Armas: ",
+                    "Automotores: ",
+                    "Objetos: ",
+                    "Secuestros: ",
+                    "Involucrados: ",
+                )
+                for i in range(0, len(indices)):
+                    texto += tags[i] + str(indices[i]) + "\n"
+
+                output.insert(tk.END, texto)
+                ventana.indices = indices
+            else:
+                try:
+                    consulta = "SELECT max(id_hecho) FROM datos_hecho"
+                    cursor.execute(consulta)
+                    resultados = cursor.fetchall()
+                    for fila in resultados:
+                        if fila[0]:
+                            indices.append(fila[0])
+                        else:
+                            indices.append(0)
+                except Exception as e:
+                    self.mostrar_mensaje_advertencia(
+                        f"No se ha encontrado tabla 'datos_hecho'. Error: {e}"
+                    )
+                try:
+                    consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
+                    cursor.execute(consulta)
+                    ultima_fecha = cursor.fetchone()
+                    ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
+                except Exception as error:
+                    self.mostrar_mensaje_advertencia(
+                        "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                    )
+                indices.append(0)
+                indices.append(0)
+                indices.append(0)
+                indices.append(0)
+                indices.append(0)
+                cursor.close()
+                conexion.close()
+
+                ventana.indices = indices
+                # Cerrar el cursor y la conexión
+                cursor.close()
+                conexion.close()
+
+                self.btn_base.config(bg=self.verde)
+
+                self.imprimir_con_color("Establecida conexión con base.", "verde")
+                self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
+                self.imprimir_con_color(f"User: {datos_conexion[2]}", "blanco")
+                self.imprimir_con_color(
+                    f"Nombre de la base: {datos_conexion[4]}", "blanco"
+                )
+                self.imprimir_con_color(
+                    f"Ultima fecha en base: {ultima_fecha}", "blanco"
                 )
 
-            try:
-                consulta = "SELECT max(id) FROM objetos"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia("No se ha encontrado tabla 'objetos'")
+                ventana.botones[0].config(bg=self.verde)
 
-            try:
-                consulta = "SELECT max(id) FROM secuestros"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'secuestros'"
+                ventana.conexion = datos_conexion.copy()
+
+                texto = f"Conexión satisfactoria!\n\nÚltima fecha: {ultima_fecha}\n\n"
+                tags = (
+                    "Hechos: ",
+                    "Armas: ",
+                    "Automotores: ",
+                    "Objetos: ",
+                    "Secuestros: ",
+                    "Involucrados: ",
                 )
+                for i in range(0, len(indices)):
+                    texto += tags[i] + str(indices[i]) + "\n"
 
-            try:
-                consulta = "SELECT max(id) FROM involucrados"
-                cursor.execute(consulta)
-                resultados = cursor.fetchall()
-                for fila in resultados:
-                    if fila[0]:
-                        indices.append(fila[0])
-                    else:
-                        indices.append(0)
-            except Exception:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha encontrado tabla 'involucrados'"
-                )
-
-            try:
-                consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
-                cursor.execute(consulta)
-                ultima_fecha = cursor.fetchone()
-                ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
-            except Exception as error:
-                self.mostrar_mensaje_advertencia(
-                    "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
-                )
-
-            ventana.datos_de_conexion = datos_conexion
-            ventana.indices = indices
-            # Cerrar el cursor y la conexión
-            cursor.close()
-            conexion.close()
-
-            self.btn_base.config(bg=self.verde)
-
-            self.imprimir_con_color("Establecida conexión con base.", "verde")
-            self.imprimir_con_color(f"Host: {datos_conexion[0]}", "blanco")
-            self.imprimir_con_color(f"User: {datos_conexion[1]}", "blanco")
-            self.imprimir_con_color(f"Nombre de la base: {datos_conexion[3]}", "blanco")
-            self.imprimir_con_color(f"Ultima fecha en base: {ultima_fecha}", "blanco")
-
-            ventana.botones[0].config(bg=self.verde)
-
-            ventana.conexion = datos_conexion.copy()
-
-            texto = f"Conexión satisfactoria!\n\nÚltima fecha: {ultima_fecha}\n\n"
-            tags = (
-                "Hechos: ",
-                "Armas: ",
-                "Automotores: ",
-                "Objetos: ",
-                "Secuestros: ",
-                "Involucrados: ",
-            )
-            for i in range(0, len(indices)):
-                texto += tags[i] + str(indices[i]) + "\n"
-
-            output.insert(tk.END, texto)
-            ventana.indices = indices
-
+                output.insert(tk.END, texto)
+                ventana.indices = indices
         except Exception as error:
             self.mostrar_mensaje_error(error)
             texto = "No se ha podido establecer conexión..."

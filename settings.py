@@ -872,7 +872,24 @@ base_de_datos = {
 }
 
 base_de_datos_recortes = {
-    "datos_hecho": [0, 1, 3, 4, 7, 10, 11, 14, 15, 17, 18, 19, 20, 24, 26, 29],
+    "datos_hecho": [
+        0,
+        1,
+        3,
+        4,
+        7,
+        10,
+        11,
+        14,
+        15,
+        17,
+        18,
+        19,
+        20,
+        24,
+        26,
+        29,
+    ],
     "involucrados": [
         0,
         1,
@@ -904,3 +921,43 @@ base_de_datos_recortes = {
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+oper_sol = {
+    "datos_hecho": [
+        "id_hecho",
+        "nro_registro",
+        "fecha_carga",
+        "hora_carga",
+        "dependencia",
+        "fecha_inicio_hecho",
+        "hora_inicio_hecho",
+        "fecha_final_hecho",
+        "hora_final_hecho",
+        "partido_hecho",
+        "localidad_hecho",
+        "calle",
+        "altura",
+        "entre",
+        "calificaciones",
+        "relato",
+    ]
+}
+oper_sol_recortes = {
+    "datos_hecho": [
+        0,
+        1,
+        3,
+        4,
+        7,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        20,
+        24,
+        26,
+        29,
+    ]
+}

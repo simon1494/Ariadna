@@ -7,6 +7,7 @@ import settings as ck
 import os
 from modelos.gestores_de_informacion.logueador import Logueador
 from copy import deepcopy
+import pickle
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -58,7 +59,15 @@ class Administrador(Logueador):
 
     def _cargar(self, path, no_tiene_encabezados=True, es_original=True):
         if no_tiene_encabezados:
-            data = pd.read_excel(path, header=None)
+            if path.endswith(".xlsx"):
+                data = pd.read_excel(path, header=None)
+            else:
+                with open(path, "rb") as archivo:
+                    data = pickle.load(archivo)
+                    data = data.dropna()
+                    algo = data.iloc[:, 0].tolist()
+                    for index, asdf in enumerate(algo):
+                        print(index, len(asdf))
             data[data.columns[0]] = data[data.columns[0]].replace(
                 to_replace="_x000D_", value=" ", regex=True
             )
