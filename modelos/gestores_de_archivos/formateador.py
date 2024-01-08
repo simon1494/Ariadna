@@ -93,7 +93,7 @@ class Formateador(MotorBase):
                             if contiene_nulos:
                                 no_nulos_con_nulos.append((columna, campo))
                 for columna in df.columns:
-                    if columna not in [7, 21, 22, 27, 30]:
+                    if columna not in [6, 7, 21, 22, 27, 30]:
                         contiene_nan = df[columna].isna().all()
                         if contiene_nan:
                             columnas_vacias.append((columna, campo))

@@ -1096,6 +1096,7 @@ class VentanaPrincipal(VentanaBase):
                         self.imprimir_con_color(
                             "Archivo insertado correctamente.", "verde"
                         )
+                        conexion.commit()
                         self.consultar_indices_a_base(
                             ventana.conexion[0],
                             ventana.conexion[1],
@@ -1115,7 +1116,6 @@ class VentanaPrincipal(VentanaBase):
                         ventana.botones[1].config(bg=self.botones_subir)
                         ventana.botones[2].config(bg=self.botones_subir)
                         ventana.a_subir = None
-                        conexion.commit()
                     except Exception as error:
                         self.mostrar_mensaje_advertencia(
                             f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
@@ -1175,6 +1175,14 @@ class VentanaPrincipal(VentanaBase):
                                 "No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
                             )
                         conexion.commit()
+                        self.consultar_indices_a_base(
+                            ventana.conexion[0],
+                            ventana.conexion[1],
+                            ventana.conexion[2],
+                            ventana.conexion[3],
+                            ventana.conexion[4],
+                            ventana,
+                        )
                         ventana.botones[1].config(bg=self.botones_subir)
                         ventana.botones[2].config(bg=self.botones_subir)
                         ventana.a_subir = None
@@ -1297,7 +1305,6 @@ class VentanaPrincipal(VentanaBase):
             # Cerrar el cursor y la conexión
             cursor.close()
             conexion.close()
-            print(indices)
             ventana.indices = indices
         except Exception as error:
             self.mostrar_mensaje_error(error)
