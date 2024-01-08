@@ -275,10 +275,10 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                     consulta = "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT max(id_hecho) FROM datos_hecho)"
                     cursor.execute(consulta)
                     ultima_fecha = cursor.fetchone()
-                    ultima_fecha = ultima_fecha[0].strftime("%d %B %Y")
+                    ultima_fecha = ultima_fecha[0]
                 except Exception as error:
                     self.mostrar_mensaje_advertencia(
-                        "No se ha podido recuperar la ultima fecha cargada: \n{error}'",
+                        f"No se ha podido recuperar la ultima fecha cargada: \n{error}'",
                     )
                 indices.append(0)
                 indices.append(0)

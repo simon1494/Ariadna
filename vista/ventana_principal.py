@@ -1175,14 +1175,6 @@ class VentanaPrincipal(VentanaBase):
                                 "No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
                             )
                         conexion.commit()
-                        self.consultar_indices_a_base(
-                            ventana.conexion[0],
-                            ventana.conexion[1],
-                            ventana.conexion[2],
-                            ventana.conexion[3],
-                            ventana.conexion[4],
-                            ventana,
-                        )
                         ventana.botones[1].config(bg=self.botones_subir)
                         ventana.botones[2].config(bg=self.botones_subir)
                         ventana.a_subir = None
