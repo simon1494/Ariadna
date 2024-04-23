@@ -964,6 +964,42 @@ class VentanaPrincipal(VentanaBase):
                     return False
                 return True
 
+        def chequear_continuidad_fechas(cursor, data):
+            def es_dia_anterior(fecha1_str, fecha2_str):
+                # Convertir las cadenas de fecha a objetos datetime.date
+                fecha1 = datetime.datetime.strptime(fecha1_str, "%Y-%m-%d").date()
+                fecha2 = datetime.datetime.strptime(fecha2_str, "%Y-%m-%d").date()
+
+                # Obtener la diferencia entre las fechas
+                diferencia = fecha2 - fecha1
+
+                # Verificar si la diferencia es de un día
+                return diferencia == datetime.timedelta(days=1)
+
+            try:
+                # Ejecutar la consulta SQL
+                cursor.execute(
+                    "SELECT fecha_carga FROM datos_hecho WHERE id_hecho = (SELECT MAX(id_hecho) FROM datos_hecho)"
+                )
+                # Obtener el resultado de la consulta
+                resultado = cursor.fetchone()
+                # Si hay resultado, formatear la fecha
+                if resultado:
+                    fecha = resultado[0]
+                    fecha_formateada = fecha.strftime("%Y-%m-%d")
+                    # print(f"fecha de base: {fecha_formateada}")
+                    # print(f"fecha de archivo: {data[-1][3]}")
+                    # print(es_dia_anterior(data[-1][3], fecha_formateada))
+                    # print(es_dia_anterior("2024-04-03", fecha_formateada))
+                    return es_dia_anterior(data[-1][3], fecha_formateada)
+                else:
+                    return False
+            except Exception as error:
+                self.mostrar_mensaje_error(
+                    f"Error en el chequeo de contiguidad de fechas. Error: {error}"
+                )
+                raise error
+
         def filtrar(lista, campos_a_recortar):
             final = [lista[i] for i in campos_a_recortar]
             final2 = [None if pd.isnull(value) else value for value in final]
@@ -1003,129 +1039,138 @@ class VentanaPrincipal(VentanaBase):
                 self.imprimir_con_color(
                     "Chequeando continuidad de indexados...", "lila"
                 )
-                if chequear_continuidad(ventana.indices, indices_archivo):
-                    self.imprimir_con_color(
-                        "CHEQUEO: continuidad de índices correcta.", "verde"
-                    )
-                    print("\n")
-                    self.imprimir_con_color(
-                        "Iniciando inserción de datos en base...", "lila"
-                    )
-                    try:
-                        if indices_archivo[0]:
-                            insertar(
-                                cursor,
-                                "datos_hecho",
-                                ventana.a_subir[0],
-                                ck.base_de_datos_recortes["datos_hecho"],
-                                ck.base_de_datos["datos_hecho"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
-                            )
-
-                        if indices_archivo[1]:
-                            insertar(
-                                cursor,
-                                "armas",
-                                ventana.a_subir[2],
-                                ck.base_de_datos_recortes["elementos"],
-                                ck.base_de_datos["armas"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'armas' ya que no contenía registros."
-                            )
-
-                        if indices_archivo[2]:
-                            insertar(
-                                cursor,
-                                "automotores",
-                                ventana.a_subir[3],
-                                ck.base_de_datos_recortes["elementos"],
-                                ck.base_de_datos["automotores"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'automotores' ya que no contenía registros."
-                            )
-
-                        if indices_archivo[3]:
-                            insertar(
-                                cursor,
-                                "objetos",
-                                ventana.a_subir[4],
-                                ck.base_de_datos_recortes["elementos"],
-                                ck.base_de_datos["elementos"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'objetos' ya que no contenía registros."
-                            )
-
-                        if indices_archivo[4]:
-                            insertar(
-                                cursor,
-                                "secuestros",
-                                ventana.a_subir[5],
-                                ck.base_de_datos_recortes["elementos"],
-                                ck.base_de_datos["elementos"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'secuestros' ya que no contenía registros."
-                            )
-
-                        if indices_archivo[5]:
-                            insertar(
-                                cursor,
-                                "involucrados",
-                                ventana.a_subir[6],
-                                ck.base_de_datos_recortes["involucrados"],
-                                ck.base_de_datos["involucrados"],
-                            )
-                        else:
-                            self.mostrar_mensaje_advertencia(
-                                "No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
-                            )
-                        if not reconstruir:
-                            self.mostrar_mensaje_info(
-                                "Archivo insertado correctamente.",
-                            )
+                if chequear_continuidad_fechas(cursor, ventana.a_subir[0]):
+                    if chequear_continuidad(ventana.indices, indices_archivo):
                         self.imprimir_con_color(
-                            "Archivo insertado correctamente.", "verde"
+                            "CHEQUEO: continuidad de índices correcta.", "verde"
                         )
-                        conexion.commit()
-                        self.consultar_indices_a_base(
-                            ventana.conexion[0],
-                            ventana.conexion[1],
-                            ventana.conexion[2],
-                            ventana.conexion[3],
-                            ventana.conexion[4],
-                            ventana,
+                        print("\n")
+                        self.imprimir_con_color(
+                            "Iniciando inserción de datos en base...", "lila"
                         )
-                        print()
-                        self.imprimir_con_color("Nuevos indices: ", "verde")
-                        self.imprimir_con_color(f"{ventana.indices[0]}", "verde")
-                        self.imprimir_con_color(f"{ventana.indices[1]}", "verde")
-                        self.imprimir_con_color(f"{ventana.indices[2]}", "verde")
-                        self.imprimir_con_color(f"{ventana.indices[3]}", "verde")
-                        self.imprimir_con_color(f"{ventana.indices[4]}", "verde")
+                        try:
+                            if indices_archivo[0]:
+                                insertar(
+                                    cursor,
+                                    "datos_hecho",
+                                    ventana.a_subir[0],
+                                    ck.base_de_datos_recortes["datos_hecho"],
+                                    ck.base_de_datos["datos_hecho"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'datos_hecho' ya que no contenía registros."
+                                )
 
-                        ventana.botones[1].config(bg=self.botones_subir)
-                        ventana.botones[2].config(bg=self.botones_subir)
-                        ventana.a_subir = None
-                    except Exception as error:
+                            if indices_archivo[1]:
+                                insertar(
+                                    cursor,
+                                    "armas",
+                                    ventana.a_subir[2],
+                                    ck.base_de_datos_recortes["elementos"],
+                                    ck.base_de_datos["armas"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'armas' ya que no contenía registros."
+                                )
+
+                            if indices_archivo[2]:
+                                insertar(
+                                    cursor,
+                                    "automotores",
+                                    ventana.a_subir[3],
+                                    ck.base_de_datos_recortes["elementos"],
+                                    ck.base_de_datos["automotores"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'automotores' ya que no contenía registros."
+                                )
+
+                            if indices_archivo[3]:
+                                insertar(
+                                    cursor,
+                                    "objetos",
+                                    ventana.a_subir[4],
+                                    ck.base_de_datos_recortes["elementos"],
+                                    ck.base_de_datos["elementos"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'objetos' ya que no contenía registros."
+                                )
+
+                            if indices_archivo[4]:
+                                insertar(
+                                    cursor,
+                                    "secuestros",
+                                    ventana.a_subir[5],
+                                    ck.base_de_datos_recortes["elementos"],
+                                    ck.base_de_datos["elementos"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'secuestros' ya que no contenía registros."
+                                )
+
+                            if indices_archivo[5]:
+                                insertar(
+                                    cursor,
+                                    "involucrados",
+                                    ventana.a_subir[6],
+                                    ck.base_de_datos_recortes["involucrados"],
+                                    ck.base_de_datos["involucrados"],
+                                )
+                            else:
+                                self.mostrar_mensaje_advertencia(
+                                    "No se ha insertado la tabla 'involucrados' ya que no contenía registros.",
+                                )
+                            if not reconstruir:
+                                self.mostrar_mensaje_info(
+                                    "Archivo insertado correctamente.",
+                                )
+                            self.imprimir_con_color(
+                                "Archivo insertado correctamente.", "verde"
+                            )
+                            conexion.commit()
+                            self.consultar_indices_a_base(
+                                ventana.conexion[0],
+                                ventana.conexion[1],
+                                ventana.conexion[2],
+                                ventana.conexion[3],
+                                ventana.conexion[4],
+                                ventana,
+                            )
+                            print()
+                            self.imprimir_con_color("Nuevos indices: ", "verde")
+                            self.imprimir_con_color(f"{ventana.indices[0]}", "verde")
+                            self.imprimir_con_color(f"{ventana.indices[1]}", "verde")
+                            self.imprimir_con_color(f"{ventana.indices[2]}", "verde")
+                            self.imprimir_con_color(f"{ventana.indices[3]}", "verde")
+                            self.imprimir_con_color(f"{ventana.indices[4]}", "verde")
+
+                            ventana.botones[1].config(bg=self.botones_subir)
+                            ventana.botones[2].config(bg=self.botones_subir)
+                            ventana.a_subir = None
+                        except Exception as error:
+                            self.mostrar_mensaje_advertencia(
+                                f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
+                            )
+                    else:
                         self.mostrar_mensaje_advertencia(
-                            f"Una de las tablas tuvo problemas de inserción. Se aborta subida a base. \n\n Error: {error}",
+                            "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+                        )
+                        self.imprimir_con_color(
+                            "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+                            "amarillo",
                         )
                 else:
                     self.mostrar_mensaje_advertencia(
-                        "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+                        "Las fechas del archivo que se intenta subir no son continuas las de la base. Se aborta proceso de inserción ya que generaría vacíos en la información.",
                     )
                     self.imprimir_con_color(
-                        "Los índices del archivo que se intenta subir no son continuos al indexado de la base. Se aborta proceso de inserción ya que generaría problemas de coherencia de índices primarios.",
+                        "Las fechas del archivo que se intenta subir no son continuas las de la base. Se aborta proceso de inserción ya que generaría vacíos en la información.",
                         "amarillo",
                     )
                 conexion.close()
@@ -1153,7 +1198,9 @@ class VentanaPrincipal(VentanaBase):
                     "Chequeando continuidad de indexados...", "lila"
                 )
                 indices_archivo = obtener_indices_archivo(ventana.a_subir)
-                if chequear_continuidad(ventana.indices, indices_archivo):
+                if chequear_continuidad(
+                    ventana.indices, indices_archivo
+                ) and chequear_continuidad_fechas(cursor, ventana.a_subir[0]):
                     self.imprimir_con_color(
                         "CHEQUEO: continuidad de índices correcta.", "verde"
                     )
