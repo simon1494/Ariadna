@@ -987,11 +987,11 @@ class VentanaPrincipal(VentanaBase):
                 if resultado:
                     fecha = resultado[0]
                     fecha_formateada = fecha.strftime("%Y-%m-%d")
-                    # print(f"fecha de base: {fecha_formateada}")
-                    # print(f"fecha de archivo: {data[-1][3]}")
-                    # print(es_dia_anterior(data[-1][3], fecha_formateada))
+                    print(f"fecha de base: {fecha_formateada}")
+                    print(f"fecha de archivo: {data[-1][3]}")
+                    print(es_dia_anterior(fecha_formateada, data[-1][3]))
                     # print(es_dia_anterior("2024-04-03", fecha_formateada))
-                    return es_dia_anterior(data[-1][3], fecha_formateada)
+                    return es_dia_anterior(fecha_formateada, data[-1][3])
                 else:
                     return False
             except Exception as error:
