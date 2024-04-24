@@ -987,18 +987,18 @@ class VentanaPrincipal(VentanaBase):
                 if resultado:
                     fecha = resultado[0]
                     fecha_formateada = fecha.strftime("%Y-%m-%d")
-                    print(f"fecha de base: {fecha_formateada}")
-                    print(f"fecha de archivo: {data[-1][3]}")
-                    print(es_dia_anterior(fecha_formateada, data[-1][3]))
-                    # print(es_dia_anterior("2024-04-03", fecha_formateada))
-                    return es_dia_anterior(fecha_formateada, data[-1][3])
-                else:
+                    if es_dia_anterior(fecha_formateada, data[-1][3]):
+                        self.imprimir_con_color(
+                            f"La fecha {data[-1][3]} del archivo a insertar es contigua a la ultima fecha en base.",
+                            "verde",
+                        )
+                        return es_dia_anterior(fecha_formateada, data[-1][3])
                     return False
             except Exception as error:
                 self.mostrar_mensaje_error(
                     f"Error en el chequeo de contiguidad de fechas. Error: {error}"
                 )
-                raise error
+                return False
 
         def filtrar(lista, campos_a_recortar):
             final = [lista[i] for i in campos_a_recortar]
