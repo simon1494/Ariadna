@@ -155,7 +155,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
                         )
                     elif base == "delitos_2021 SERVER":
                         conexion = mysql.connector.connect(
-                            host="192.168.1.135",
+                            host="192.168.1.125",
                             port="3307",
                             user="simon",
                             password="monitoreo",
@@ -163,7 +163,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
                         )
                     elif base == "delitos_2022 SERVER":
                         conexion = mysql.connector.connect(
-                            host="192.168.1.135",
+                            host="192.168.1.125",
                             port="3307",
                             user="simon",
                             password="monitoreo",
@@ -171,7 +171,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
                         )
                     elif base == "delitos_2023 SERVER":
                         conexion = mysql.connector.connect(
-                            host="192.168.1.135",
+                            host="192.168.1.125",
                             port="3307",
                             user="simon",
                             password="monitoreo",
@@ -179,7 +179,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
                         )
                     elif base == "delitos_2024 SERVER":
                         conexion = mysql.connector.connect(
-                            host="192.168.1.135",
+                            host="192.168.1.125",
                             port="3307",
                             user="simon",
                             password="monitoreo",
@@ -187,7 +187,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
                         )
                     elif base == "OPERATIVO SOL":
                         conexion = mysql.connector.connect(
-                            host="192.168.1.135",
+                            host="192.168.1.125",
                             port="3307",
                             user="simon",
                             password="monitoreo",
