@@ -66,7 +66,11 @@ class Separador(Logueador, Mensajeador):
 
     def filtrar_y_guardar_campo(self, df, fecha, destino):
         search_string = f"Fecha: {fecha} Hora: "
-        filtered_df = df[df[df.columns[0]].str.contains(search_string, case=True)]
+        filtered_df = df[
+            df[df.columns[0]].str.contains(
+                f"{search_string}|CHEQUEAR DESDE EL SISEP", regex=True, case=True
+            )
+        ]
         nombre = self.convertir_fecha(fecha)
         if not os.path.isfile(rf"{destino}\{nombre}.xlsx"):
             filtered_df.to_excel(rf"{destino}\{nombre}.xlsx", header=False, index=False)
