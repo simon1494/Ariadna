@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import tkinter as tk
 import settings as ck
+from tkinter import messagebox
 from .ventana_base import VentanaBase
 from .ventana_calificaciones import VentanaCalificaciones
 from .ventana_conexion import VentanaConexion
@@ -964,18 +965,20 @@ class VentanaPrincipal(VentanaBase):
                     return False
                 return True
 
-        def chequear_continuidad_fechas(cursor, data):
+        def chequear_continuidad_fechas(cursor, data, reconstruir=False):
             def es_dia_anterior(fecha1_str, fecha2_str):
                 # Convertir las cadenas de fecha a objetos datetime.date
                 fecha1 = datetime.datetime.strptime(fecha1_str, "%Y-%m-%d").date()
                 fecha2 = datetime.datetime.strptime(fecha2_str, "%Y-%m-%d").date()
-
+                print(fecha1, fecha2)
                 # Obtener la diferencia entre las fechas
                 diferencia = fecha2 - fecha1
 
                 # Verificar si la diferencia es de un día
                 return diferencia == datetime.timedelta(days=1)
 
+            if reconstruir:
+                return True
             try:
                 # Ejecutar la consulta SQL
                 cursor.execute(
@@ -989,11 +992,20 @@ class VentanaPrincipal(VentanaBase):
                     fecha_formateada = fecha.strftime("%Y-%m-%d")
                     if es_dia_anterior(fecha_formateada, data[-1][3]):
                         self.imprimir_con_color(
-                            f"La fecha {data[-1][3]} del archivo a insertar es contigua a la ultima fecha en base.",
+                            f"La fecha {data[-1][3]} del archivo a insertar es contigua a la última fecha en base.",
                             "verde",
                         )
                         return es_dia_anterior(fecha_formateada, data[-1][3])
                     return False
+                else:
+                    # No hay resultado, mostrar cuadro de diálogo
+                    root = tk.Tk()
+                    root.withdraw()  # Ocultar la ventana principal de Tkinter
+                    respuesta = tk.messagebox.askyesno(
+                        "Sin fechas en la base",
+                        "La base parece no tener fechas aun. Seleccione SI en caso de que el archivo a insertar sea el primero; seleccione NO para abortar el proceso.",
+                    )
+                    return respuesta
             except Exception as error:
                 self.mostrar_mensaje_error(
                     f"Error en el chequeo de contiguidad de fechas. Error: {error}"
@@ -1039,7 +1051,7 @@ class VentanaPrincipal(VentanaBase):
                 self.imprimir_con_color(
                     "Chequeando continuidad de indexados...", "lila"
                 )
-                if chequear_continuidad_fechas(cursor, ventana.a_subir[0]):
+                if chequear_continuidad_fechas(cursor, ventana.a_subir[0], reconstruir):
                     if chequear_continuidad(ventana.indices, indices_archivo):
                         self.imprimir_con_color(
                             "CHEQUEO: continuidad de índices correcta.", "verde"
@@ -1200,7 +1212,9 @@ class VentanaPrincipal(VentanaBase):
                 indices_archivo = obtener_indices_archivo(ventana.a_subir)
                 if chequear_continuidad(
                     ventana.indices, indices_archivo
-                ) and chequear_continuidad_fechas(cursor, ventana.a_subir[0]):
+                ) and chequear_continuidad_fechas(
+                    cursor, ventana.a_subir[0], reconstruir
+                ):
                     self.imprimir_con_color(
                         "CHEQUEO: continuidad de índices correcta.", "verde"
                     )
