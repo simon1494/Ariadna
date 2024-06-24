@@ -54,11 +54,13 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
             )
             etiqueta.place(x=70, y=(i + sep_y) * sep_x, anchor=tk.NW)
             self.etiquetas_labels.append(etiqueta)
-
-            cuadro_texto = tk.Entry(
-                self,
-                textvariable=self.set_vars[i],
-            )
+            if i in (0, 1):
+                cuadro_texto = tk.Entry(
+                    self,
+                    textvariable=self.set_vars[i],
+                )
+            else:
+                cuadro_texto = tk.Entry(self, textvariable=self.set_vars[i], show="*")
             cuadro_texto.place(x=160, y=(i + sep_y) * sep_x, anchor=tk.NW)
             self.etiquetas_entries.append(cuadro_texto)
 
