@@ -10,6 +10,7 @@ import pandas as pd
 import tkinter as tk
 import settings as ck
 from tkinter import messagebox
+from tkinter import simpledialog
 from .ventana_base import VentanaBase
 from .ventana_calificaciones import VentanaCalificaciones
 from .ventana_conexion import VentanaConexion
@@ -996,6 +997,13 @@ class VentanaPrincipal(VentanaBase):
                             "verde",
                         )
                         return es_dia_anterior(fecha_formateada, data[-1][3])
+                    else:
+                        bypass = simpledialog.askstring(
+                            "ADVERTENCIA",
+                            "Las fechas no son contiguas, pero puede evitar esta validacion si asi lo desea.\nIngrese el codigo para saltar la validacion e insertar el archivo directo en base: ",
+                        )
+                        if bypass == "1494":
+                            return True
                     return False
                 else:
                     # No hay resultado, mostrar cuadro de diálogo

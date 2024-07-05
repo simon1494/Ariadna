@@ -6,7 +6,7 @@ USUARIOS = {
     "nico": "nico",
 }
 
-VER = "6.2.6-RC [2024-04-23]"
+VER = "6.3.6-SR [2024-07-05]"
 
 cp_iniciales = (
     (
