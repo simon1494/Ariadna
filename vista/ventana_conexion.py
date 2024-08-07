@@ -356,6 +356,7 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                     CREATE TABLE IF NOT EXISTS datos_hecho (
                         id_hecho INT PRIMARY KEY,
                         nro_registro VARCHAR(30) NOT NULL,
+                        ipp VARCHAR(30),
                         fecha_carga DATE NOT NULL NOT NULL,
                         hora_carga TIME NOT NULL,
                         dependencia VARCHAR(100) NOT NULL,
@@ -375,6 +376,9 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_datos_hecho_partido_hecho ON datos_hecho(partido_hecho)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_datos_hecho_ipp ON datos_hecho(ipp)"
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_datos_hecho_fecha_carga ON datos_hecho(fecha_carga)"
@@ -490,6 +494,7 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                         provincia_nacimiento VARCHAR(50),
                         ciudad_nacimiento VARCHAR(50),
                         fecha_nacimiento DATE,
+                        profesion VARCHAR(50),
                         observaciones VARCHAR(1000),
                         provincia_domicilio VARCHAR(50),
                         partido_domicilio VARCHAR(50),
@@ -521,6 +526,9 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                 )
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_involucrados_nro_dni ON involucrados(nro_dni)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_involucrados_profesion ON involucrados(profesion)"
                 )
 
                 conn.commit()

@@ -796,6 +796,7 @@ general_calificaciones2 = {"id_hecho": "", "Tipificación:": ""}
 base_de_datos = {
     "datos_hecho": [
         "id_hecho",
+        "ipp",
         "nro_registro",
         "fecha_carga",
         "hora_carga",
@@ -847,6 +848,7 @@ base_de_datos = {
         "provincia_nacimiento",
         "ciudad_nacimiento",
         "fecha_nacimiento",
+        "profesion",
         "observaciones",
         "provincia_domicilio",
         "partido_domicilio",
@@ -875,6 +877,7 @@ base_de_datos_recortes = {
     "datos_hecho": [
         0,
         1,
+        2,
         3,
         4,
         7,
@@ -903,6 +906,7 @@ base_de_datos_recortes = {
         13,
         14,
         15,
+        17,
         24,
         25,
         26,
