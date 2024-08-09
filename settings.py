@@ -796,8 +796,8 @@ general_calificaciones2 = {"id_hecho": "", "Tipificación:": ""}
 base_de_datos = {
     "datos_hecho": [
         "id_hecho",
-        "ipp",
         "nro_registro",
+        "ipp",
         "fecha_carga",
         "hora_carga",
         "dependencia",
