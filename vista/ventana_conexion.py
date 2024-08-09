@@ -355,8 +355,8 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                     """
                     CREATE TABLE IF NOT EXISTS datos_hecho (
                         id_hecho INT PRIMARY KEY,
-                        nro_registro VARCHAR(30) NOT NULL,
                         ipp VARCHAR(30),
+                        nro_registro VARCHAR(30) NOT NULL,
                         fecha_carga DATE NOT NULL NOT NULL,
                         hora_carga TIME NOT NULL,
                         dependencia VARCHAR(100) NOT NULL,
@@ -483,8 +483,8 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
                     """
                     CREATE TABLE IF NOT EXISTS involucrados (
                         id INT PRIMARY KEY,
-                        id_hecho INT,
-                        involucrado VARCHAR(30),
+                        id_hecho INT NOT NULL,
+                        involucrado VARCHAR(30) NOT NULL,
                         pais_origen VARCHAR(50),
                         tipo_dni VARCHAR(10),
                         nro_dni VARCHAR(20),
