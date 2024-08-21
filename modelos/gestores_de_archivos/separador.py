@@ -80,7 +80,7 @@ class Separador(Logueador, Mensajeador):
         return self.medir_largo_estructura(filtered_df)
 
     def procesar_uno(self):
-        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Crudos/")
+        ruta_archivo = self.seleccionar_archivo("../Delfos/exportaciones/")
         destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
         nombre_archivo = ruta_archivo
         if os.path.isfile(nombre_archivo):
