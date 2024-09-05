@@ -36,3 +36,17 @@ class Mensajeador:
             initialdir=cls.DIRECTORIO_PADRE + carpeta_abierta_por_default
         )
         return ruta_de_la_carpeta
+
+    @classmethod
+    def obtener_directorio_github(cls, subcarpeta=None):
+        # Obtenemos el directorio actual del script
+        directorio_actual = os.path.dirname(os.path.abspath(__file__))
+
+        # Vamos subiendo de nivel según el número especificado
+        for _ in range(3):
+            directorio_actual = os.path.dirname(directorio_actual)
+
+        if subcarpeta:
+            return os.path.join(directorio_actual, subcarpeta)
+
+        return directorio_actual

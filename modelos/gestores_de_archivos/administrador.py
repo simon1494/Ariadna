@@ -113,7 +113,7 @@ class Administrador(Logueador):
             nombre_archivo = "(log_errores)"
             ult = pd.DataFrame(archivo, columns=encabezados)
             ult.to_excel(
-                rf"{DIRECTORIO_PADRE}\Exportaciones\{nombre} {nombre_archivo}.xlsx",
+                rf"{DIRECTORIO_PADRE}\Exportaciones\Errores\{nombre} {nombre_archivo}.xlsx",
                 index=False,
             )
             self.imprimir_con_color(

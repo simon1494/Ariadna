@@ -97,7 +97,7 @@ class VentanaErrores(tk.Toplevel, VentanaBase):
             )
 
     def cargar_original(self):
-        path = self.seleccionar_archivo("/Exportaciones/Crudos/")
+        path = self.seleccionar_archivo("/Exportaciones/Crudos/2024")
         if path:
             self.path_original = path
             self.boton_original.config(bg=self.verde)
