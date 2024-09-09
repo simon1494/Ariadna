@@ -4,7 +4,7 @@ sys.path.append("../ariadna")
 import os
 import pandas as pd
 import re
-from tkinter.filedialog import askopenfile
+from tkinter.filedialog import askopenfilename
 from datetime import datetime
 from modelos.gestores_de_informacion.logueador import Logueador
 from modelos.gestores_de_informacion.mensajeador import Mensajeador
@@ -83,7 +83,7 @@ class Separador(Logueador, Mensajeador):
     def procesar_uno(self):
         directorio = self.obtener_directorio_github("Delfos\exportaciones")
         print(directorio)
-        ruta_archivo = askopenfile(initialdir=directorio)
+        ruta_archivo = askopenfilename(initialdir=directorio)
         print(ruta_archivo)
         destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
         print(destino)
