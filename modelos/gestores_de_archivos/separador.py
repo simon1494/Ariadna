@@ -82,13 +82,9 @@ class Separador(Logueador, Mensajeador):
 
     def procesar_uno(self):
         directorio = self.obtener_directorio_github("Delfos\exportaciones")
-        print(directorio)
         ruta_archivo = askopenfilename(initialdir=directorio)
-        print(ruta_archivo)
         destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
-        print(destino)
         nombre_archivo = ruta_archivo
-        print(nombre_archivo)
         if os.path.isfile(nombre_archivo):
             try:
                 df = pd.read_excel(nombre_archivo, header=None)
