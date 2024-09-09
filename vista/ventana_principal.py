@@ -598,9 +598,10 @@ class VentanaPrincipal(VentanaBase):
         except WindowsError:
             self.imprimir_con_color("Nada seleccionado.", "blanco")
             self.mostrar_mensaje_advertencia("Nada seleccionado.")
-        except Exception as error:
+        """except Exception as error:
             self.imprimir_con_color(f"Error inesperado: {error}", "rojo")
             self.mostrar_mensaje_error(f"Error inesperado: {error}")
+            raise error"""
 
     def _archivos(self):
         carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
