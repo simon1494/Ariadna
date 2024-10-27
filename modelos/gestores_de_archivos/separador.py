@@ -49,18 +49,41 @@ class Separador(Logueador, Mensajeador):
                     paso_dates.extend(extracted_dates)
 
         return paso_dates
+    
+    def obtener_lineas_de_errores(self, df, paso_columns):
+        errores = []
+
+        for column in paso_columns:
+            for idx, cell in df[column].items():  # Usa idx para obtener el índice
+                if isinstance(cell, str):
+                    extracted_dates = self.extract_dates_between_strings(
+                        cell, "Fecha: ", " Hora:"
+                    )
+                    try:
+                        # Intentamos convertir cada fecha y verificamos errores
+                        index_errores = [self.convertir_fecha(fecha) for fecha in extracted_dates]
+                    except Exception:
+                        errores.append(idx+1)  # Agregamos el índice de la fila con error
+        return errores
+    
+    def generar_str_error_con_lineas(self, lista_errores):
+        retorno = "\nLineas con errores"
+        for error in lista_errores:
+            retorno += f"\n--> {error}"
+        return retorno
 
     def get_paso_data(self, df, paso_columns):
         paso_data = df[paso_columns]
         return paso_data
 
     def convertir_fecha(self, fecha):
-        fecha_str = fecha
-        fecha_obj = datetime.strptime(fecha_str, "%d %B %Y")
-        numero_mes = fecha_obj.strftime("%m")
-        dia_mes = fecha_obj.strftime("%d")
-        formato_deseado = f"{numero_mes}-{dia_mes}"
-        return formato_deseado
+            fecha_str = fecha
+            fecha_obj = datetime.strptime(fecha_str, "%d %B %Y")
+            numero_mes = fecha_obj.strftime("%m")
+            dia_mes = fecha_obj.strftime("%d")
+            formato_deseado = f"{numero_mes}-{dia_mes}"
+            return formato_deseado
+    
 
     def medir_largo_estructura(self, estructura) -> int:
         return len(estructura)
@@ -102,9 +125,13 @@ class Separador(Logueador, Mensajeador):
                     self.imprimir_con_color(f"{fecha}", color="blanco")
                 self.imprimir_con_color(f"Total registros: {largo_df}", color="blanco")
                 suma_subs = 0
-                for fecha in paso_dates:
-                    largo_sub = self.filtrar_y_guardar_campo(paso_data, fecha, destino)
-                    suma_subs += largo_sub
+                try:
+                    for fecha in paso_dates:
+                        largo_sub = self.filtrar_y_guardar_campo(paso_data, fecha, destino)
+                        suma_subs += largo_sub
+                except Exception:
+                    listado_errores = self.obtener_lineas_de_errores(df, paso_columns)
+                    raise ValueError(f"{self.generar_str_error_con_lineas(listado_errores)}") 
                 if suma_subs == largo_df:
                     self.imprimir_con_color(
                         f"La suma de sub-listados [{suma_subs}] coincide con el total [{largo_df}]",
@@ -161,11 +188,15 @@ class Separador(Logueador, Mensajeador):
                         f"Total registros: {largo_df}", color="blanco"
                     )
                     suma_subs = 0
-                    for fecha in paso_dates:
-                        largo_sub = self.filtrar_y_guardar_campo(
-                            paso_data, fecha, destino
-                        )
-                        suma_subs += largo_sub
+                    try:
+                        for fecha in paso_dates:
+                            largo_sub = self.filtrar_y_guardar_campo(
+                                paso_data, fecha, destino
+                            )
+                            suma_subs += largo_sub
+                    except Exception:
+                        listado_errores = self.obtener_lineas_de_errores(df, paso_columns)
+                        raise ValueError(f"{self.generar_str_error_con_lineas(listado_errores)}")
                     if suma_subs == largo_df:
                         self.imprimir_con_color(
                             f"La suma de sub-listados [{suma_subs}] coincide con el total [{largo_df}]",
