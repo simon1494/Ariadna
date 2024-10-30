@@ -50,6 +50,8 @@ def ocultar_y_mostrar(func):
 class VentanaPrincipal(VentanaBase):
     def __init__(self, master, version, usuario):
         self.crear_directorio_de_exportaciones()
+        self.crear_base_caratulas()
+        self.insertar_caratulas_preexistentes()
         self.usuario = usuario
         self.version = version
         self.ventana = master

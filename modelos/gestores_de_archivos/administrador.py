@@ -8,12 +8,14 @@ import os
 from modelos.gestores_de_informacion.logueador import Logueador
 from copy import deepcopy
 import pickle
+import mysql.connector
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
 
 class Administrador(Logueador):
+
     def crear_directorio_de_exportaciones(self):
         RUTA_A_CHEQUEAR = f"{DIRECTORIO_PADRE}/Exportaciones"
         if not os.path.exists(RUTA_A_CHEQUEAR):
@@ -223,3 +225,104 @@ class Administrador(Logueador):
             lista_anidada.append(registros)
 
         return lista_anidada
+
+    def crear_base_caratulas(self):
+        try:
+            conn = mysql.connector.connect(
+                host="localhost", port=3306, user="root", password=""
+            )
+        except Exception:
+            try:
+                conn = mysql.connector.connect(
+                    host="localhost", port=3307, user="root", password="Python311"
+                )
+            except Exception as e:
+                self.imprimir_con_color(
+                    "No se pudo crear conectar con Motor MySQL.", "rojo"
+                )
+                self.imprimir_con_color(f"Error: {e}", "rojo")
+                return  # Salir si no se puede conectar
+
+        cursor = conn.cursor()
+        cursor.execute("SHOW DATABASES")
+        databases = [
+            db[0] for db in cursor.fetchall()
+        ]  # Extraer nombres de bases de datos
+        if "caratulas" not in databases:
+            try:
+                cursor.execute("CREATE DATABASE IF NOT EXISTS caratulas")
+                conn.database = "caratulas"  # Selecciona la base de datos recién creada
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calificaciones (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        calificacion VARCHAR(200) NOT NULL UNIQUE,
+                        grupo VARCHAR(30),
+                        sub_grupo VARCHAR(30)
+                    )
+                    """
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_caratulas ON calificaciones(calificacion)"
+                )
+
+                conn.commit()
+                self.imprimir_con_color(
+                    "Base de datos de calificaciones creada.", "verde"
+                )
+            except Exception as error:
+                self.imprimir_con_color(
+                    f"No se ha podido crear la base: {error}", "rojo"
+                )
+            finally:
+                conn.close()  # Cierra la conexión después de finalizar
+
+    def insertar_caratulas_preexistentes(self):
+        try:
+            conn = mysql.connector.connect(
+                host="localhost", port=3306, user="root", password=""
+            )
+        except Exception:
+            try:
+                conn = mysql.connector.connect(
+                    host="localhost", port=3307, user="root", password="Python311"
+                )
+            except Exception as e:
+                self.imprimir_con_color(
+                    "No se pudo crear conectar con Motor MySQL.", "rojo"
+                )
+                self.imprimir_con_color(f"Error: {e}", "rojo")
+                return  # Salir si no se puede conectar
+
+        cursor = conn.cursor()
+        cursor.execute(f"USE caratulas;")
+
+        base_calificaciones = dict(
+            pd.read_excel(
+                rf"{DIRECTORIO_PADRE}\Base calificaciones\calificaciones_db.xlsx",
+                header=None,
+            ).values.tolist()
+        )
+        caratulas = [caratula for caratula in base_calificaciones.values()]
+
+        for calificacion in caratulas:
+            # Comprobar si la calificación ya existe
+            cursor.execute(
+                "SELECT COUNT(*) FROM calificaciones WHERE calificacion = %s",
+                (calificacion,),
+            )
+            existe = cursor.fetchone()[0]
+
+            if existe == 0:  # Si no existe
+                # Insertar la calificación
+                cursor.execute(
+                    "INSERT INTO calificaciones (calificacion) VALUES (%s)",
+                    (calificacion,),
+                )
+                print(f"Caratula insertada --> {calificacion}")
+
+        # Confirmar los cambios
+        conn.commit()
+
+        # Cerrar el cursor
+        cursor.close()
