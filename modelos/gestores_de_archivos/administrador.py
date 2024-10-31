@@ -251,7 +251,7 @@ class Administrador(Logueador):
                 """
                 CREATE TABLE IF NOT EXISTS calificaciones (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    calificacion VARCHAR(200) NOT NULL UNIQUE,
+                    calificacion VARCHAR(1000) NOT NULL UNIQUE,
                     grupo VARCHAR(30),
                     sub_grupo VARCHAR(30)
                 )
@@ -266,7 +266,7 @@ class Administrador(Logueador):
                 CREATE TABLE IF NOT EXISTS grupos (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     grupo VARCHAR(30) NOT NULL UNIQUE,
-                    grupo_tabla VARCHAR(50) NOT NULL UNIQUE
+                    grupo_tabla VARCHAR(1000) NOT NULL UNIQUE
 
                 )
                 """
@@ -277,7 +277,7 @@ class Administrador(Logueador):
                 """
                 CREATE TABLE IF NOT EXISTS sub_grupos (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    sub_grupo VARCHAR(30) NOT NULL UNIQUE
+                    sub_grupo VARCHAR(1000) NOT NULL UNIQUE
                 )
                 """
             )
