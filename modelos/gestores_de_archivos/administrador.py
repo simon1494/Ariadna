@@ -244,38 +244,53 @@ class Administrador(Logueador):
                 return  # Salir si no se puede conectar
 
         cursor = conn.cursor()
-        cursor.execute("SHOW DATABASES")
-        databases = [
-            db[0] for db in cursor.fetchall()
-        ]  # Extraer nombres de bases de datos
-        if "caratulas" not in databases:
-            try:
-                cursor.execute("CREATE DATABASE IF NOT EXISTS caratulas")
-                conn.database = "caratulas"  # Selecciona la base de datos recién creada
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS calificaciones (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        calificacion VARCHAR(200) NOT NULL UNIQUE,
-                        grupo VARCHAR(30),
-                        sub_grupo VARCHAR(30)
-                    )
-                    """
+        try:
+            cursor.execute("CREATE DATABASE IF NOT EXISTS caratulas")
+            conn.database = "caratulas"  # Selecciona la base de datos recién creada
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS calificaciones (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    calificacion VARCHAR(200) NOT NULL UNIQUE,
+                    grupo VARCHAR(30),
+                    sub_grupo VARCHAR(30)
                 )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_caratulas ON calificaciones(calificacion)"
-                )
+                """
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_caratulas ON calificaciones(calificacion)"
+            )
 
-                conn.commit()
-                self.imprimir_con_color(
-                    "Base de datos de calificaciones creada.", "verde"
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS grupos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    grupo VARCHAR(30) NOT NULL UNIQUE,
+                    grupo_tabla VARCHAR(50) NOT NULL UNIQUE
+
                 )
-            except Exception as error:
-                self.imprimir_con_color(
-                    f"No se ha podido crear la base: {error}", "rojo"
+                """
+            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_grupo ON grupos(grupo)")
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sub_grupos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    sub_grupo VARCHAR(30) NOT NULL UNIQUE
                 )
-            finally:
-                conn.close()  # Cierra la conexión después de finalizar
+                """
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sgrupo ON sub_grupos(sub_grupo)"
+            )
+
+            conn.commit()
+            self.imprimir_con_color("Base de datos de calificaciones creada.", "verde")
+        except Exception as error:
+            self.imprimir_con_color(f"No se ha podido crear la base: {error}", "rojo")
+        finally:
+            conn.close()  # Cierra la conexión después de finalizar
 
     def insertar_caratulas_preexistentes(self):
         try:
