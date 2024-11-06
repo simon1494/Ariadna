@@ -22,8 +22,19 @@ from modelos.gestores_de_archivos.formateador import Formateador
 from modelos.gestores_de_archivos.testeador import Tester
 from modelos.procesadores.procesador_inicial import Inicial
 from modelos.procesadores.procesador_segmentado import Segmentado
+import calendar
 
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
+
+
+def mes_actual_formato():
+    # Obtener el mes y el número en curso
+    fecha_actual = datetime.datetime.now()
+    mes_numero = fecha_actual.month
+    nombre_mes = calendar.month_name[mes_numero].capitalize()
+
+    # Devolver en formato "mm Mes"
+    return f"{mes_numero:02d} {nombre_mes}"
 
 
 def ocultar_y_mostrar(func):
@@ -239,10 +250,13 @@ class VentanaPrincipal(VentanaBase):
 
     @ocultar_y_mostrar
     def procesar_inicial(self):
+
         #::::::::::::::::::::::::procesado inicial:::::::::::::::::::::::::::
         self.ventana_top.withdraw()
         try:
-            path = self.seleccionar_archivo("/Exportaciones/Crudos/")
+            path = self.seleccionar_archivo(
+                f"/Exportaciones/Crudos/NORMAL/{mes_actual_formato()}"
+            )
 
             nombre_archivo = os.path.splitext(os.path.basename(path))[0]
 
@@ -302,7 +316,7 @@ class VentanaPrincipal(VentanaBase):
         try:
             if path is False:
                 path_archivo = self.seleccionar_archivo(
-                    "/Exportaciones/No segmentados/"
+                    f"/Exportaciones/No segmentados/NORMAL/{mes_actual_formato()}"
                 )
                 archivo1 = self._cargar(
                     path_archivo, no_tiene_encabezados=False, es_original=False

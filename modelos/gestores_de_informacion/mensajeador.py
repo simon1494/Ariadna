@@ -2,6 +2,7 @@ import os
 from tkinter import messagebox
 from tkinter import filedialog
 import calendar
+import re
 
 
 class Mensajeador:
@@ -53,7 +54,14 @@ class Mensajeador:
         return directorio_actual
 
     @classmethod
+    def es_formato_mm_dd(cls, cadena):
+        # Expresión regular para detectar formato "mm-dd" con valores válidos
+        patron = r"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+        return bool(re.match(patron, cadena))
+
+    @classmethod
     def distribuir_archivos(cls, carpeta_destino, archivo):
+        print(archivo)
         match carpeta_destino.lower():
             case "cr":
                 ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
@@ -65,7 +73,10 @@ class Mensajeador:
                 ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/NORMAL/"
 
         # Detectar mes del archivo (primeros 2 caracteres son el mes)
-        mes_numero = int(archivo[5:7])
+        if not cls.es_formato_mm_dd(archivo):
+            mes_numero = int(archivo[5:7])
+        else:
+            mes_numero = int(archivo[0:2])
 
         # Convertir el número del mes al nombre completo en español
         nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"

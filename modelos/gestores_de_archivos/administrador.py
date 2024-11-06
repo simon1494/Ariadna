@@ -6,6 +6,7 @@ import tkinter as tk
 import settings as ck
 import os
 from modelos.gestores_de_informacion.logueador import Logueador
+from modelos.gestores_de_informacion.mensajeador import Mensajeador
 from copy import deepcopy
 import pickle
 import mysql.connector
@@ -14,7 +15,7 @@ import mysql.connector
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
 
-class Administrador(Logueador):
+class Administrador(Logueador, Mensajeador):
 
     def crear_directorio_de_exportaciones(self):
         RUTA_A_CHEQUEAR = f"{DIRECTORIO_PADRE}/Exportaciones"
@@ -106,11 +107,13 @@ class Administrador(Logueador):
             else:
                 nombre_archivo = nombre
             ult = pd.DataFrame(archivo, columns=encabezados)
+            ruta = self.distribuir_archivos("ns", nombre_archivo)
+            print(ruta)
             ult.to_excel(
-                rf"{DIRECTORIO_PADRE}\Exportaciones\No segmentados\{nombre_archivo} (ns).xlsx",
+                rf"{ruta}\{nombre_archivo} (ns).xlsx",
                 index=False,
             )
-            return rf"{DIRECTORIO_PADRE}\Exportaciones\No segmentados\{nombre_archivo} (ns).xlsx"
+            return (rf"{ruta}\{nombre_archivo} (ns).xlsx",)
         else:
             nombre_archivo = "(log_errores)"
             ult = pd.DataFrame(archivo, columns=encabezados)
