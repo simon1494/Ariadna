@@ -355,7 +355,6 @@ class Administrador(Logueador):
 
     @classmethod
     def distribuir_archivos(self, carpeta_destino, archivo):
-        print(archivo)
         match carpeta_destino.lower():
             case "cr":
                 ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
