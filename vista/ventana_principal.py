@@ -345,7 +345,8 @@ class VentanaPrincipal(VentanaBase):
                             f"Finales:-----{str(indices_finales)}",
                             "blanco",
                         )
-                        indices = list(map(lambda x: x + 1, indices_finales))
+                        for i, ind in enumerate(indices):
+                            ind.set(indices_finales[i])
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
@@ -395,7 +396,8 @@ class VentanaPrincipal(VentanaBase):
                             f"Finales:-----{str(indices_finales)}",
                             "blanco",
                         )
-                        indices = list(map(lambda x: x + 1, indices_finales))
+                        for i, ind in enumerate(indices):
+                            ind.set(indices_finales[i])
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
