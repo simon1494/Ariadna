@@ -76,4 +76,5 @@ class Mensajeador:
             os.makedirs(carpeta_mes)
 
         # Retornar el path de la carpeta del mes
+        print(carpeta_mes)
         return carpeta_mes
