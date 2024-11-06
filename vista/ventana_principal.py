@@ -345,10 +345,9 @@ class VentanaPrincipal(VentanaBase):
                             f"Finales:-----{str(indices_finales)}",
                             "blanco",
                         )
-                        for i, ind in enumerate(indices):
-                            print(self.indices)
-                            input()
-                            self.indices[i] = indices_finales[i]
+                        for i, ind in enumerate(self.indices):
+                            ind.set(indices_finales[i])
+
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
@@ -398,10 +397,9 @@ class VentanaPrincipal(VentanaBase):
                             f"Finales:-----{str(indices_finales)}",
                             "blanco",
                         )
-                        for i, ind in enumerate(indices):
-                            print(self.indices)
-                            input()
-                            self.indices[i] = indices_finales[i]
+                        for i, ind in enumerate(self.indices):
+                            ind.set(indices_finales[i])
+
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
