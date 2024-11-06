@@ -167,7 +167,6 @@ class Separador(Logueador, Mensajeador):
 
     def procesar_archivos(self):
         directorio = self.seleccionar_carpeta("/Exportaciones/Crudos/")
-        destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
 
         # Obtén la lista de nombres de archivos en el directorio
         nombres_archivos = os.listdir(directorio)
@@ -175,6 +174,7 @@ class Separador(Logueador, Mensajeador):
         # Itera sobre los nombres de archivos
         for nombre_archivo in nombres_archivos:
             ruta_archivo = os.path.join(directorio, nombre_archivo)
+            destino = self.distribuir_archivos("cr", nombre_archivo)
 
             if os.path.isfile(ruta_archivo):
                 try:

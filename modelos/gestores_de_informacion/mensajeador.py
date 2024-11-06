@@ -74,9 +74,7 @@ class Mensajeador:
 
         # Si la carpeta no existe, crearla
         if not os.path.exists(carpeta_mes):
-            print(f"Creando ruta: {carpeta_mes}")
             os.makedirs(carpeta_mes)
 
         # Retornar el path de la carpeta del mes
-        print(carpeta_mes)
         return carpeta_mes
