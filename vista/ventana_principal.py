@@ -333,17 +333,27 @@ class VentanaPrincipal(VentanaBase):
                         "verde",
                     )
 
-                    indices_finales = self._obtener_indices(segmentado.final, indices)
-                    self.imprimir_con_color(
-                        f"Iniciales:---{str(indices)}",
-                        "blanco",
-                    )
-                    self.imprimir_con_color(
-                        f"Finales:-----{str(indices_finales)}",
-                        "blanco",
-                    )
-                    indices = list(map(lambda x: x + 1, indices_finales))
-                    self.imprimir_con_color(f"Siguientes:--{str(indices)}", "blanco")
+                    try:
+                        indices_finales = self._obtener_indices(
+                            segmentado.final, indices
+                        )
+                        self.imprimir_con_color(
+                            f"Iniciales:---{str(indices)}",
+                            "blanco",
+                        )
+                        self.imprimir_con_color(
+                            f"Finales:-----{str(indices_finales)}",
+                            "blanco",
+                        )
+                        indices = list(map(lambda x: x + 1, indices_finales))
+                        self.imprimir_con_color(
+                            f"Siguientes:--{str(indices)}", "blanco"
+                        )
+                    except Exception as error:
+                        self.imprimir_con_color(
+                            f"Error en la obtención de índices nuevos: {error}",
+                            "rojo",
+                        )
 
                     mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
@@ -372,6 +382,29 @@ class VentanaPrincipal(VentanaBase):
                         f"El proceso se completo correctamente",
                         "verde",
                     )
+
+                    try:
+                        indices_finales = self._obtener_indices(
+                            segmentado.final, indices
+                        )
+                        self.imprimir_con_color(
+                            f"Iniciales:---{str(indices)}",
+                            "blanco",
+                        )
+                        self.imprimir_con_color(
+                            f"Finales:-----{str(indices_finales)}",
+                            "blanco",
+                        )
+                        indices = list(map(lambda x: x + 1, indices_finales))
+                        self.imprimir_con_color(
+                            f"Siguientes:--{str(indices)}", "blanco"
+                        )
+                    except Exception as error:
+                        self.imprimir_con_color(
+                            f"Error en la obtención de índices nuevos: {error}",
+                            "rojo",
+                        )
+
                     mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
                         self.mostrar_mensaje_advertencia(mensaje)
