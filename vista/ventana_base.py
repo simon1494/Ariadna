@@ -5,7 +5,7 @@ from modelos.gestores_de_informacion.mensajeador import Mensajeador
 from modelos.gestores_de_archivos.administrador import Administrador
 
 
-class VentanaBase(Mensajeador, Administrador):
+class VentanaBase(Mensajeador):
     usuario = None
     color_botones = "#D0F2EF"
     botones_iniciales = "#F2F2F2"
