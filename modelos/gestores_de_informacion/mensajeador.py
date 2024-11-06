@@ -1,6 +1,7 @@
 import os
 from tkinter import messagebox
 from tkinter import filedialog
+import calendar
 
 
 class Mensajeador:
@@ -50,3 +51,29 @@ class Mensajeador:
             return os.path.join(directorio_actual, subcarpeta)
 
         return directorio_actual
+
+    @classmethod
+    def distribuir_archivos(cls, carpeta_destino, archivo):
+        match carpeta_destino.lower():
+            case "cr":
+                ruta_base = "/Exportaciones/Crudos/NORMAL/"
+            case "ns":
+                ruta_base = "/Exportaciones/No segmentados/NORMAL/"
+            case "seg":
+                ruta_base = "/Exportaciones/Segmentados/NORMAL/"
+
+        # Detectar mes del archivo (primeros 2 caracteres son el mes)
+        mes_numero = int(archivo[:2])
+
+        # Convertir el número del mes al nombre completo en español
+        nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+
+        # Crear el path completo de la carpeta del mes
+        carpeta_mes = os.path.join(ruta_base, nombre_mes)
+
+        # Si la carpeta no existe, crearla
+        if not os.path.exists(carpeta_mes):
+            os.makedirs(carpeta_mes)
+
+        # Retornar el path de la carpeta del mes
+        return carpeta_mes
