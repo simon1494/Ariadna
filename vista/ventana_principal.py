@@ -323,6 +323,7 @@ class VentanaPrincipal(VentanaBase):
                 )
                 nombre_archivo = os.path.splitext(os.path.basename(path_archivo))[0]
                 segmentado = Segmentado(archivo1, indices)
+                print(indices)
                 try:
                     self.imprimir_con_color(f"Procesando {nombre_archivo}...", "lila")
                     self._convertir_segmentado(
@@ -332,11 +333,10 @@ class VentanaPrincipal(VentanaBase):
                         f"El proceso se completo correctamente",
                         "verde",
                     )
-                    print(indices)
+
                     indices_finales = self._obtener_indices(segmentado.final, indices)
                     print(indices_finales)
                     indices = list(map(lambda x: x + 1, indices_finales))
-
                     mensaje = Formateador.comprobar_salida(segmentado.final)
                     if mensaje != "":
                         self.mostrar_mensaje_advertencia(mensaje)
