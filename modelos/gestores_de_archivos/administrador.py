@@ -10,12 +10,14 @@ from modelos.gestores_de_informacion.mensajeador import Mensajeador
 from copy import deepcopy
 import pickle
 import mysql.connector
+import re
+import calendar
 
 # Obtener la ruta del directorio padre del archivo actual (tu_proyecto)
 DIRECTORIO_PADRE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
 
-class Administrador(Logueador, Mensajeador):
+class Administrador(Logueador):
 
     def crear_directorio_de_exportaciones(self):
         RUTA_A_CHEQUEAR = f"{DIRECTORIO_PADRE}/Exportaciones"
@@ -344,3 +346,40 @@ class Administrador(Logueador, Mensajeador):
 
         # Cerrar el cursor
         cursor.close()
+
+    @classmethod
+    def es_formato_mm_dd(self, cadena):
+        # Expresión regular para detectar formato "mm-dd" con valores válidos
+        patron = r"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+        return bool(re.match(patron, cadena))
+
+    @classmethod
+    def distribuir_archivos(self, carpeta_destino, archivo):
+        print(archivo)
+        match carpeta_destino.lower():
+            case "cr":
+                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
+            case "ns":
+                ruta_base = (
+                    self.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/NORMAL/"
+                )
+            case "seg":
+                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/NORMAL/"
+
+        # Detectar mes del archivo (primeros 2 caracteres son el mes)
+        if not self.es_formato_mm_dd(archivo):
+            mes_numero = int(archivo[5:7])
+        else:
+            mes_numero = int(archivo[0:2])
+
+        # Convertir el número del mes al nombre completo en español
+        nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+        # Crear el path completo de la carpeta del mes
+        carpeta_mes = os.path.join(ruta_base, nombre_mes)
+
+        # Si la carpeta no existe, crearla
+        if not os.path.exists(carpeta_mes):
+            os.makedirs(carpeta_mes)
+
+        # Retornar el path de la carpeta del mes
+        return carpeta_mes
