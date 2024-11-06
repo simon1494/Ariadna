@@ -346,7 +346,7 @@ class VentanaPrincipal(VentanaBase):
                             "blanco",
                         )
                         for i, ind in enumerate(indices):
-                            ind.set(indices_finales[i])
+                            self.indices[i] = indices_finales[i]
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
@@ -397,7 +397,7 @@ class VentanaPrincipal(VentanaBase):
                             "blanco",
                         )
                         for i, ind in enumerate(indices):
-                            ind.set(indices_finales[i])
+                            self.indices[i] = indices_finales[i]
                         self.imprimir_con_color(
                             f"Siguientes:--{str(indices)}", "blanco"
                         )
