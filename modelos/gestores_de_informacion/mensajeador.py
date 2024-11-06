@@ -65,7 +65,7 @@ class Mensajeador:
         # Detectar mes del archivo (primeros 2 caracteres son el mes)
         print(archivo)
         print(carpeta_destino)
-        mes_numero = int(archivo[:2])
+        mes_numero = int(archivo[5:7])
 
         # Convertir el número del mes al nombre completo en español
         nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
