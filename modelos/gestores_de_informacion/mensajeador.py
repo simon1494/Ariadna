@@ -54,30 +54,29 @@ class Mensajeador:
 
     @classmethod
     def distribuir_archivos(cls, carpeta_destino, archivo):
-        try:
-            match carpeta_destino.lower():
-                case "cr":
-                    ruta_base = "/Exportaciones/Crudos/NORMAL/"
-                case "ns":
-                    ruta_base = "/Exportaciones/No segmentados/NORMAL/"
-                case "seg":
-                    ruta_base = "/Exportaciones/Segmentados/NORMAL/"
+        match carpeta_destino.lower():
+            case "cr":
+                ruta_base = "/Exportaciones/Crudos/NORMAL/"
+            case "ns":
+                ruta_base = "/Exportaciones/No segmentados/NORMAL/"
+            case "seg":
+                ruta_base = "/Exportaciones/Segmentados/NORMAL/"
 
-            # Detectar mes del archivo (primeros 2 caracteres son el mes)
-            mes_numero = int(archivo[:2])
+        # Detectar mes del archivo (primeros 2 caracteres son el mes)
+        print(archivo)
+        print(carpeta_destino)
+        mes_numero = int(archivo[:2])
 
-            # Convertir el número del mes al nombre completo en español
-            nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+        # Convertir el número del mes al nombre completo en español
+        nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+        print(nombre_mes)
+        # Crear el path completo de la carpeta del mes
+        carpeta_mes = os.path.join(ruta_base, nombre_mes)
 
-            # Crear el path completo de la carpeta del mes
-            carpeta_mes = os.path.join(ruta_base, nombre_mes)
+        # Si la carpeta no existe, crearla
+        if not os.path.exists(carpeta_mes):
+            os.makedirs(carpeta_mes)
 
-            # Si la carpeta no existe, crearla
-            if not os.path.exists(carpeta_mes):
-                os.makedirs(carpeta_mes)
-
-            # Retornar el path de la carpeta del mes
-            print(carpeta_mes)
-            return carpeta_mes
-        except Exception as e:
-            raise e
+        # Retornar el path de la carpeta del mes
+        print(carpeta_mes)
+        return carpeta_mes
