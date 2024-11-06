@@ -56,25 +56,25 @@ class Mensajeador:
     def distribuir_archivos(cls, carpeta_destino, archivo):
         match carpeta_destino.lower():
             case "cr":
-                ruta_base = "/Exportaciones/Crudos/NORMAL/"
+                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
             case "ns":
-                ruta_base = "/Exportaciones/No segmentados/NORMAL/"
+                ruta_base = (
+                    cls.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/NORMAL/"
+                )
             case "seg":
-                ruta_base = "/Exportaciones/Segmentados/NORMAL/"
+                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/NORMAL/"
 
         # Detectar mes del archivo (primeros 2 caracteres son el mes)
-        print(archivo)
-        print(carpeta_destino)
         mes_numero = int(archivo[5:7])
 
         # Convertir el número del mes al nombre completo en español
         nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
-        print(nombre_mes)
         # Crear el path completo de la carpeta del mes
         carpeta_mes = os.path.join(ruta_base, nombre_mes)
 
         # Si la carpeta no existe, crearla
         if not os.path.exists(carpeta_mes):
+            print(f"Creando ruta: {carpeta_mes}")
             os.makedirs(carpeta_mes)
 
         # Retornar el path de la carpeta del mes
