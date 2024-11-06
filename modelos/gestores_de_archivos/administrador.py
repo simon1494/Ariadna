@@ -110,7 +110,6 @@ class Administrador(Logueador):
                 nombre_archivo = nombre
             ult = pd.DataFrame(archivo, columns=encabezados)
             ruta = self.distribuir_archivos("ns", nombre_archivo)
-            print(ruta)
             ult.to_excel(
                 rf"{ruta}\{nombre_archivo} (ns).xlsx",
                 index=False,
@@ -128,15 +127,16 @@ class Administrador(Logueador):
             )
             return rf"{DIRECTORIO_PADRE}\Exportaciones\{nombre} {nombre_archivo}.xlsx"
 
-    @staticmethod
-    def _convertir_segmentado(archivo, nombre=False):
+    def _convertir_segmentado(self, archivo, nombre=False):
         if not nombre:
             nombre_archivo = tk.simpledialog.askstring("Nombre", "Nombre del archivo:")
         else:
             nombre_archivo = nombre
 
+        ruta = self.distribuir_archivos("seg", nombre_archivo.replace(" (ns).xlsx", ""))
+
         writer = pd.ExcelWriter(
-            rf"{DIRECTORIO_PADRE}\Exportaciones\Segmentados\{nombre_archivo.replace(' (ns).xlsx','')} (seg).xlsx",
+            rf"{ruta}\{nombre_archivo.replace(' (ns).xlsx','')} (seg).xlsx",
             engine="xlsxwriter",
         )
 
