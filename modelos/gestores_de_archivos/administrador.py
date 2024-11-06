@@ -114,7 +114,7 @@ class Administrador(Logueador):
                 rf"{ruta}\{nombre_archivo} (ns).xlsx",
                 index=False,
             )
-            return (rf"{ruta}\{nombre_archivo} (ns).xlsx",)
+            return rf"{ruta}\{nombre_archivo} (ns).xlsx"
         else:
             nombre_archivo = "(log_errores)"
             ult = pd.DataFrame(archivo, columns=encabezados)
