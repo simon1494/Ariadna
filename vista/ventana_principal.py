@@ -346,10 +346,11 @@ class VentanaPrincipal(VentanaBase):
                             "blanco",
                         )
                         for i, ind in enumerate(self.indices):
-                            ind.set(indices_finales[i])
+                            ind.set(indices_finales[i] + 1)
 
                         self.imprimir_con_color(
-                            f"Siguientes:--{str(indices)}", "blanco"
+                            f"Siguientes:--{str([valor.get() for valor in self.indices])}",
+                            "blanco",
                         )
                     except Exception as error:
                         self.imprimir_con_color(
@@ -398,10 +399,11 @@ class VentanaPrincipal(VentanaBase):
                             "blanco",
                         )
                         for i, ind in enumerate(self.indices):
-                            ind.set(indices_finales[i])
+                            ind.set(indices_finales[i] + 1)
 
                         self.imprimir_con_color(
-                            f"Siguientes:--{str(indices)}", "blanco"
+                            f"Siguientes:--{str([valor.get() for valor in self.indices])}",
+                            "blanco",
                         )
                     except Exception as error:
                         self.imprimir_con_color(
