@@ -255,7 +255,7 @@ class VentanaPrincipal(VentanaBase):
         self.ventana_top.withdraw()
         try:
             path = self.seleccionar_archivo(
-                f"/Exportaciones/Crudos/NORMAL/{mes_actual_formato()}"
+                f"/Exportaciones/Crudos/2025/{mes_actual_formato()}"
             )
 
             nombre_archivo = os.path.splitext(os.path.basename(path))[0]
@@ -316,7 +316,7 @@ class VentanaPrincipal(VentanaBase):
         try:
             if path is False:
                 path_archivo = self.seleccionar_archivo(
-                    f"/Exportaciones/No segmentados/NORMAL/{mes_actual_formato()}"
+                    f"/Exportaciones/No segmentados/2025/{mes_actual_formato()}"
                 )
                 archivo1 = self._cargar(
                     path_archivo, no_tiene_encabezados=False, es_original=False
@@ -672,7 +672,7 @@ class VentanaPrincipal(VentanaBase):
             raise error"""
 
     def _archivos(self):
-        carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/")
+        carpeta = self.seleccionar_archivo("/Exportaciones/Segmentados/2025/")
         print("\n")
         archivos = os.listdir(carpeta)
 
@@ -845,7 +845,7 @@ class VentanaPrincipal(VentanaBase):
     def chequear_integridad(self, ventana, reconstruir=False, archivo=None):
         print("\n\n")
         if not reconstruir:
-            path = self.seleccionar_archivo("/Exportaciones/Segmentados")
+            path = self.seleccionar_archivo("/Exportaciones/Segmentados/2025/")
         else:
             path = archivo
         if path:
