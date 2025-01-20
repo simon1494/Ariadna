@@ -357,13 +357,13 @@ class Administrador(Logueador):
     def distribuir_archivos(self, carpeta_destino, archivo):
         match carpeta_destino.lower():
             case "cr":
-                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
+                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Crudos/2025/"
             case "ns":
                 ruta_base = (
-                    self.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/NORMAL/"
+                    self.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/2025/"
                 )
             case "seg":
-                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/NORMAL/"
+                ruta_base = self.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/2025/"
 
         # Detectar mes del archivo (primeros 2 caracteres son el mes)
         if not self.es_formato_mm_dd(archivo):
@@ -371,8 +371,11 @@ class Administrador(Logueador):
         else:
             mes_numero = int(archivo[0:2])
 
+        if mes_numero < 10:
+            mes_numero_str = f"0{mes_numero}"
+
         # Convertir el número del mes al nombre completo en español
-        nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+        nombre_mes = f"{mes_numero_str} {calendar.month_name[mes_numero].capitalize()}"
         # Crear el path completo de la carpeta del mes
         carpeta_mes = os.path.join(ruta_base, nombre_mes)
 
