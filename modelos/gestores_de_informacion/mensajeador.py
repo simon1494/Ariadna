@@ -61,16 +61,13 @@ class Mensajeador:
 
     @classmethod
     def distribuir_archivos(cls, carpeta_destino, archivo):
-        print(archivo)
         match carpeta_destino.lower():
             case "cr":
-                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Crudos/NORMAL/"
+                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Crudos/2025/"
             case "ns":
-                ruta_base = (
-                    cls.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/NORMAL/"
-                )
+                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/No segmentados/2025/"
             case "seg":
-                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/NORMAL/"
+                ruta_base = cls.DIRECTORIO_PADRE + "/Exportaciones/Segmentados/2025/"
 
         # Detectar mes del archivo (primeros 2 caracteres son el mes)
         if not cls.es_formato_mm_dd(archivo):
@@ -78,8 +75,11 @@ class Mensajeador:
         else:
             mes_numero = int(archivo[0:2])
 
+        if mes_numero < 10:
+            mes_numero_str = f"0{mes_numero}"
+
         # Convertir el número del mes al nombre completo en español
-        nombre_mes = f"{mes_numero} {calendar.month_name[mes_numero].capitalize()}"
+        nombre_mes = f"{mes_numero_str} {calendar.month_name[mes_numero].capitalize()}"
         # Crear el path completo de la carpeta del mes
         carpeta_mes = os.path.join(ruta_base, nombre_mes)
 
@@ -88,4 +88,5 @@ class Mensajeador:
             os.makedirs(carpeta_mes)
 
         # Retornar el path de la carpeta del mes
+        print(carpeta_mes)
         return carpeta_mes
