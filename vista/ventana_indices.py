@@ -269,7 +269,7 @@ class VentanaIndices(tk.Toplevel, VentanaBase):
             self.mostrar_mensaje_error(error)
 
     def conectar_con_archivo(self):
-        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Segmentados/")
+        ruta_archivo = self.seleccionar_archivo("/Exportaciones/Segmentados/2025/")
         try:
             # Cargar el archivo Excel
             df = pd.read_excel(ruta_archivo, sheet_name=None)
