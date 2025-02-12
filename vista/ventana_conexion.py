@@ -25,8 +25,8 @@ class VentanaConexion(tk.Toplevel, VentanaBase):
 
         self.host.set("localhost")
         self.port.set("3306")
-        self.user.set("root")
-        self.passw.set("")
+        self.user.set("simon")
+        self.passw.set("monitoreo")
         self.base.set(f"delitos_{datetime.now().year}")
 
         self.set_vars = [self.host, self.port, self.user, self.passw, self.base]

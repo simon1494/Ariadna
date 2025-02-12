@@ -110,7 +110,7 @@ class Separador(Logueador, Mensajeador):
         directorio = self.obtener_directorio_github("Delfos\exportaciones")
         ruta_archivo = askopenfilename(initialdir=directorio)
         destino = self.distribuir_archivos("cr", os.path.basename(ruta_archivo))
-        # destino = self.seleccionar_carpeta("/Exportaciones/Crudos/")
+
         nombre_archivo = ruta_archivo
         if os.path.isfile(nombre_archivo):
             try:

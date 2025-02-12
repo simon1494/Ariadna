@@ -239,7 +239,7 @@ class Administrador(Logueador):
         except Exception:
             try:
                 conn = mysql.connector.connect(
-                    host="localhost", port=3307, user="root", password="Python311"
+                    host="localhost", port=3306, user="root", password="Python311"
                 )
             except Exception as e:
                 self.imprimir_con_color(
@@ -305,7 +305,7 @@ class Administrador(Logueador):
         except Exception:
             try:
                 conn = mysql.connector.connect(
-                    host="localhost", port=3307, user="root", password="Python311"
+                    host="localhost", port=3306, user="root", password="Python311"
                 )
             except Exception as e:
                 self.imprimir_con_color(
